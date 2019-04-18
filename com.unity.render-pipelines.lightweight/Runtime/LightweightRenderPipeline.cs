@@ -85,6 +85,10 @@ namespace UnityEngine.Rendering.LWRP
             Lightmapping.SetDelegate(lightsDelegate);
 
             CameraCaptureBridge.enabled = true;
+
+            // force set tier to tier1 if we have tier stripping on
+            if (asset.stripGraphicsTierShaderVariants)
+                Graphics.activeTier = GraphicsTier.Tier1;
         }
 
         protected override void Dispose(bool disposing)
@@ -103,6 +107,10 @@ namespace UnityEngine.Rendering.LWRP
 
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
+            // force set tier to tier1 if we have tier stripping on
+            if (asset.stripGraphicsTierShaderVariants)
+                Graphics.activeTier = GraphicsTier.Tier1;
+
             BeginFrameRendering(renderContext, cameras);
 
             GraphicsSettings.lightsUseLinearIntensity = (QualitySettings.activeColorSpace == ColorSpace.Linear);
@@ -132,6 +140,10 @@ namespace UnityEngine.Rendering.LWRP
             LWRPAdditionalCameraData additionalCameraData = null;
             if (camera.cameraType == CameraType.Game || camera.cameraType == CameraType.VR)
                 additionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
+
+            // force set tier to tier1 if we have tier stripping on
+            if (asset.stripGraphicsTierShaderVariants)
+                Graphics.activeTier = GraphicsTier.Tier1;
 
             InitializeCameraData(settings, camera, additionalCameraData, out var cameraData);
             SetupPerCameraShaderConstants(cameraData);
@@ -219,7 +231,7 @@ namespace UnityEngine.Rendering.LWRP
                 if (cameraData.isStereoEnabled && msaaSampleCountHasChanged)
                     XR.XRDevice.UpdateEyeTextureMSAASetting();
             }
-            
+
             cameraData.isSceneViewCamera = camera.cameraType == CameraType.SceneView;
             cameraData.isHdrEnabled = camera.allowHDR && settings.supportsHDR;
             cameraData.postProcessLayer = camera.GetComponent<PostProcessLayer>();
@@ -242,7 +254,7 @@ namespace UnityEngine.Rendering.LWRP
 
             bool anyShadowsEnabled = settings.supportsMainLightShadows || settings.supportsAdditionalLightShadows;
             cameraData.maxShadowDistance = (anyShadowsEnabled) ? settings.shadowDistance : 0.0f;
-            
+
             if (additionalCameraData != null)
             {
                 cameraData.maxShadowDistance = (additionalCameraData.renderShadows) ? cameraData.maxShadowDistance : 0.0f;
@@ -389,7 +401,7 @@ namespace UnityEngine.Rendering.LWRP
             int maxVisibleAdditionalLights = LightweightRenderPipeline.maxVisibleAdditionalLights;
 
             lightData.mainLightIndex = mainLightIndex;
-            
+
             if (settings.additionalLightsRenderingMode != LightRenderingMode.Disabled)
             {
                 lightData.additionalLightsCount =
