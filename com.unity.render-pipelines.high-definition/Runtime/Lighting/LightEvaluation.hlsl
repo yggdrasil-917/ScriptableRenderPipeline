@@ -4,7 +4,7 @@
 //  cookieIndex, the index of the cookie texture in the Texture2DArray
 //  L, the 4 local-space corners of the area light polygon transformed by the LTC M^-1 matrix
 //  F, the *normalized* vector irradiance
-float3 SampleAreaLightCookie(int cookieIndex, float4x3 L, float3 F)
+float3 SampleAreaLightCookie(float4 cookieScaleOffset, float4x3 L, float3 F)
 {
     // L[0] = top-right
     // L[1] = bottom-right
@@ -71,7 +71,8 @@ float3 SampleAreaLightCookie(int cookieIndex, float4x3 L, float3 F)
     const float COOKIE_MIPS_COUNT = _CookieSizePOT;
     float   mipLevel = 0.5 * log2(1e-8 + PI * hitDistance*hitDistance * rsqrt(sqArea)) + COOKIE_MIPS_COUNT;
 
-    return SAMPLE_TEXTURE2D_ARRAY_LOD(_AreaCookieTextures, s_trilinear_clamp_sampler, hitUV, cookieIndex, mipLevel).xyz;
+    return SampleCookie2D(hitUV, cookieScaleOffset, mipLevel);
+    // return SAMPLE_TEXTURE2D_ARRAY_LOD(_AreaCookieTextures, s_trilinear_clamp_sampler, hitUV, cookieIndex, mipLevel).xyz;
 }
 
 //-----------------------------------------------------------------------------
@@ -99,7 +100,7 @@ float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, Directional
         positionNDC = frac(positionNDC);
 
     // We let the sampler handle clamping to border.
-    return SampleCookie2D(lightLoopContext, positionNDC, light.cookieScaleOffset);
+    return SampleCookie2D(positionNDC, light.cookieScaleOffset);
 }
 #endif
 
@@ -261,7 +262,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
 
     UNITY_BRANCH if (lightType == GPULIGHTTYPE_POINT)
     {
-        cookie.rgb = SampleCookieCube(lightLoopContext, positionLS, light.cookieIndex);
+        cookie.rgb = SampleCookieCube(positionLS, light.cookieIndex);
         cookie.a   = 1;
     }
     else
@@ -275,7 +276,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
         float2 positionNDC = positionCS * 0.5 + 0.5;
 
         // Manually clamp to border (black).
-        cookie.rgb = SampleCookie2D(lightLoopContext, positionNDC, light.cookieScaleOffset);
+        cookie.rgb = SampleCookie2D(positionNDC, light.cookieScaleOffset);
         cookie.a   = isInBounds ? 1 : 0;
     }
 

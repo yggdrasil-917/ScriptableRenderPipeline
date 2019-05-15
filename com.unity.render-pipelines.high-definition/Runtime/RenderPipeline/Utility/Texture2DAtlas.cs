@@ -227,9 +227,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool allocated = AllocateTextureWithoutBlit(texture, width, height, ref scaleOffset);
 
             if (allocated)
-            {
                 BlitTexture(cmd, scaleOffset, texture, fullScaleOffset);
-            }
+            else
+                Debug.LogError("Can't place texture " + texture + " in the atlas " + m_AtlasTexture.m_Name + ": Atlas is out of space");
 
             return allocated;
         }

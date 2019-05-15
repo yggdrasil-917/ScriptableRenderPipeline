@@ -103,7 +103,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [FormerlySerializedAs("cookieSize")]
         public CookieAtlasResolution cookieAtlasSize;
         public CubeCookieResolution pointCookieSize;
-        public int cookieAtlasMaxValidMip;
         public int cubeCookieTexArraySize;
 
         public AreaCookieResolution cookieAreaTextureSize;

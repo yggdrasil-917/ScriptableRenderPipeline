@@ -642,7 +642,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     children =
                     {
                         new DebugUI.UIntField { displayName = "Mip Level", getter = () => data.lightingDebugSettings.planarReflectionProbeMipLevel, setter = value => data.lightingDebugSettings.planarReflectionProbeMipLevel = value, min = () => 0, max = () => (uint)(RenderPipelineManager.currentPipeline as HDRenderPipeline).GetPlanarReflectionProbeMipCount()},
-                        new DebugUI.BoolField { displayName = "Use Selection", getter = () => data.lightingDebugSettings.planarReflectionProbeUseSelection, setter = value => data.lightingDebugSettings.planarReflectionProbeUseSelection = value },
                         new DebugUI.Button { displayName = "Reset Planar Atlas", action = () => data.lightingDebugSettings.clearPlanarReflectionProbeAtlas = true },
                     }
                 });

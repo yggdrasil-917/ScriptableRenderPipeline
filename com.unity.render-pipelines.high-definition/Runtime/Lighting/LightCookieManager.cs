@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    public class LTCAreaLightCookieManager
+    public class LightCookieManager
     {
         HDRenderPipelineAsset m_RenderPipelineAsset = null;
 
         // Structure for cookies used by area lights
-        TextureCache2D m_AreaCookieTexArray;
+        // TextureCache2D m_AreaCookieTexArray;
 
         internal static readonly int s_texSource = Shader.PropertyToID("_SourceTexture");
         internal static readonly int s_sourceMipLevel = Shader.PropertyToID("_SourceMipLevel");
@@ -17,36 +17,57 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Material m_MaterialFilterAreaLights;
         MaterialPropertyBlock m_MPBFilterAreaLights;
 
+        Material m_CubeToPanoMaterial;
+
         RenderTexture m_TempRenderTexture0 = null;
         RenderTexture m_TempRenderTexture1 = null;
+        
+        // Structure for cookies used by directional and spotlights
+        PowerOfTwoTextureAtlas m_CookieAtlas;
 
-        public LTCAreaLightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
+        // Structure for cookies used by point lights
+        TextureCacheCubemap m_CubeCookieTexArray;
+
+        public LightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
         {
             // Keep track of the render pipeline asset
             m_RenderPipelineAsset = hdAsset;
 
             // Create the texture cookie cache that we shall be using for the area lights
             GlobalLightLoopSettings gLightLoopSettings = hdAsset.currentPlatformRenderPipelineSettings.lightLoopSettings;
-            m_AreaCookieTexArray = new TextureCache2D("AreaCookie");
+            // m_AreaCookieTexArray = new TextureCache2D("AreaCookie");
             int cookieSize = gLightLoopSettings.cookieAreaTextureArraySize;
-            int cookieResolution = (int)gLightLoopSettings.cookieAreaTextureSize;
-            if (TextureCache2D.GetApproxCacheSizeInByte(cookieSize, cookieResolution, 1) > maxCacheSize)
-                cookieSize = TextureCache2D.GetMaxCacheSizeForWeightInByte(maxCacheSize, cookieResolution, 1);
-            m_AreaCookieTexArray.AllocTextureArray(cookieSize, cookieResolution, cookieResolution, TextureFormat.RGBA32, true);
+            // int cookieResolution = (int)gLightLoopSettings.cookieAreaTextureSize;
+            // if (TextureCache2D.GetApproxCacheSizeInByte(cookieSize, cookieResolution, 1) > maxCacheSize)
+                // cookieSize = TextureCache2D.GetMaxCacheSizeForWeightInByte(maxCacheSize, cookieResolution, 1);
+            // m_AreaCookieTexArray.AllocTextureArray(cookieSize, cookieResolution, cookieResolution, TextureFormat.RGBA32, true);
 
             // Also make sure to create the engine material that is used for the filtering
             m_MaterialFilterAreaLights = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.shaders.filterAreaLightCookiesPS);
+
+            int cookieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
+            int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
+            int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
+            
+            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, 0, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)", useMipMap: false);
+
+            m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.shaders.cubeToPanoPS);
+
+            m_CubeCookieTexArray = new TextureCacheCubemap("Cookie");
+            m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
         }
 
         public void ReleaseResources()
         {
-            if(m_AreaCookieTexArray != null)
-            {
-                m_AreaCookieTexArray.Release();
-                m_AreaCookieTexArray = null;
-            }
+            // if(m_AreaCookieTexArray != null)
+            // {
+            //     m_AreaCookieTexArray.Release();
+            //     m_AreaCookieTexArray = null;
+            // }
 
             CoreUtils.Destroy(m_MaterialFilterAreaLights);
+            CoreUtils.Destroy(m_CubeToPanoMaterial);
+
             if(m_TempRenderTexture0 != null)
             {
                 m_TempRenderTexture0.Release();
@@ -57,27 +78,43 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_TempRenderTexture1.Release();
                 m_TempRenderTexture1 = null;
             }
-        }
 
-        public Texture GetTexCache()
-        {
-            return m_AreaCookieTexArray.GetTexCache();
-        }
-
-        public int FetchSlice(CommandBuffer cmd, Texture texture)
-        {
-            bool needUpdate;
-            int sliceIndex = m_AreaCookieTexArray.ReserveSlice(texture, out needUpdate);
-            if (sliceIndex != -1 && needUpdate)
+            if (m_CookieAtlas != null)
             {
-                Texture filteredAreaLight = FilterAreaLightTexture(cmd, texture);
-                m_AreaCookieTexArray.UpdateSlice(cmd, sliceIndex, filteredAreaLight, m_AreaCookieTexArray.GetTextureHash(texture));
-
+                m_CookieAtlas.Release();
+                m_CookieAtlas = null;
             }
-            return sliceIndex;
+            if (m_CubeCookieTexArray != null)
+            {
+                m_CubeCookieTexArray.Release();
+                m_CubeCookieTexArray = null;
+            }
         }
 
-        Texture FilterAreaLightTexture( CommandBuffer cmd, Texture source)
+        // public Texture GetTexCache()
+        // {
+        //     return m_AreaCookieTexArray.GetTexCache();
+        // }
+
+        // public int FetchSlice(CommandBuffer cmd, Texture texture)
+        // {
+        //     bool needUpdate;
+        //     int sliceIndex = m_AreaCookieTexArray.ReserveSlice(texture, out needUpdate);
+        //     if (sliceIndex != -1 && needUpdate)
+        //     {
+        //         Texture filteredAreaLight = FilterAreaLightTexture(cmd, texture);
+        //         m_AreaCookieTexArray.UpdateSlice(cmd, sliceIndex, filteredAreaLight, m_AreaCookieTexArray.GetTextureHash(texture));
+
+        //     }
+        //     return sliceIndex;
+        // }
+
+        public void NewFrame()
+        {
+            m_CubeCookieTexArray.NewFrame();
+        }
+
+        Texture FilterAreaLightTexture(CommandBuffer cmd, Texture source)
         {
             if ( m_MaterialFilterAreaLights == null )
             {
@@ -85,18 +122,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return null;
             }
 
+#if false
             Texture texCache = m_AreaCookieTexArray.GetTexCache();
             int numMipLevels = m_AreaCookieTexArray.GetNumMipLevels();
 
             if (m_TempRenderTexture0 == null )
             {
-                string cacheName = m_AreaCookieTexArray.GetCacheName();
                 m_TempRenderTexture0 = new RenderTexture(texCache.width, texCache.height, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
                 {
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
                     autoGenerateMips = false,
-                    name = cacheName + "TempAreaLightRT0"
+                    name = "AreaCookieTempAreaLightRT0"
                 };
 
                 // We start by a horizontal gaussian into mip 1 that reduces the width by a factor 2 but keeps the same height
@@ -105,7 +142,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
                     autoGenerateMips = false,
-                    name = cacheName + "TempAreaLightRT1"
+                    name = "AreaCookieTempAreaLightRT1"
                 };
             }
 
@@ -157,8 +194,61 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 sourceHeight = targetHeight;
             }
+            #endif
 
             return m_TempRenderTexture0;
+        }
+
+        public Vector4 Fetch2DCookie(CommandBuffer cmd, Texture cookie)
+        {
+            Vector4 scaleBias = Vector4.zero;
+
+            if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias))
+                return Vector4.zero;
+
+            return scaleBias;
+        }
+
+        public int FetchCubeCookie(CommandBuffer cmd, Texture cookie)
+        {
+            return m_CubeCookieTexArray.FetchSlice(cmd, cookie);
+        }
+
+        public void ResetAllocator()
+        {
+            m_CookieAtlas.ResetAllocator();
+        }
+
+        public void ClearAtlasTexture(CommandBuffer cmd)
+        {
+            m_CookieAtlas.ClearTarget(cmd);
+        }
+
+        public RTHandleSystem.RTHandle atlasTexture => m_CookieAtlas.AtlasTexture;
+        public Texture cubeCache => m_CubeCookieTexArray.GetTexCache();
+
+        public PowerOfTwoTextureAtlas atlas => m_CookieAtlas;
+        public TextureCacheCubemap cubeCookieTexArray => m_CubeCookieTexArray;
+
+        public Vector4 GetCookieAtlasSize()
+        {
+            return new Vector4(
+                m_CookieAtlas.AtlasTexture.rt.width,
+                m_CookieAtlas.AtlasTexture.rt.height,
+                1.0f / m_CookieAtlas.AtlasTexture.rt.width,
+                1.0f / m_CookieAtlas.AtlasTexture.rt.height
+            );
+        }
+
+        public Vector4 GetCookieAtlasDatas()
+        {
+            float padding = Mathf.Pow(2.0f, m_CookieAtlas.mipPadding) * 2.0f;
+            return new Vector4(
+                m_CookieAtlas.mipPadding,
+                padding / (float)m_CookieAtlas.AtlasTexture.rt.width,
+                0,
+                0
+            );
         }
     }
 }

@@ -27,12 +27,11 @@ float2 RemapUVWithPadding(float2 coord, float2 size, float rcpPaddingWidth)
     return coord * scale + offset;
 }
 
-// Used by directional and spot lights.
-float3 SampleCookie2D(LightLoopContext lightLoopContext, float2 coord, float4 scaleOffset)
+// Used by directiona, spots and area lights.
+float3 SampleCookie2D(float2 coord, float4 scaleOffset, float lod = 0) // TODO: mip maps for cookies
 {
     float2 offset       = scaleOffset.zw;
     float2 scale        = scaleOffset.xy;
-    float lod           = 0; // TODO: mip maps for cookies
 
     // Clamp lod to the maximum level of the texture we are sampling
     // lod = min(_CookieAtlasData.x, lod);
@@ -43,7 +42,7 @@ float3 SampleCookie2D(LightLoopContext lightLoopContext, float2 coord, float4 sc
     // Apply atlas scale and offset
     float2 atlasCoords = coord * scale + offset;
 
-    float3 color = SAMPLE_TEXTURE2D_LOD(_CookieAtlas, s_linear_clamp_sampler, atlasCoords, lod).rgb;
+    float3 color = SAMPLE_TEXTURE2D_LOD(_CookieAtlas, s_trilinear_clamp_sampler, atlasCoords, lod).rgb;
     
     // Mip visualization (0 -> red, 10 -> blue)
     // color *= saturate(1 - abs(3 * lod / 10 - float4(0, 1, 2, 3))).rgb;
@@ -52,7 +51,7 @@ float3 SampleCookie2D(LightLoopContext lightLoopContext, float2 coord, float4 sc
 }
 
 // Used by point lights.
-float3 SampleCookieCube(LightLoopContext lightLoopContext, float3 coord, int index)
+float3 SampleCookieCube(float3 coord, int index)
 {
     // TODO: add MIP maps to combat aliasing?
     return SAMPLE_TEXTURECUBE_ARRAY_LOD_ABSTRACT(_CookieCubeTextures, s_linear_clamp_sampler, coord, index, 0).rgb;

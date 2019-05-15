@@ -69,7 +69,10 @@ namespace UnityEngine.Experimental.Rendering
         {
             // This atlas only supports square textures
             if (height != width)
+            {
+                Debug.LogError("Can't place " + texture + " in the atlas " + m_AtlasTexture.m_Name + ": Only squared texture are allowed in this atlas.");
                 return false;
+            }
 
             TextureSizeToPowerOfTwo(texture, ref height, ref width);
 

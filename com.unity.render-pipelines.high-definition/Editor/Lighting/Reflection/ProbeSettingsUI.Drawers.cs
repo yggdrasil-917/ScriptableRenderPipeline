@@ -20,7 +20,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 | ProbeSettingsFields.proxyCaptureRotationProxySpace
                 | ProbeSettingsFields.proxyMirrorPositionProxySpace
                 | ProbeSettingsFields.proxyMirrorRotationProxySpace
-                | ProbeSettingsFields.proxyUseInfluenceVolumeAsProxyVolume;
+                | ProbeSettingsFields.proxyUseInfluenceVolumeAsProxyVolume
+                | ProbeSettingsFields.resolution;
 
             if (!(RenderPipelineManager.currentPipeline is HDRenderPipeline hd))
                 return;
@@ -39,6 +40,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if ((displayedFields.probe & proxy) != 0)
             {
+                PropertyFieldWithFlagToggleIfDisplayed(
+                    ProbeSettingsFields.resolution,
+                    serialized.resolution,
+                    EditorGUIUtility.TrTextContent("Resolution", "Sets the resolution for the planar probe camera."),
+                    @override.probe, displayedFields.probe, overridableFields.probe
+                );
+
                 PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyUseInfluenceVolumeAsProxyVolume, serialized.proxyUseInfluenceVolumeAsProxyVolume, EditorGUIUtility.TrTextContent("Use Influence Volume As Proxy Volume", "When enabled, this Reflection Probe uses the boundaries of the Influence Volume as its Proxy Volume."), @override.probe, displayedFields.probe, overridableFields.probe);
                 PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCapturePositionProxySpace, serialized.proxyCapturePositionProxySpace, EditorGUIUtility.TrTextContent("Capture Position", "Sets the position, relative to the Transform Position, from which the Reflection Probe captures its surroundings."), @override.probe, displayedFields.probe, overridableFields.probe,
                     (p, l) =>
@@ -64,12 +72,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 );
                 EditorGUILayout.Space();
             }
-
-            // TODO: move this elsewhere
-            EditorGUILayout.PropertyField(
-                serialized.resolution,
-                EditorGUIUtility.TrTextContent("Resolution", "Sets the resolution for the planar probe camera.")
-            );
 
             CameraSettingsUI.Draw(serialized.cameraSettings, owner, @override.camera, displayedFields.camera, overridableFields.camera);
         }

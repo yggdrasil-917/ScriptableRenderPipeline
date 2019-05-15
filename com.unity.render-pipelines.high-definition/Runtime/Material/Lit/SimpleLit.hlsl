@@ -282,7 +282,7 @@ float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, Directional
         positionNDC = frac(positionNDC);
 
     // We let the sampler handle clamping to border.
-    return SampleCookie2D(lightLoopContext, positionNDC, lightData.cookieScaleOffset);
+    return SampleCookie2D(positionNDC, lightData.cookieScaleOffset);
 }
 
 float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData lightData,
@@ -299,7 +299,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
 
     UNITY_BRANCH if (lightType == GPULIGHTTYPE_POINT)
     {
-        cookie.rgb = SampleCookieCube(lightLoopContext, positionLS, lightData.cookieIndex);
+        cookie.rgb = SampleCookieCube(positionLS, lightData.cookieIndex);
         cookie.a   = 1;
     }
     else
@@ -313,7 +313,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
         float2 positionNDC = positionCS * 0.5 + 0.5;
 
         // Manually clamp to border (black).
-        cookie.rgb = SampleCookie2D(lightLoopContext, positionNDC, lightData.cookieScaleOffset);
+        cookie.rgb = SampleCookie2D(positionNDC, lightData.cookieScaleOffset);
         cookie.a   = isInBounds ? 1 : 0;
     }
 

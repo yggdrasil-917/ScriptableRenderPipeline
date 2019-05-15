@@ -177,7 +177,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUILayout.HelpBox(message, MessageType.Info);
                 }
             }
-            EditorGUILayout.PropertyField(serialized.renderPipelineSettings.lightLoopSettings.cookieAtlasMaxValidMip, k_CookieAtlasMaxValidMip);
             EditorGUILayout.PropertyField(serialized.renderPipelineSettings.lightLoopSettings.pointCookieSize, k_PointCookieSizeContent);
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.DelayedIntField(serialized.renderPipelineSettings.lightLoopSettings.cubeCookieTexArraySize, k_PointCookieTextureArraySizeContent);

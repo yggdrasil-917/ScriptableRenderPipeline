@@ -1521,7 +1521,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
             {
                 // Compute the cookie data for the diffuse term
                 float3 formFactorD =  PolygonFormFactor(LD);
-                ltcValue *= SampleAreaLightCookie(lightData.cookieIndex, LD, formFactorD);
+                ltcValue *= SampleAreaLightCookie(lightData.cookieScaleOffset, LD, formFactorD);
             }
 
             // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
@@ -1550,7 +1550,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
                 {
                     // Compute the cookie data for the transmission diffuse term
                     float3 formFactorTD = PolygonFormFactor(LTD);
-                    ltcValue *= SampleAreaLightCookie(lightData.cookieIndex, LTD, formFactorTD);
+                    ltcValue *= SampleAreaLightCookie(lightData.cookieScaleOffset, LTD, formFactorTD);
                 }
 
                 // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
@@ -1569,7 +1569,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
             {
                 // Compute the cookie data for the specular term
                 float3 formFactorS =  PolygonFormFactor(LS);
-                ltcValue *= SampleAreaLightCookie(lightData.cookieIndex, LS, formFactorS);
+                ltcValue *= SampleAreaLightCookie(lightData.cookieScaleOffset, LS, formFactorS);
             }
 
             // We need to multiply by the magnitude of the integral of the BRDF
@@ -1588,7 +1588,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
                 {
                     // Compute the cookie data for the specular term
                     float3 formFactorS =  PolygonFormFactor(LSCC);
-                    ltcValue *= SampleAreaLightCookie(lightData.cookieIndex, LSCC, formFactorS);
+                    ltcValue *= SampleAreaLightCookie(lightData.cookieScaleOffset, LSCC, formFactorS);
                 }
                 // For clear coat we don't fetch specularFGD we can use directly the perfect fresnel coatIblF
                 lighting.diffuse *= (1.0 - preLightData.coatIblF);

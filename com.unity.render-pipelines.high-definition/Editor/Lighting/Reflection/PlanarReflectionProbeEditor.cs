@@ -229,7 +229,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedCaptureSettings => new ProbeSettingsOverride
         {
             probe = ProbeSettingsFields.proxyMirrorPositionProxySpace
-               | ProbeSettingsFields.proxyMirrorRotationProxySpace,
+               | ProbeSettingsFields.proxyMirrorRotationProxySpace
+               | ProbeSettingsFields.resolution,
             camera = new CameraSettingsOverride
             {
                 camera = (CameraSettingsFields)(-1) & ~(

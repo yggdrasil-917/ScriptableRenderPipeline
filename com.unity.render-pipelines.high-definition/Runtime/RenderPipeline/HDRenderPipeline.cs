@@ -192,7 +192,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public int GetCookieAtlasMipCount()
         {
             int size = (int)currentPlatformRenderPipelineSettings.lightLoopSettings.cookieAtlasSize;
-            return (int)Mathf.Log(size, 2);
+            // return (int)Mathf.Log(size, 2);
+            return 0; // We don't have cookie atlas mips currently
         }
         public int GetPlanarReflectionProbeMipCount()
         {

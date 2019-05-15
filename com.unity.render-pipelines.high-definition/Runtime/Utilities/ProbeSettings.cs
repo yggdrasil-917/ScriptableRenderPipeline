@@ -16,6 +16,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         proxyCaptureRotationProxySpace = 1 << 7,
         proxyMirrorPositionProxySpace = 1 << 8,
         proxyMirrorRotationProxySpace = 1 << 9,
+        resolution = 1 << 10,
     }
 
     [Serializable]

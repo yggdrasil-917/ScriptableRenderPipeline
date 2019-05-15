@@ -84,7 +84,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool                 displayPlanarReflectionProbeAtlas = false;
         public uint                 planarReflectionProbeMipLevel = 0;
-        public bool                 planarReflectionProbeUseSelection = false;
         public bool                 clearPlanarReflectionProbeAtlas = false;
 
         public bool                 showPunctualLight = true;

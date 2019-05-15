@@ -201,21 +201,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         PlanarReflectionProbeCache m_ReflectionPlanarProbeCache;
         ReflectionProbeCache m_ReflectionProbeCache;
+        
+        public PowerOfTwoTextureAtlas cookieAtlas => m_LightCookieManager.atlas;
+        public TextureCacheCubemap cubeCookieTexArray => m_LightCookieManager.cubeCookieTexArray;
 
-        // Structure for cookies used by directional and spotlights
-        public PowerOfTwoTextureAtlas cookieAtlas { get { return m_CookieAtlas; } }
-        PowerOfTwoTextureAtlas m_CookieAtlas;
-
-        // Structure for cookies used by point lights
-        public TextureCacheCubemap cubeCookieTexArray { get { return m_CubeCookieTexArray; } }
-        TextureCacheCubemap m_CubeCookieTexArray;
         List<Matrix4x4> m_Env2DCaptureVP = new List<Matrix4x4>();
         List<float> m_Env2DCaptureForward = new List<float>();
         List<Vector4> m_Env2DAtlasScaleOffset = new List<Vector4>();
 
         // Structure for cookies used by area lights
-        public LTCAreaLightCookieManager areaLightCookieManager { get { return m_AreaLightCookieManager; } }
-        LTCAreaLightCookieManager m_AreaLightCookieManager;
+        public LightCookieManager areaLightCookieManager { get { return m_LightCookieManager; } }
+        LightCookieManager m_LightCookieManager;
 
         // For now we don't use shadow cascade borders.
         static public readonly bool s_UseCascadeBorders = false;
@@ -405,7 +401,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Material[] m_deferredLightingMaterial;
         Material m_DebugViewTilesMaterial;
         Material m_DebugHDShadowMapMaterial;
-        Material m_CubeToPanoMaterial;
 
         Light m_CurrentSunLight;
         int m_CurrentShadowSortedSunLightIndex = -1;
@@ -512,7 +507,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_DebugViewTilesMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.debugViewTilesPS);
             m_DebugHDShadowMapMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.debugHDShadowMapPS);
-            m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.cubeToPanoPS);
 
             m_MaxDirectionalLightsOnScreen = lightLoopSettings.maxDirectionalLightsOnScreen;
             m_MaxPunctualLightsOnScreen = lightLoopSettings.maxPunctualLightsOnScreen;
@@ -540,19 +534,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Allocate cookie atlas and cube map
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
-            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, gLightLoopSettings.cookieAtlasMaxValidMip, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)");
+            // For now we disable the mipmaps generation for cookies atlas as we don't use them
             int cookieResolution = (int)gLightLoopSettings.cookieAtlasSize;
             if (TextureCache2D.GetApproxCacheSizeInByte(cookieAtlasSize, cookieResolution, 1) > k_MaxCacheSize)
                 cookieAtlasSize = TextureCache2D.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, cookieResolution, 1);
-            m_CubeCookieTexArray = new TextureCacheCubemap("Cookie");
             int cookieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
             int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
             if (TextureCacheCubemap.GetApproxCacheSizeInByte(cookieCubeSize, cookieCubeResolution, 1) > k_MaxCacheSize)
                 cookieCubeSize = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, cookieCubeResolution, 1);
-            m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
 
             // Create the cookie manager
-            m_AreaLightCookieManager = new LTCAreaLightCookieManager(hdAsset, k_MaxCacheSize);
+            m_LightCookieManager = new LightCookieManager(hdAsset, k_MaxCacheSize);
 
             // For regular reflection probes, we need to convolve with all the BSDF functions
             TextureFormat probeCacheFormat = gLightLoopSettings.reflectionCacheCompressed ? TextureFormat.BC6H : TextureFormat.RGBAHalf;
@@ -706,21 +698,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_ReflectionPlanarProbeCache.Release();
                 m_ReflectionPlanarProbeCache = null;
             }
-            if (m_CookieAtlas != null)
-            {
-                m_CookieAtlas.Release();
-                m_CookieAtlas = null;
-            }
-            if (m_CubeCookieTexArray != null)
-            {
-                m_CubeCookieTexArray.Release();
-                m_CubeCookieTexArray = null;
-            }
 
-            if (m_AreaLightCookieManager != null)
+            if (m_LightCookieManager != null)
             {
-                m_AreaLightCookieManager.ReleaseResources();
-                m_AreaLightCookieManager = null;
+                m_LightCookieManager.ReleaseResources();
+                m_LightCookieManager = null;
             }
 
             ReleaseResolutionDependentBuffers();
@@ -749,7 +731,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             CoreUtils.Destroy(m_DebugViewTilesMaterial);
             CoreUtils.Destroy(m_DebugHDShadowMapMaterial);
-            CoreUtils.Destroy(m_CubeToPanoMaterial);
         }
 
 #if ENABLE_RAYTRACING
@@ -797,7 +778,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(m_FrameSettings.IsEnabled(FrameSettingsField.BigTilePrepass) ? "TileLightListGen_SrcBigTile_Oblique" : "TileLightListGen_Oblique");
             }
 
-            m_CubeCookieTexArray.NewFrame();
+            m_LightCookieManager.NewFrame();
             m_ReflectionProbeCache.NewFrame();
             m_ReflectionPlanarProbeCache.NewFrame();
         }
@@ -989,7 +970,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (lightComponent != null && lightComponent.cookie != null)
             {
                 lightData.cookieMode = lightComponent.cookie.wrapMode == TextureWrapMode.Repeat ? CookieMode.Repeat : CookieMode.Clamp;
-                lightData.cookieScaleOffset = FetchCookieAtlas(cmd, lightComponent.cookie);
+                lightData.cookieScaleOffset = m_LightCookieManager.Fetch2DCookie(cmd, lightComponent.cookie);
             }
             else
             {
@@ -1233,10 +1214,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     case LightType.Spot:
                         lightData.cookieMode = (lightComponent.cookie.wrapMode == TextureWrapMode.Repeat) ? CookieMode.Repeat : CookieMode.Clamp;
-                        lightData.cookieScaleOffset = FetchCookieAtlas(cmd, lightComponent.cookie);
+                        lightData.cookieScaleOffset = m_LightCookieManager.Fetch2DCookie(cmd, lightComponent.cookie);
                         break;
                     case LightType.Point:
-                        lightData.cookieIndex = m_CubeCookieTexArray.FetchSlice(cmd, lightComponent.cookie);
+                        lightData.cookieIndex = m_LightCookieManager.FetchCubeCookie(cmd, lightComponent.cookie);
                         break;
                 }
             }
@@ -1244,11 +1225,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // Projectors lights must always have a cookie texture.
                 // As long as the cache is a texture array and not an atlas, the 4x4 white texture will be rescaled to 128
-                lightData.cookieScaleOffset = FetchCookieAtlas(cmd, Texture2D.whiteTexture);
+                lightData.cookieScaleOffset = m_LightCookieManager.Fetch2DCookie(cmd, Texture2D.whiteTexture);
             }
             else if (lightData.lightType == GPULightType.Rectangle && additionalLightData.areaLightCookie != null)
             {
-                lightData.cookieIndex = m_AreaLightCookieManager.FetchSlice(cmd, additionalLightData.areaLightCookie);
+                lightData.cookieMode = CookieMode.Clamp;
+                lightData.cookieScaleOffset = m_LightCookieManager.Fetch2DCookie(cmd, additionalLightData.areaLightCookie);
             }
             else // we don't have any cookie
             {
@@ -1827,6 +1809,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // We must clear the shadow requests before checking if they are any visible light because we would have requests from the last frame executed in the case where we don't see any lights
                 m_ShadowManager.Clear();
 
+                // TODO: Implement a defragmentation function that clears only when there is no more space in the atlas
+                m_LightCookieManager.ResetAllocator();
+
                 // Note: Light with null intensity/Color are culled by the C++, no need to test it here
                 if (cullResults.visibleLights.Length != 0 || cullResults.visibleReflectionProbes.Length != 0)
                 {
@@ -2262,19 +2247,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_enableBakeShadowMask;
         }
 
-        Vector4 FetchCookieAtlas(CommandBuffer cmd, Texture cookie)
-        {
-            Vector4 scaleBias = Vector4.zero;
-
-            if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias))
-            {
-                Debug.LogError("No more space in the cookie atlas");
-                return Vector4.zero;
-            }
-
-            return scaleBias;
-        }
-
         Vector2 GetCookieSize(Texture cookie)
         {
             CustomRenderTexture crt = cookie as CustomRenderTexture;
@@ -2649,21 +2621,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void PushGlobalParams(HDCamera hdCamera, CommandBuffer cmd)
         {
-            Vector4 cookieAtlasSize = new Vector4(
-                m_CookieAtlas.AtlasTexture.rt.width,
-                m_CookieAtlas.AtlasTexture.rt.height,
-                1.0f / m_CookieAtlas.AtlasTexture.rt.width,
-                1.0f / m_CookieAtlas.AtlasTexture.rt.height
-            );
-
-            float padding = Mathf.Pow(2.0f, m_CookieAtlas.mipPadding) * 2.0f;
-            Vector4 cookieAtlasData = new Vector4(
-                m_CookieAtlas.mipPadding,
-                padding / (float)m_CookieAtlas.AtlasTexture.rt.width,
-                0,
-                0
-            );
-
             using (new ProfilingSample(cmd, "Push Global Parameters", CustomSamplerId.TPPushGlobalParameters.GetSampler()))
             {
                 Camera camera = hdCamera.camera;
@@ -2672,11 +2629,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_ShadowManager.SyncData();
                 m_ShadowManager.BindResources(cmd);
 
-                cmd.SetGlobalTexture(HDShaderIDs._CookieAtlas, m_CookieAtlas.AtlasTexture);
-                cmd.SetGlobalVector(HDShaderIDs._CookieAtlasSize, cookieAtlasSize);
-                cmd.SetGlobalVector(HDShaderIDs._CookieAtlasData, cookieAtlasData);
-                cmd.SetGlobalTexture(HDShaderIDs._AreaCookieTextures, m_AreaLightCookieManager.GetTexCache());
-                cmd.SetGlobalTexture(HDShaderIDs._CookieCubeTextures, m_CubeCookieTexArray.GetTexCache());
+                cmd.SetGlobalTexture(HDShaderIDs._CookieAtlas, m_LightCookieManager.atlasTexture);
+                cmd.SetGlobalVector(HDShaderIDs._CookieAtlasSize, m_LightCookieManager.GetCookieAtlasSize());
+                cmd.SetGlobalVector(HDShaderIDs._CookieAtlasData, m_LightCookieManager.GetCookieAtlasDatas());
+                // cmd.SetGlobalTexture(HDShaderIDs._AreaCookieTextures, m_LightCookieManager.GetTexCache()); // TODO
+                cmd.SetGlobalTexture(HDShaderIDs._CookieCubeTextures, m_LightCookieManager.cubeCache);
                 cmd.SetGlobalTexture(HDShaderIDs._EnvCubemapTextures, m_ReflectionProbeCache.GetTexCache());
                 cmd.SetGlobalInt(HDShaderIDs._EnvSliceSize, m_ReflectionProbeCache.GetEnvSliceSize());
 
@@ -3120,15 +3077,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 if (lightingDebug.clearCookieAtlas)
                 {
-                    m_CookieAtlas.ResetAllocator();
-                    m_CookieAtlas.ClearTarget(cmd);
+                    m_LightCookieManager.ResetAllocator();
+                    m_LightCookieManager.ClearAtlasTexture(cmd);
                     lightingDebug.clearCookieAtlas = false;
                 }
                 
                 if (lightingDebug.displayCookieAtlas)
                 {
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
-                    HDUtils.BlitQuad(cmd, m_CookieAtlas.AtlasTexture, new Vector4(1, 1, 0, 0), new Vector4(1, 1, 0, 0), (int)lightingDebug.cookieAtlasMipLevel, false);
+                    HDUtils.BlitQuad(cmd, m_LightCookieManager.atlasTexture, new Vector4(1, 1, 0, 0), new Vector4(1, 1, 0, 0), (int)lightingDebug.cookieAtlasMipLevel, false);
                     HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
                 }
             }
