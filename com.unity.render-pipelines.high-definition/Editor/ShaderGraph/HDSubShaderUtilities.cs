@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor.Graphing;
 using UnityEngine;              // Vector3,4
 using UnityEditor.ShaderGraph;
+using UnityEngine.Assertions;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
@@ -502,6 +505,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     static class HDSubShaderUtilities
     {
+
         public static bool GenerateShaderPass(AbstractMaterialNode masterNode, Pass pass, GenerationMode mode, SurfaceMaterialOptions materialOptions, HashSet<string> activeFields, ShaderGenerator result, List<string> sourceAssetDependencyPaths, bool vertexActive)
         {
             string templatePath = Path.Combine(HDUtils.GetHDRenderPipelinePath(), "Editor/Material");
@@ -516,10 +520,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             bool debugOutput = false;
 
             // grab all of the active nodes (for pixel and vertex graphs)
-            var vertexNodes = ListPool<AbstractMaterialNode>.Get();
+            var vertexNodes = Graphing.ListPool<AbstractMaterialNode>.Get();
             NodeUtils.DepthFirstCollectNodesFromNode(vertexNodes, masterNode, NodeUtils.IncludeSelf.Include, pass.VertexShaderSlots);
 
-            var pixelNodes = ListPool<AbstractMaterialNode>.Get();
+            var pixelNodes = Graphing.ListPool<AbstractMaterialNode>.Get();
             NodeUtils.DepthFirstCollectNodesFromNode(pixelNodes, masterNode, NodeUtils.IncludeSelf.Include, pass.PixelShaderSlots);
 
             // graph requirements describe what the graph itself requires
@@ -1082,7 +1086,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 "   Pass Replace",
                 "}"
             };
-        }        
+        }
 
         public static void GetStencilStateForGBuffer(bool receiveSSR, bool useSplitLighting, ref Pass pass)
         {
@@ -1105,6 +1109,286 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 "   Pass Replace",
                 "}"
             };
+        }
+    }
+
+    static class MultiCompileSupport
+    {
+        static void DepthFirstCollectNodesFromNodeWithVariants<T>(
+            List<T> nodeList,
+            T node,
+            KeywordSet keywordSet,
+            NodeUtils.IncludeSelf includeSelf = NodeUtils.IncludeSelf.Include,
+            List<int> slotIds = null
+        )
+            where T : AbstractMaterialNode
+        {
+            // no where to start
+            if (node == null)
+                return;
+
+            // already added this node
+            if (nodeList.Contains(node))
+                return;
+
+            var inputSlots = (node is HDPipeline.IGenerateMultiCompile multiCompileNode)
+                ? multiCompileNode.GetInputSlotsFor(keywordSet.keywords)
+                : node.GetInputSlots<ISlot>().Select(x => x.id);
+
+            var ids = slotIds == null
+                ? inputSlots
+                : inputSlots.Where(slotIds.Contains);
+
+            foreach (var slot in ids)
+            {
+                foreach (var edge in node.owner.GetEdges(node.GetSlotReference(slot)))
+                {
+                    if (node.owner.GetNodeFromGuid(edge.outputSlot.nodeGuid) is T outputNode)
+                        DepthFirstCollectNodesFromNodeWithVariants(nodeList, outputNode, keywordSet);
+                }
+            }
+
+            if (includeSelf == NodeUtils.IncludeSelf.Include)
+                nodeList.Add(node);
+        }
+
+        struct NodesPerVariant
+        {
+            Dictionary<KeywordSet, List<AbstractMaterialNode>> m_NodesPerVariants;
+            Func<List<AbstractMaterialNode>> m_ListAllocator;
+
+            public IEnumerable<KeywordSet> variants => m_NodesPerVariants.Keys;
+
+            public bool AddKey(KeywordSet variant)
+            {
+                if (!m_NodesPerVariants.ContainsKey(variant))
+                {
+                    m_NodesPerVariants.Add(variant, m_ListAllocator());
+                    return true;
+                }
+
+                return false;
+            }
+
+            public List<AbstractMaterialNode> GetNodeList(KeywordSet keywordSet) => m_NodesPerVariants[keywordSet];
+        }
+
+        /// <summary> Use this string set to perform equality based on their content.</summary>
+        struct KeywordSet: IEquatable<KeywordSet>
+        {
+            readonly HashSet<string> m_Keywords;
+            readonly int m_Hash;
+
+            public HashSet<string> keywords => m_Keywords;
+
+            public KeywordSet(HashSet<string> keywords)
+            {
+                Assert.IsNotNull(keywords);
+
+                m_Keywords = keywords;
+                m_Hash = 0;
+                foreach (var keyword in m_Keywords)
+                    m_Hash ^= keyword.GetHashCode();
+            }
+
+            public override int GetHashCode() => m_Hash;
+
+            public bool Equals(KeywordSet set)
+                => set.m_Keywords.IsSubsetOf(m_Keywords) &&
+                    set.m_Keywords.IsSupersetOf(m_Keywords);
+
+            public override bool Equals(object obj)
+                => (obj is KeywordSet set) && Equals(set);
+        }
+
+        static void CollectNodesPerVariantsFor<T>(ref NodesPerVariant dst, T root, List<int> slotIds = null)
+            where T: AbstractMaterialNode
+        {
+            CollectVariantsFor(dst, root, slotIds);
+
+            //
+            // At this point, `dst` contains all variants that needs to be parsed.
+            // Now we need to fetch the input nodes for all variants
+            //
+
+            foreach (var variant in dst.variants)
+            {
+                var nodeList = dst.GetNodeList(variant);
+                DepthFirstCollectNodesFromNodeWithVariants(nodeList, root, variant, NodeUtils.IncludeSelf.Include,
+                    slotIds);
+            }
+        }
+
+        static void CollectVariantsFor<T>(NodesPerVariant dst, T root, List<int> slotIds)
+            where T : AbstractMaterialNode
+        {
+            using (UnityEngine.Experimental.Rendering.ListPool<List<string>>.Get(out var multiCompileList))
+            {
+                //
+                // Compute all variants generated by the multi compiles
+                //
+
+                using (HashSetPool<KeywordSet>.Get(out var allMultiCompiles))
+                {
+                    //
+                    // To do so, we first need all multi compile sets that are generated by the input nodes
+                    //
+
+                    using (UnityEngine.Experimental.Rendering.ListPool<AbstractMaterialNode>.Get(out var allNodes))
+                    {
+                        //
+                        // Search for all nodes connected to all inputs of the provided node
+                        //
+                        NodeUtils.DepthFirstCollectNodesFromNode(allNodes, root, NodeUtils.IncludeSelf.Include, slotIds);
+
+                        // Now search for all nodes that can generates multi compile sets
+                        foreach (var node in allNodes)
+                        {
+                            if (!(node is IGenerateMultiCompile multiCompileNode)) continue;
+
+                            using (UnityEngine.Experimental.Rendering.ListPool<HashSet<string>>.Get(
+                                out var multiCompiles))
+                            {
+                                multiCompileNode.GetMultiCompiles(HashSetPool<string>.Get, multiCompiles);
+                                foreach (var multiCompileSet in multiCompiles)
+                                {
+                                    var newSet = new KeywordSet(multiCompileSet);
+                                    if (!allMultiCompiles.Add(newSet))
+                                        // We don't store this set, so we return it to the pool
+                                        HashSetPool<string>.Release(multiCompileSet);
+                                }
+                            }
+                        }
+                    }
+
+                    // `allMultiCompiles` contains all generated multi compile sets, except the default one
+                    // Try to add the default multi compile
+                    {
+                        var defaultMultiCompile = HashSetPool<string>.Get();
+                        defaultMultiCompile.Add("_");
+                        var defaultSet = new KeywordSet(defaultMultiCompile);
+                        if (!allMultiCompiles.Add(defaultSet))
+                            // If it was not added, then release it to the pool
+                            HashSetPool<string>.Release(defaultMultiCompile);
+                    }
+
+                    //
+                    // At this point, we have a unique set of MultiCompileSet
+                    //
+
+                    // We can now generate all variants from the multi compiles sets
+
+                    // But, first, convert HashSet<HashSet<string>> to List<List<string>>
+                    // It is easier to iterate on List than on HashSet
+                    // But still, use Pools to avoid allocations each frame
+                    foreach (var multiCompileSet in allMultiCompiles)
+                    {
+                        if (multiCompileSet.keywords.Count == 0)
+                            // Ignore empty multi compile sets
+                            continue;
+
+                        var listValues = UnityEngine.Experimental.Rendering.ListPool<string>.Get();
+                        listValues.AddRange(multiCompileSet.keywords);
+                        multiCompileList.Add(listValues);
+                    }
+
+                    // Release `multiCompileSet` and its values
+                    foreach (var multiCompileSet in allMultiCompiles)
+                        HashSetPool<string>.Release(multiCompileSet.keywords);
+                }
+
+                using (HashSetPool<KeywordSet>.Get(out var allVariants))
+                {
+                    using (UnityEngine.Experimental.Rendering.ListPool<int>.Get(out var variantIndices))
+                    using (HashSetPool<string>.Get(out var variant))
+                    {
+                        // Generate a list of indices to track which variant we are currently visiting
+                        // in each sets.
+                        for (var i = 0; i < multiCompileList.Count; ++i)
+                            variantIndices.Add(0);
+
+                        // Generate all variants from the multi compile
+                        // Current variant combination is generated by taking the keyword from each set
+                        // that is at the index defined in `variantIndices`.
+                        // Then increase the indices from the end, and 'overflows' the increment to the start.
+                        do
+                        {
+                            // There must be always at least 1 multi compile (the default one)
+                            // So we are sure that the first loop needs to do some work
+
+                            variant.Clear();
+                            for (var i = 0; i < variantIndices.Count; ++i)
+                            {
+                                var keyword = multiCompileList[i][variantIndices[i]];
+                                if (keyword != "_")
+                                    variant.Add(keyword);
+                            }
+
+                            // Increase indices
+                            var lastIndex = variantIndices[variantIndices.Count - 1];
+                            if (lastIndex < multiCompileList[variantIndices.Count - 1].Count - 1)
+                                // Last set has still values to iterate on
+                                variantIndices[variantIndices.Count - 1] = lastIndex + 1;
+                            else
+                            {
+                                // We iterated on all values in the last set
+                                // So we reset the last index to 0, and 'overflows' the increment to the previous set
+                                variantIndices[variantIndices.Count - 1] = 0;
+                                for (var i = variantIndices.Count - 2; i >= 0; --i)
+                                {
+                                    if (variantIndices[i] < multiCompileList[i].Count - 1)
+                                    {
+                                        // Previous index was increased
+                                        // So we have a new variant set to visit
+                                        // We can break the inner loop
+                                        ++variantIndices[i];
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        // All values were visited in this set
+
+                                        if (i == 0)
+                                            // This was the first set, so we explored all possible
+                                            // variant combination. We can break the outer loop.
+                                            goto LOOP_COMPLETED;
+
+                                        // This is an intermediate set, so we reset its index and try
+                                        // to overflow the increment the previous set (next loop iteration)
+                                        variantIndices[i] = 0;
+                                    }
+                                }
+                            }
+
+                            var set = new KeywordSet(variant);
+                            if (allVariants.Add(set))
+                                // The variant may already have been added, it depends on the different
+                                // multi compile sets
+                                //
+                                // In the case the set was already added, then we need to get a new temporary HashSet
+                                variant = HashSetPool<string>.Get();
+                        } while (true);
+                    }
+
+                    LOOP_COMPLETED:
+
+                    //
+                    // At this point, `allVariants` contains all variants generated by the shader graph
+                    //
+
+                    // Now allocate all keys in `dst`
+                    foreach (var variant in allVariants)
+                    {
+                        if (!dst.AddKey(variant))
+                            // Release all variants that weren't transferred
+                            HashSetPool<string>.Release(variant.keywords);
+                    }
+                }
+
+                // We don't need `multiCompileList`, so we can release it and its values as well
+                foreach (var list in multiCompileList)
+                    UnityEngine.Experimental.Rendering.ListPool<string>.Release(list);
+            }
         }
     }
 }
