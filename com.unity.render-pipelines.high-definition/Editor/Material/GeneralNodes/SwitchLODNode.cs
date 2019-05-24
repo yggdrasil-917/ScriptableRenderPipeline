@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     [Title("Math", "HDRP/Material", "Switch LOD")]
-    class SwitchLODNode : AbstractMaterialNode, IGeneratesBodyCode
+    class SwitchLODNode : AbstractMaterialNode, IGeneratesBodyCode, IGenerateMultiCompile
     {
         List<MaterialSlot> m_TempSlots = new List<MaterialSlot>();
 
@@ -20,6 +20,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         const string kInputIdLowName = "Low";
         const string kInputIdMedName = "Med";
         const string kInputIdHighName = "High";
+        const string kKeywordLow = "HDRP_MATERIAL_LOD_LOW";
+        const string kKeywordHigh = "HDRP_MATERIAL_LOD_HIGH";
 
         public override bool hasPreview { get { return true; } }
 
@@ -61,10 +63,26 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {outputType} {outputName} = {medValue};
 #endif
 ";
-
-            //if (!visitor.GetPragmaString().Contains("HDRP_MATERIAL_LOD_LOW"))
-                visitor.AddPragmaChunk("#pragma multi_compile _ HDRP_MATERIAL_LOD_LOW HDRP_MATERIAL_LOD_HIGH");
             visitor.AddShaderChunk(result, true);
+        }
+
+        public void GetMultiCompiles(HashSetAllocator setAllocator, List<HashSet<string>> values)
+        {
+            var multiCompiles = setAllocator();
+            multiCompiles.Add("_");
+            multiCompiles.Add(kKeywordLow);
+            multiCompiles.Add(kKeywordHigh);
+            values.Add(multiCompiles);
+        }
+
+        public void GetInputSlotsFor(HashSet<string> keywordSet, List<int> slotIds)
+        {
+            if (keywordSet.Contains(kKeywordHigh))
+                slotIds.Add(InputIdHigh);
+            else if (keywordSet.Contains(kKeywordLow))
+                slotIds.Add(InputIdLow);
+            else
+                slotIds.Add(InputIdMed);
         }
     }
 }

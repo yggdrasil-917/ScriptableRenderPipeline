@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor.Graphing;
+using UnityEditor.Graphs;
 using UnityEngine;              // Vector3,4
 using UnityEditor.ShaderGraph;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -519,92 +521,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             bool debugOutput = false;
 
-            // grab all of the active nodes (for pixel and vertex graphs)
-            var vertexNodes = Graphing.ListPool<AbstractMaterialNode>.Get();
-            NodeUtils.DepthFirstCollectNodesFromNode(vertexNodes, masterNode, NodeUtils.IncludeSelf.Include, pass.VertexShaderSlots);
+            //
+            // Code generation that is not variant dependent
+            //
 
-            var pixelNodes = Graphing.ListPool<AbstractMaterialNode>.Get();
-            NodeUtils.DepthFirstCollectNodesFromNode(pixelNodes, masterNode, NodeUtils.IncludeSelf.Include, pass.PixelShaderSlots);
-
-            // graph requirements describe what the graph itself requires
-            var pixelRequirements = ShaderGraphRequirements.FromNodes(pixelNodes, ShaderStageCapability.Fragment, false);   // TODO: is ShaderStageCapability.Fragment correct?
-            var vertexRequirements = ShaderGraphRequirements.FromNodes(vertexNodes, ShaderStageCapability.Vertex, false);
-            var graphRequirements = pixelRequirements.Union(vertexRequirements);
-
-            // Function Registry tracks functions to remove duplicates, it wraps a string builder that stores the combined function string
-            ShaderStringBuilder graphNodeFunctions = new ShaderStringBuilder();
-            graphNodeFunctions.IncreaseIndent();
-            var functionRegistry = new FunctionRegistry(graphNodeFunctions);
-
-            // TODO: this can be a shared function for all HDRP master nodes -- From here through GraphUtil.GenerateSurfaceDescription(..)
-
-            // Build the list of active slots based on what the pass requires
-            var pixelSlots = HDSubShaderUtilities.FindMaterialSlotsOnNode(pass.PixelShaderSlots, masterNode);
-            var vertexSlots = HDSubShaderUtilities.FindMaterialSlotsOnNode(pass.VertexShaderSlots, masterNode);
-
-            // properties used by either pixel and vertex shader
-            PropertyCollector sharedProperties = new PropertyCollector();
-
-            // build the graph outputs structure to hold the results of each active slots (and fill out activeFields to indicate they are active)
-            string pixelGraphInputStructName = "SurfaceDescriptionInputs";
-            string pixelGraphOutputStructName = "SurfaceDescription";
-            string pixelGraphEvalFunctionName = "SurfaceDescriptionFunction";
-            ShaderStringBuilder pixelGraphEvalFunction = new ShaderStringBuilder();
-            ShaderStringBuilder pixelGraphOutputs = new ShaderStringBuilder();
-
-            // build initial requirements
-            HDRPShaderStructs.AddActiveFieldsFromPixelGraphRequirements(activeFields, pixelRequirements);
-
-            // build the graph outputs structure, and populate activeFields with the fields of that structure
-            GraphUtil.GenerateSurfaceDescriptionStruct(pixelGraphOutputs, pixelSlots, pixelGraphOutputStructName, activeFields);
-
-            // Build the graph evaluation code, to evaluate the specified slots
-            GraphUtil.GenerateSurfaceDescriptionFunction(
-                pixelNodes,
-                masterNode,
-                masterNode.owner as GraphData,
-                pixelGraphEvalFunction,
-                functionRegistry,
-                sharedProperties,
-                pixelRequirements,  // TODO : REMOVE UNUSED
-                mode,
-                pixelGraphEvalFunctionName,
-                pixelGraphOutputStructName,
-                null,
-                pixelSlots,
-                pixelGraphInputStructName);
-
-            string vertexGraphInputStructName = "VertexDescriptionInputs";
-            string vertexGraphOutputStructName = "VertexDescription";
-            string vertexGraphEvalFunctionName = "VertexDescriptionFunction";
-            ShaderStringBuilder vertexGraphEvalFunction = new ShaderStringBuilder();
-            ShaderStringBuilder vertexGraphOutputs = new ShaderStringBuilder();
-
-            // check for vertex animation -- enables HAVE_VERTEX_MODIFICATION
-            if (vertexActive)
-            {
-                vertexActive = true;
-                activeFields.Add("features.modifyMesh");
-                HDRPShaderStructs.AddActiveFieldsFromVertexGraphRequirements(activeFields, vertexRequirements);
-
-                // -------------------------------------
-                // Generate Output structure for Vertex Description function
-                GraphUtil.GenerateVertexDescriptionStruct(vertexGraphOutputs, vertexSlots, vertexGraphOutputStructName, activeFields);
-
-                // -------------------------------------
-                // Generate Vertex Description function
-                GraphUtil.GenerateVertexDescriptionFunction(
-                    masterNode.owner as GraphData,
-                    vertexGraphEvalFunction,
-                    functionRegistry,
-                    sharedProperties,
-                    mode,
-                    vertexNodes,
-                    vertexSlots,
-                    vertexGraphInputStructName,
-                    vertexGraphEvalFunctionName,
-                    vertexGraphOutputStructName);
-            }
+            HDRPShaderStructs.AddRequiredFields(pass.RequiredFields, activeFields);
 
             var blendCode = new ShaderStringBuilder();
             var cullCode = new ShaderStringBuilder();
@@ -614,36 +535,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var stencilCode = new ShaderStringBuilder();
             var colorMaskCode = new ShaderStringBuilder();
             HDSubShaderUtilities.BuildRenderStatesFromPassAndMaterialOptions(pass, materialOptions, blendCode, cullCode, zTestCode, zWriteCode, zClipCode, stencilCode, colorMaskCode);
-
-            HDRPShaderStructs.AddRequiredFields(pass.RequiredFields, activeFields);
-
-            // propagate active field requirements using dependencies
-            ShaderSpliceUtil.ApplyDependencies(
-                activeFields,
-                new List<Dependency[]>()
-                {
-                    HDRPShaderStructs.FragInputs.dependencies,
-                    HDRPShaderStructs.VaryingsMeshToPS.standardDependencies,
-                    HDRPShaderStructs.SurfaceDescriptionInputs.dependencies,
-                    HDRPShaderStructs.VertexDescriptionInputs.dependencies
-                });
-
-            // debug output all active fields
-            var interpolatorDefines = new ShaderGenerator();
-            if (debugOutput)
-            {
-                interpolatorDefines.AddShaderChunk("// ACTIVE FIELDS:");
-                foreach (string f in activeFields)
-                {
-                    interpolatorDefines.AddShaderChunk("//   " + f);
-                }
-            }
-
-            // build graph inputs structures
-            ShaderGenerator pixelGraphInputs = new ShaderGenerator();
-            ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.SurfaceDescriptionInputs), activeFields, pixelGraphInputs);
-            ShaderGenerator vertexGraphInputs = new ShaderGenerator();
-            ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.VertexDescriptionInputs), activeFields, vertexGraphInputs);
 
             ShaderGenerator instancingOptions = new ShaderGenerator();
             {
@@ -655,21 +546,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
-            ShaderGenerator defines = new ShaderGenerator();
-            {
-                defines.AddShaderChunk(string.Format("#define SHADERPASS {0}", pass.ShaderPassName), true);
-                if (pass.ExtraDefines != null)
-                {
-                    foreach (var define in pass.ExtraDefines)
-                        defines.AddShaderChunk(define);
-                }
-                if (graphRequirements.requiresDepthTexture)
-                    defines.AddShaderChunk("#define REQUIRE_DEPTH_TEXTURE");
-                if (graphRequirements.requiresCameraOpaqueTexture)
-                    defines.AddShaderChunk("#define REQUIRE_OPAQUE_TEXTURE");
-                defines.AddGenerator(interpolatorDefines);
-            }
-
             var shaderPassIncludes = new ShaderGenerator();
             if (pass.Includes != null)
             {
@@ -677,12 +553,227 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     shaderPassIncludes.AddShaderChunk(include);
             }
 
+            // Function Registry tracks functions to remove duplicates, it wraps a string builder that stores the combined function string
+            // Will contains the function library for all variants.
+            ShaderStringBuilder graphNodeFunctions = new ShaderStringBuilder();
+            graphNodeFunctions.IncreaseIndent();
+            var functionRegistry = new FunctionRegistry(graphNodeFunctions);
+
+            // Build the list of active slots based on what the pass requires
+            var pixelSlots = HDSubShaderUtilities.FindMaterialSlotsOnNode(pass.PixelShaderSlots, masterNode);
+            var vertexSlots = HDSubShaderUtilities.FindMaterialSlotsOnNode(pass.VertexShaderSlots, masterNode);
+
+            //
+            // Code generation that is variant dependent
+            //
+
+            // Define shader string builder that are variant dependent
+            string pixelGraphInputStructName = "SurfaceDescriptionInputs";
+            string pixelGraphOutputStructName = "SurfaceDescription";
+            string pixelGraphEvalFunctionName = "SurfaceDescriptionFunction";
+            ShaderStringBuilder pixelGraphEvalFunction = new ShaderStringBuilder();
+            ShaderStringBuilder pixelGraphOutputs = new ShaderStringBuilder();
+
+            string vertexGraphInputStructName = "VertexDescriptionInputs";
+            string vertexGraphOutputStructName = "VertexDescription";
+            string vertexGraphEvalFunctionName = "VertexDescriptionFunction";
+            ShaderStringBuilder vertexGraphEvalFunction = new ShaderStringBuilder();
+            ShaderStringBuilder vertexGraphOutputs = new ShaderStringBuilder();
+
+            ShaderGenerator pixelGraphInputs = new ShaderGenerator();
+            ShaderGenerator vertexGraphInputs = new ShaderGenerator();
+            ShaderGenerator defines = new ShaderGenerator();
+            ShaderStringBuilder sharedPropertiesDeclarations = new ShaderStringBuilder();
+
+            var interpolatorDefines = new ShaderGenerator();
+
+            // grab all of the active nodes (for pixel and vertex graphs) per variant
+            using (UnityEngine.Experimental.Rendering.ListPool<ShaderStringBuilder>.Get(out var stringBuilders))
+            using (UnityEngine.Experimental.Rendering.ListPool<ShaderGenerator>.Get(out var generators))
+            using (var vertexNodesPerVariant = KeywordSupport.NodesPerVariant.New())
+            using (var pixelNodesPerVariant = KeywordSupport.NodesPerVariant.New())
+            {
+                stringBuilders.Add(pixelGraphEvalFunction);
+                stringBuilders.Add(pixelGraphOutputs);
+                stringBuilders.Add(vertexGraphEvalFunction);
+                stringBuilders.Add(vertexGraphOutputs);
+                stringBuilders.Add(sharedPropertiesDeclarations);
+                generators.Add(pixelGraphInputs);
+                generators.Add(vertexGraphInputs);
+                generators.Add(defines);
+
+                using (HashSetPool<KeywordSupport.KeywordSet>.Get(out var variants))
+                {
+                    KeywordSupport.CollectVariantsFor(variants, masterNode, pass.VertexShaderSlots);
+                    KeywordSupport.CollectVariantsFor(variants, masterNode, pass.PixelShaderSlots);
+
+                    KeywordSupport.CollectNodesPerVariantsFor(vertexNodesPerVariant, variants, masterNode, pass.VertexShaderSlots);
+                    KeywordSupport.CollectNodesPerVariantsFor(pixelNodesPerVariant, variants, masterNode, pass.PixelShaderSlots);
+
+                    // release KeywordSets in variants
+                    foreach (var variant in variants)
+                        variant.Dispose();
+                    variants.Clear();
+                }
+
+                // graph requirements describe what the graph itself requires
+                using (var pixelRequirementsPerVariant =
+                    new KeywordSupport.RequirementsPerVariant(pixelNodesPerVariant, masterNode, ShaderStageCapability.Fragment,
+                        false)) // TODO: is ShaderStageCapability.Fragment correct?
+                using (var vertexRequirementsPerVariant =
+                    new KeywordSupport.RequirementsPerVariant(vertexNodesPerVariant, masterNode, ShaderStageCapability.Vertex, false))
+                using (UnityEngine.Experimental.Rendering.ListPool<KeywordSupport.KeywordSet>.Get(out var variants))
+                {
+                    var graphRequirementsPerVariant = pixelRequirementsPerVariant.Union(vertexRequirementsPerVariant);
+
+                    // Get a list of variants and set the default (empty) variant as the last one
+                    // We need this because for shader, this is the last one (#else)
+                    variants.AddRange(graphRequirementsPerVariant.keywordSets);
+                    var emptyVariantIndex = variants.FindIndex(v => v.keywords.Count == 0);
+                    if (emptyVariantIndex >= 0)
+                    {
+                        var emptyVariant = variants[emptyVariantIndex];
+                        variants.RemoveAt(emptyVariantIndex);
+                        variants.Add(emptyVariant);
+                    }
+
+                    var isFirstVariant = true;
+
+                    foreach (var variant in variants)
+                    {
+                        var pixelRequirements = pixelRequirementsPerVariant[variant];
+                        var vertexRequirements = vertexRequirementsPerVariant[variant];
+                        var pixelNodes = pixelNodesPerVariant[variant];
+                        var vertexNodes = vertexNodesPerVariant[variant];
+                        var graphRequirements = graphRequirementsPerVariant[variant];
+
+                        var condition = string.Empty;
+                        if (isFirstVariant)
+                            condition = $"#if {string.Join(" ", variant.keywords)}";
+                        else if (variant.keywords.Count == 0)
+                            condition = "#else";
+                        else
+                            condition = $"#elif {string.Join(" ", variant.keywords)}";
+                        isFirstVariant = false;
+
+                        foreach (var stringBuilder in stringBuilders)
+                            stringBuilder.AppendLine(condition);
+                        foreach (var generator in generators)
+                            generator.AddShaderChunk(condition);
+
+                        // TODO: this can be a shared function for all HDRP master nodes -- From here through GraphUtil.GenerateSurfaceDescription(..)
+
+                        // properties used by either pixel and vertex shader
+                        PropertyCollector sharedProperties = new PropertyCollector();
+
+                        // build the graph outputs structure to hold the results of each active slots (and fill out activeFields to indicate they are active)
+
+                        // build initial requirements
+                        HDRPShaderStructs.AddActiveFieldsFromPixelGraphRequirements(activeFields, pixelRequirements);
+
+                        // build the graph outputs structure, and populate activeFields with the fields of that structure
+                        GraphUtil.GenerateSurfaceDescriptionStruct(pixelGraphOutputs, pixelSlots, pixelGraphOutputStructName, activeFields);
+
+                        // Build the graph evaluation code, to evaluate the specified slots
+                        GraphUtil.GenerateSurfaceDescriptionFunction(
+                            pixelNodes,
+                            masterNode,
+                            masterNode.owner as GraphData,
+                            pixelGraphEvalFunction,
+                            functionRegistry,
+                            sharedProperties,
+                            pixelRequirements,  // TODO : REMOVE UNUSED
+                            mode,
+                            pixelGraphEvalFunctionName,
+                            pixelGraphOutputStructName,
+                            null,
+                            pixelSlots,
+                            pixelGraphInputStructName);
+
+                        // check for vertex animation -- enables HAVE_VERTEX_MODIFICATION
+                        if (vertexActive)
+                        {
+                            vertexActive = true;
+                            activeFields.Add("features.modifyMesh");
+                            HDRPShaderStructs.AddActiveFieldsFromVertexGraphRequirements(activeFields, vertexRequirements);
+
+                            // -------------------------------------
+                            // Generate Output structure for Vertex Description function
+                            GraphUtil.GenerateVertexDescriptionStruct(vertexGraphOutputs, vertexSlots, vertexGraphOutputStructName, activeFields);
+
+                            // -------------------------------------
+                            // Generate Vertex Description function
+                            GraphUtil.GenerateVertexDescriptionFunction(
+                                masterNode.owner as GraphData,
+                                vertexGraphEvalFunction,
+                                functionRegistry,
+                                sharedProperties,
+                                mode,
+                                vertexNodes,
+                                vertexSlots,
+                                vertexGraphInputStructName,
+                                vertexGraphEvalFunctionName,
+                                vertexGraphOutputStructName);
+                        }
+
+                        sharedPropertiesDeclarations.AppendLines(sharedProperties.GetPropertiesDeclaration(1, mode));
+
+                        // propagate active field requirements using dependencies
+                        ShaderSpliceUtil.ApplyDependencies(
+                            activeFields,
+                            new List<Dependency[]>()
+                            {
+                                HDRPShaderStructs.FragInputs.dependencies,
+                                HDRPShaderStructs.VaryingsMeshToPS.standardDependencies,
+                                HDRPShaderStructs.SurfaceDescriptionInputs.dependencies,
+                                HDRPShaderStructs.VertexDescriptionInputs.dependencies
+                            });
+
+                        // debug output all active fields
+                        if (debugOutput)
+                        {
+                            interpolatorDefines.AddShaderChunk("// ACTIVE FIELDS:");
+                            foreach (string f in activeFields)
+                            {
+                                interpolatorDefines.AddShaderChunk("//   " + f);
+                            }
+                        }
+
+                        // build graph inputs structures
+                        ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.SurfaceDescriptionInputs), activeFields, pixelGraphInputs);
+                        ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.VertexDescriptionInputs), activeFields, vertexGraphInputs);
+
+                        // Defines
+                        {
+                            defines.AddShaderChunk(string.Format("#define SHADERPASS {0}", pass.ShaderPassName), true);
+                            if (pass.ExtraDefines != null)
+                            {
+                                foreach (var define in pass.ExtraDefines)
+                                    defines.AddShaderChunk(define);
+                            }
+                            if (graphRequirements.requiresDepthTexture)
+                                defines.AddShaderChunk("#define REQUIRE_DEPTH_TEXTURE");
+                            if (graphRequirements.requiresCameraOpaqueTexture)
+                                defines.AddShaderChunk("#define REQUIRE_OPAQUE_TEXTURE");
+                            defines.AddGenerator(interpolatorDefines);
+                        }
+                    }
+
+                    foreach (var stringBuilder in stringBuilders)
+                        stringBuilder.AppendLine("#endif");
+                    foreach (var generator in generators)
+                        generator.AddShaderChunk("#endif");
+
+                    graphRequirementsPerVariant.Dispose();
+                }
+            }
+
 
             // build graph code
             var graph = new ShaderGenerator();
             {
                 graph.AddShaderChunk("// Shared Graph Properties (uniform inputs)");
-                graph.AddShaderChunk(sharedProperties.GetPropertiesDeclaration(1, mode));
+                graph.AddShaderChunk(sharedPropertiesDeclarations.ToString());
 
                 if (vertexActive)
                 {
@@ -1112,9 +1203,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
     }
 
-    static class MultiCompileSupport
+    static class KeywordSupport
     {
-        static void DepthFirstCollectNodesFromNodeWithVariants<T>(
+        public static void DepthFirstCollectNodesFromNodeWithVariants<T>(
             List<T> nodeList,
             T node,
             KeywordSet keywordSet,
@@ -1152,29 +1243,111 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 nodeList.Add(node);
         }
 
-        struct NodesPerVariant
+        public struct RequirementsPerVariant: IDisposable
+        {
+            // Keys are not owned
+            readonly Dictionary<KeywordSet, ShaderGraphRequirements> m_Values;
+
+            public IEnumerable<KeywordSet> keywordSets => m_Values.Keys;
+
+            public ShaderGraphRequirements this[KeywordSet set] => m_Values[set];
+
+            RequirementsPerVariant(Dictionary<KeywordSet, ShaderGraphRequirements> values)
+            {
+                m_Values = values;
+            }
+
+            public RequirementsPerVariant(
+                in NodesPerVariant nodesPerVariant,
+                AbstractMaterialNode node,
+                ShaderStageCapability stageCapability,
+                bool includeIntermediateSpaces
+            )
+            {
+                m_Values = UnityEngine.Experimental.Rendering.DictionaryPool<KeywordSet, ShaderGraphRequirements>.Get();
+                foreach (var pair in nodesPerVariant.iter)
+                {
+                    var requirements = ShaderGraphRequirements.FromNodes(pair.Value, stageCapability, includeIntermediateSpaces);
+
+                    // Here, we directly insert the key and don't clone it, so it is not owned by this type.
+                    m_Values.Add(pair.Key, requirements);
+                }
+            }
+
+            public RequirementsPerVariant Union(in RequirementsPerVariant other)
+            {
+                var result = UnityEngine.Experimental.Rendering.DictionaryPool<KeywordSet, ShaderGraphRequirements>.Get();
+                foreach (var value in m_Values)
+                    result.Add(value.Key, value.Value);
+                foreach (var value in other.m_Values)
+                {
+                    if (result.ContainsKey(value.Key))
+                        result[value.Key] = result[value.Key].Union(value.Value);
+                    else
+                        result.Add(value.Key, value.Value);
+                }
+
+                return new RequirementsPerVariant(result);
+            }
+
+            public void Dispose()
+            {
+                // Don't dispose the keys of the dictionary, the keys are not owned.
+                UnityEngine.Experimental.Rendering.DictionaryPool<KeywordSet, ShaderGraphRequirements>
+                    .Release(m_Values);
+            }
+        }
+
+        public struct NodesPerVariant: IDisposable
         {
             Dictionary<KeywordSet, List<AbstractMaterialNode>> m_NodesPerVariants;
-            Func<List<AbstractMaterialNode>> m_ListAllocator;
+
+            public static NodesPerVariant New()
+            {
+                return new NodesPerVariant
+                {
+                    m_NodesPerVariants = UnityEngine.Experimental.Rendering
+                        .DictionaryPool<KeywordSet, List<AbstractMaterialNode>>.Get()
+                };
+            }
 
             public IEnumerable<KeywordSet> variants => m_NodesPerVariants.Keys;
+            public IEnumerable<KeyValuePair<KeywordSet, List<AbstractMaterialNode>>> iter => m_NodesPerVariants;
+
+            public List<AbstractMaterialNode> this[KeywordSet set] => m_NodesPerVariants[set];
+
 
             public bool AddKey(KeywordSet variant)
             {
-                if (!m_NodesPerVariants.ContainsKey(variant))
-                {
-                    m_NodesPerVariants.Add(variant, m_ListAllocator());
-                    return true;
-                }
+                if (m_NodesPerVariants.ContainsKey(variant))
+                    return false;
 
-                return false;
+                // Clone the key to get ownership when inserting the value
+                var variantCopySet = HashSetPool<string>.Get();
+                foreach (var v in variant.keywords)
+                    variantCopySet.Add(v);
+                var variantCopy = new KeywordSet(variantCopySet);
+
+                m_NodesPerVariants.Add(variantCopy, UnityEngine.Experimental.Rendering.ListPool<AbstractMaterialNode>.Get());
+                return true;
+
             }
 
             public List<AbstractMaterialNode> GetNodeList(KeywordSet keywordSet) => m_NodesPerVariants[keywordSet];
+
+            public void Dispose()
+            {
+                foreach (var pair in m_NodesPerVariants)
+                {
+                    pair.Key.Dispose();
+                    UnityEngine.Experimental.Rendering.ListPool<AbstractMaterialNode>.Release(pair.Value);
+                }
+                UnityEngine.Experimental.Rendering.DictionaryPool<KeywordSet, List<AbstractMaterialNode>>.Release(m_NodesPerVariants);
+            }
         }
 
         /// <summary> Use this string set to perform equality based on their content.</summary>
-        struct KeywordSet: IEquatable<KeywordSet>
+        public struct KeywordSet: IEquatable<KeywordSet>, IDisposable
         {
             readonly HashSet<string> m_Keywords;
             readonly int m_Hash;
@@ -1191,6 +1364,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     m_Hash ^= keyword.GetHashCode();
             }
 
+            public void Dispose()
+            {
+                HashSetPool<string>.Release(m_Keywords);
+            }
+
             public override int GetHashCode() => m_Hash;
 
             public bool Equals(KeywordSet set)
@@ -1201,17 +1379,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 => (obj is KeywordSet set) && Equals(set);
         }
 
-        static void CollectNodesPerVariantsFor<T>(ref NodesPerVariant dst, T root, List<int> slotIds = null)
+        public static void CollectNodesPerVariantsFor<T>(NodesPerVariant dst, HashSet<KeywordSet> variants, T root, List<int> slotIds = null)
             where T: AbstractMaterialNode
         {
-            CollectVariantsFor(dst, root, slotIds);
-
             //
             // At this point, `dst` contains all variants that needs to be parsed.
             // Now we need to fetch the input nodes for all variants
             //
 
-            foreach (var variant in dst.variants)
+            foreach (var variant in variants)
+                dst.AddKey(variant);
+
+            foreach (var variant in variants)
             {
                 var nodeList = dst.GetNodeList(variant);
                 DepthFirstCollectNodesFromNodeWithVariants(nodeList, root, variant, NodeUtils.IncludeSelf.Include,
@@ -1219,7 +1398,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void CollectVariantsFor<T>(NodesPerVariant dst, T root, List<int> slotIds)
+        public static void CollectVariantsFor<T>(HashSet<KeywordSet> allVariants, T root, List<int> slotIds)
             where T : AbstractMaterialNode
         {
             using (UnityEngine.Experimental.Rendering.ListPool<List<string>>.Get(out var multiCompileList))
@@ -1297,93 +1476,82 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         HashSetPool<string>.Release(multiCompileSet.keywords);
                 }
 
-                using (HashSetPool<KeywordSet>.Get(out var allVariants))
+                using (UnityEngine.Experimental.Rendering.ListPool<int>.Get(out var variantIndices))
+                using (HashSetPool<string>.Get(out var variant))
                 {
-                    using (UnityEngine.Experimental.Rendering.ListPool<int>.Get(out var variantIndices))
-                    using (HashSetPool<string>.Get(out var variant))
+                    // Generate a list of indices to track which variant we are currently visiting
+                    // in each sets.
+                    for (var i = 0; i < multiCompileList.Count; ++i)
+                        variantIndices.Add(0);
+
+                    // Generate all variants from the multi compile
+                    // Current variant combination is generated by taking the keyword from each set
+                    // that is at the index defined in `variantIndices`.
+                    // Then increase the indices from the end, and 'overflows' the increment to the start.
+                    do
                     {
-                        // Generate a list of indices to track which variant we are currently visiting
-                        // in each sets.
-                        for (var i = 0; i < multiCompileList.Count; ++i)
-                            variantIndices.Add(0);
+                        // There must be always at least 1 multi compile (the default one)
+                        // So we are sure that the first loop needs to do some work
 
-                        // Generate all variants from the multi compile
-                        // Current variant combination is generated by taking the keyword from each set
-                        // that is at the index defined in `variantIndices`.
-                        // Then increase the indices from the end, and 'overflows' the increment to the start.
-                        do
+                        variant.Clear();
+                        for (var i = 0; i < variantIndices.Count; ++i)
                         {
-                            // There must be always at least 1 multi compile (the default one)
-                            // So we are sure that the first loop needs to do some work
+                            var keyword = multiCompileList[i][variantIndices[i]];
+                            if (keyword != "_")
+                                variant.Add(keyword);
+                        }
 
-                            variant.Clear();
-                            for (var i = 0; i < variantIndices.Count; ++i)
-                            {
-                                var keyword = multiCompileList[i][variantIndices[i]];
-                                if (keyword != "_")
-                                    variant.Add(keyword);
-                            }
+                        // Try to add the variant
+                        var set = new KeywordSet(variant);
+                        if (allVariants.Add(set))
+                            // The variant may already have been added, it depends on the different
+                            // multi compile sets
+                            //
+                            // In the case the set was already added, then we need to get a new temporary HashSet
+                            variant = HashSetPool<string>.Get();
 
-                            // Increase indices
-                            var lastIndex = variantIndices[variantIndices.Count - 1];
-                            if (lastIndex < multiCompileList[variantIndices.Count - 1].Count - 1)
-                                // Last set has still values to iterate on
-                                variantIndices[variantIndices.Count - 1] = lastIndex + 1;
-                            else
+                        // Increment variant combination
+                        var lastIndex = variantIndices[variantIndices.Count - 1];
+                        if (lastIndex < multiCompileList[variantIndices.Count - 1].Count - 1)
+                            // Last set has still values to iterate on
+                            variantIndices[variantIndices.Count - 1] = lastIndex + 1;
+                        else
+                        {
+                            // We iterated on all values in the last set
+                            // So we 'overflows' the increment to the previous set
+                            for (var i = variantIndices.Count - 1; i >= 0; --i)
                             {
-                                // We iterated on all values in the last set
-                                // So we reset the last index to 0, and 'overflows' the increment to the previous set
-                                variantIndices[variantIndices.Count - 1] = 0;
-                                for (var i = variantIndices.Count - 2; i >= 0; --i)
+                                if (variantIndices[i] < multiCompileList[i].Count - 1)
                                 {
-                                    if (variantIndices[i] < multiCompileList[i].Count - 1)
-                                    {
-                                        // Previous index was increased
-                                        // So we have a new variant set to visit
-                                        // We can break the inner loop
-                                        ++variantIndices[i];
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        // All values were visited in this set
+                                    // Previous index was increased
+                                    // So we have a new variant set to visit
+                                    // We can break the inner loop
+                                    ++variantIndices[i];
+                                    break;
+                                }
+                                else
+                                {
+                                    // All values were visited in this set
 
-                                        if (i == 0)
-                                            // This was the first set, so we explored all possible
-                                            // variant combination. We can break the outer loop.
-                                            goto LOOP_COMPLETED;
+                                    if (i == 0)
+                                        // This was the first set, so we explored all possible
+                                        // variant combination. We can break the outer loop.
+                                        goto LOOP_COMPLETED;
 
-                                        // This is an intermediate set, so we reset its index and try
-                                        // to overflow the increment the previous set (next loop iteration)
-                                        variantIndices[i] = 0;
-                                    }
+                                    // This is an intermediate set, so we reset its index and try
+                                    // to overflow the increment the previous set (next loop iteration)
+                                    variantIndices[i] = 0;
                                 }
                             }
-
-                            var set = new KeywordSet(variant);
-                            if (allVariants.Add(set))
-                                // The variant may already have been added, it depends on the different
-                                // multi compile sets
-                                //
-                                // In the case the set was already added, then we need to get a new temporary HashSet
-                                variant = HashSetPool<string>.Get();
-                        } while (true);
-                    }
-
-                    LOOP_COMPLETED:
-
-                    //
-                    // At this point, `allVariants` contains all variants generated by the shader graph
-                    //
-
-                    // Now allocate all keys in `dst`
-                    foreach (var variant in allVariants)
-                    {
-                        if (!dst.AddKey(variant))
-                            // Release all variants that weren't transferred
-                            HashSetPool<string>.Release(variant.keywords);
-                    }
+                        }
+                    } while (true);
                 }
+
+                LOOP_COMPLETED:
+
+                //
+                // At this point, `allVariants` contains all variants generated by the shader graph
+                //
 
                 // We don't need `multiCompileList`, so we can release it and its values as well
                 foreach (var list in multiCompileList)
