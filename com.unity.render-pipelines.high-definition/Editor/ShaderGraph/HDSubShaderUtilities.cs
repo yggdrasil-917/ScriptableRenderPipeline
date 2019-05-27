@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEditor.Graphing;
 using UnityEditor.Graphs;
 using UnityEngine;              // Vector3,4
@@ -507,7 +508,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     static class HDSubShaderUtilities
     {
-
         public static bool GenerateShaderPass(AbstractMaterialNode masterNode, Pass pass, GenerationMode mode, SurfaceMaterialOptions materialOptions, HashSet<string> activeFields, ShaderGenerator result, List<string> sourceAssetDependencyPaths, bool vertexActive)
         {
             string templatePath = Path.Combine(HDUtils.GetHDRenderPipelinePath(), "Editor/Material");
@@ -568,40 +568,38 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //
 
             // Define shader string builder that are variant dependent
-            string pixelGraphInputStructName = "SurfaceDescriptionInputs";
-            string pixelGraphOutputStructName = "SurfaceDescription";
-            string pixelGraphEvalFunctionName = "SurfaceDescriptionFunction";
-            ShaderStringBuilder pixelGraphEvalFunction = new ShaderStringBuilder();
-            ShaderStringBuilder pixelGraphOutputs = new ShaderStringBuilder();
+            const string pixelGraphInputStructName = "SurfaceDescriptionInputs";
+            const string pixelGraphOutputStructName = "SurfaceDescription";
+            const string pixelGraphEvalFunctionName = "SurfaceDescriptionFunction";
 
-            string vertexGraphInputStructName = "VertexDescriptionInputs";
-            string vertexGraphOutputStructName = "VertexDescription";
-            string vertexGraphEvalFunctionName = "VertexDescriptionFunction";
-            ShaderStringBuilder vertexGraphEvalFunction = new ShaderStringBuilder();
-            ShaderStringBuilder vertexGraphOutputs = new ShaderStringBuilder();
+            const string vertexGraphInputStructName = "VertexDescriptionInputs";
+            const string vertexGraphOutputStructName = "VertexDescription";
+            const string vertexGraphEvalFunctionName = "VertexDescriptionFunction";
 
-            ShaderGenerator pixelGraphInputs = new ShaderGenerator();
-            ShaderGenerator vertexGraphInputs = new ShaderGenerator();
-            ShaderGenerator defines = new ShaderGenerator();
-            ShaderStringBuilder sharedPropertiesDeclarations = new ShaderStringBuilder();
+            // Output of the per variant code gen
+            string sharedPropertiesDeclarationsOut;
+            string vertexGraphOutputsOut;
+            string pixelGraphOutputsOut;
+            string vertexGraphEvalFunctionOut;
+            string pixelGraphEvalFunctionOut;
+            string definesOut;
+            ShaderGenerator vertexGraphInputsOut;
+            ShaderGenerator pixelGraphInputsOut;
 
-            var interpolatorDefines = new ShaderGenerator();
-
+            // structure to contains generated code per variant
+            using (var pixelGraphEvalFunctionPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+            using (var pixelGraphOutputsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+            using (var vertexGraphEvalFunctionPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+            using (var vertexGraphOutputsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+            using (var pixelGraphInputsPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
+            using (var vertexGraphInputsPerVariant =  KeywordSupport.NewShaderGeneratorPerVariant())
+            using (var definesPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
+            using (var sharedPropertiesDeclarationsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+            using (var interpolatorDefinesPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
             // grab all of the active nodes (for pixel and vertex graphs) per variant
-            using (UnityEngine.Experimental.Rendering.ListPool<ShaderStringBuilder>.Get(out var stringBuilders))
-            using (UnityEngine.Experimental.Rendering.ListPool<ShaderGenerator>.Get(out var generators))
             using (var vertexNodesPerVariant = KeywordSupport.NodesPerVariant.New())
             using (var pixelNodesPerVariant = KeywordSupport.NodesPerVariant.New())
             {
-                stringBuilders.Add(pixelGraphEvalFunction);
-                stringBuilders.Add(pixelGraphOutputs);
-                stringBuilders.Add(vertexGraphEvalFunction);
-                stringBuilders.Add(vertexGraphOutputs);
-                stringBuilders.Add(sharedPropertiesDeclarations);
-                generators.Add(pixelGraphInputs);
-                generators.Add(vertexGraphInputs);
-                generators.Add(defines);
-
                 using (HashSetPool<KeywordSupport.KeywordSet>.Get(out var variants))
                 {
                     KeywordSupport.CollectVariantsFor(variants, masterNode, pass.VertexShaderSlots);
@@ -622,44 +620,28 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         false)) // TODO: is ShaderStageCapability.Fragment correct?
                 using (var vertexRequirementsPerVariant =
                     new KeywordSupport.RequirementsPerVariant(vertexNodesPerVariant, masterNode, ShaderStageCapability.Vertex, false))
-                using (UnityEngine.Experimental.Rendering.ListPool<KeywordSupport.KeywordSet>.Get(out var variants))
                 {
                     var graphRequirementsPerVariant = pixelRequirementsPerVariant.Union(vertexRequirementsPerVariant);
 
-                    // Get a list of variants and set the default (empty) variant as the last one
-                    // We need this because for shader, this is the last one (#else)
-                    variants.AddRange(graphRequirementsPerVariant.keywordSets);
-                    var emptyVariantIndex = variants.FindIndex(v => v.keywords.Count == 0);
-                    if (emptyVariantIndex >= 0)
-                    {
-                        var emptyVariant = variants[emptyVariantIndex];
-                        variants.RemoveAt(emptyVariantIndex);
-                        variants.Add(emptyVariant);
-                    }
-
                     var isFirstVariant = true;
 
-                    foreach (var variant in variants)
+                    foreach (var variant in graphRequirementsPerVariant.keywordSets)
                     {
+                        var pixelGraphEvalFunction = new ShaderStringBuilder();
+                        var pixelGraphOutputs = new ShaderStringBuilder();
+                        var vertexGraphEvalFunction = new ShaderStringBuilder();
+                        var vertexGraphOutputs = new ShaderStringBuilder();
+                        var pixelGraphInputs = new ShaderGenerator();
+                        var vertexGraphInputs = new ShaderGenerator();
+                        var defines = new ShaderGenerator();
+                        var sharedPropertiesDeclarations = new ShaderStringBuilder();
+                        var interpolatorDefines = new ShaderGenerator();
+
                         var pixelRequirements = pixelRequirementsPerVariant[variant];
                         var vertexRequirements = vertexRequirementsPerVariant[variant];
                         var pixelNodes = pixelNodesPerVariant[variant];
                         var vertexNodes = vertexNodesPerVariant[variant];
                         var graphRequirements = graphRequirementsPerVariant[variant];
-
-                        var condition = string.Empty;
-                        if (isFirstVariant)
-                            condition = $"#if {string.Join(" ", variant.keywords)}";
-                        else if (variant.keywords.Count == 0)
-                            condition = "#else";
-                        else
-                            condition = $"#elif {string.Join(" ", variant.keywords)}";
-                        isFirstVariant = false;
-
-                        foreach (var stringBuilder in stringBuilders)
-                            stringBuilder.AppendLine(condition);
-                        foreach (var generator in generators)
-                            generator.AddShaderChunk(condition);
 
                         // TODO: this can be a shared function for all HDRP master nodes -- From here through GraphUtil.GenerateSurfaceDescription(..)
 
@@ -745,7 +727,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                         // Defines
                         {
-                            defines.AddShaderChunk(string.Format("#define SHADERPASS {0}", pass.ShaderPassName), true);
+                            defines.AddShaderChunk($"#define SHADERPASS {pass.ShaderPassName}", true);
                             if (pass.ExtraDefines != null)
                             {
                                 foreach (var define in pass.ExtraDefines)
@@ -755,45 +737,58 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                 defines.AddShaderChunk("#define REQUIRE_DEPTH_TEXTURE");
                             if (graphRequirements.requiresCameraOpaqueTexture)
                                 defines.AddShaderChunk("#define REQUIRE_OPAQUE_TEXTURE");
-                            defines.AddGenerator(interpolatorDefines);
                         }
-                    }
 
-                    foreach (var stringBuilder in stringBuilders)
-                        stringBuilder.AppendLine("#endif");
-                    foreach (var generator in generators)
-                        generator.AddShaderChunk("#endif");
+                        pixelGraphEvalFunctionPerVariant.Add(variant, pixelGraphEvalFunction);
+                        pixelGraphOutputsPerVariant.Add(variant, pixelGraphOutputs);
+                        vertexGraphEvalFunctionPerVariant.Add(variant, vertexGraphEvalFunction);
+                        vertexGraphOutputsPerVariant.Add(variant, vertexGraphOutputs);
+                        pixelGraphInputsPerVariant.Add(variant, pixelGraphInputs);
+                        vertexGraphInputsPerVariant.Add(variant, vertexGraphInputs);
+                        definesPerVariant.Add(variant, defines);
+                        sharedPropertiesDeclarationsPerVariant.Add(variant, sharedPropertiesDeclarations);
+                        interpolatorDefinesPerVariant.Add(variant, interpolatorDefines);
+                    }
 
                     graphRequirementsPerVariant.Dispose();
                 }
-            }
 
+                sharedPropertiesDeclarationsOut = KeywordSupport.ToString(sharedPropertiesDeclarationsPerVariant);
+                vertexGraphInputsOut = KeywordSupport.ToGenerator(vertexGraphInputsPerVariant);
+                vertexGraphOutputsOut = KeywordSupport.ToString(vertexGraphOutputsPerVariant);
+                pixelGraphInputsOut = KeywordSupport.ToGenerator(pixelGraphInputsPerVariant);
+                pixelGraphOutputsOut = KeywordSupport.ToString(pixelGraphOutputsPerVariant);
+                vertexGraphEvalFunctionOut = KeywordSupport.ToString(vertexGraphEvalFunctionPerVariant);
+                pixelGraphEvalFunctionOut = KeywordSupport.ToString(pixelGraphEvalFunctionPerVariant);
+                definesOut = definesPerVariant.GetShaderString(2, false) +
+                                 interpolatorDefinesPerVariant.GetShaderString(2, false);
+            }
 
             // build graph code
             var graph = new ShaderGenerator();
             {
                 graph.AddShaderChunk("// Shared Graph Properties (uniform inputs)");
-                graph.AddShaderChunk(sharedPropertiesDeclarations.ToString());
+                graph.AddShaderChunk(sharedPropertiesDeclarationsOut);
 
                 if (vertexActive)
                 {
                     graph.AddShaderChunk("// Vertex Graph Inputs");
                     graph.Indent();
-                    graph.AddGenerator(vertexGraphInputs);
+                    graph.AddGenerator(vertexGraphInputsOut);
                     graph.Deindent();
                     graph.AddShaderChunk("// Vertex Graph Outputs");
                     graph.Indent();
-                    graph.AddShaderChunk(vertexGraphOutputs.ToString());
+                    graph.AddShaderChunk(vertexGraphOutputsOut);
                     graph.Deindent();
                 }
 
                 graph.AddShaderChunk("// Pixel Graph Inputs");
                 graph.Indent();
-                graph.AddGenerator(pixelGraphInputs);
+                graph.AddGenerator(pixelGraphInputsOut);
                 graph.Deindent();
                 graph.AddShaderChunk("// Pixel Graph Outputs");
                 graph.Indent();
-                graph.AddShaderChunk(pixelGraphOutputs.ToString());
+                graph.AddShaderChunk(pixelGraphOutputsOut);
                 graph.Deindent();
 
                 graph.AddShaderChunk("// Shared Graph Node Functions");
@@ -803,20 +798,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     graph.AddShaderChunk("// Vertex Graph Evaluation");
                     graph.Indent();
-                    graph.AddShaderChunk(vertexGraphEvalFunction.ToString());
+                    graph.AddShaderChunk(vertexGraphEvalFunctionOut);
                     graph.Deindent();
                 }
 
                 graph.AddShaderChunk("// Pixel Graph Evaluation");
                 graph.Indent();
-                graph.AddShaderChunk(pixelGraphEvalFunction.ToString());
+                graph.AddShaderChunk(pixelGraphEvalFunctionOut);
                 graph.Deindent();
             }
 
             // build the hash table of all named fragments      TODO: could make this Dictionary<string, ShaderGenerator / string>  ?
             Dictionary<string, string> namedFragments = new Dictionary<string, string>();
             namedFragments.Add("InstancingOptions", instancingOptions.GetShaderString(0, false));
-            namedFragments.Add("Defines", defines.GetShaderString(2, false));
+            namedFragments.Add("Defines", definesOut);
             namedFragments.Add("Graph", graph.GetShaderString(2, false));
             namedFragments.Add("LightMode", pass.LightMode);
             namedFragments.Add("PassName", pass.Name);
@@ -1203,44 +1198,311 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
     }
 
-    static class KeywordSupport
+    internal static class KeywordSupportExtensions
     {
-        public static void DepthFirstCollectNodesFromNodeWithVariants<T>(
-            List<T> nodeList,
-            T node,
-            KeywordSet keywordSet,
-            NodeUtils.IncludeSelf includeSelf = NodeUtils.IncludeSelf.Include,
-            List<int> slotIds = null
+        public static string GetShaderString(
+            this KeywordSupport.GeneratedCodePerVariant<ShaderGenerator> value,
+            int indentLevel,
+            bool newLines = false
         )
-            where T : AbstractMaterialNode
         {
-            // no where to start
-            if (node == null)
-                return;
-
-            // already added this node
-            if (nodeList.Contains(node))
-                return;
-
-            var inputSlots = (node is HDPipeline.IGenerateMultiCompile multiCompileNode)
-                ? multiCompileNode.GetInputSlotsFor(keywordSet.keywords)
-                : node.GetInputSlots<ISlot>().Select(x => x.id);
-
-            var ids = slotIds == null
-                ? inputSlots
-                : inputSlots.Where(slotIds.Contains);
-
-            foreach (var slot in ids)
+            using (UnityEngine.Experimental.Rendering.DictionaryPool<KeywordSupport.KeywordExpr, ShaderGenerator>.Get(
+                out var results))
             {
-                foreach (var edge in node.owner.GetEdges(node.GetSlotReference(slot)))
+                value.ToDictionary(results);
+
+                if (results.Count > 1)
                 {
-                    if (node.owner.GetNodeFromGuid(edge.outputSlot.nodeGuid) is T outputNode)
-                        DepthFirstCollectNodesFromNodeWithVariants(nodeList, outputNode, keywordSet);
+                    var sb = new StringBuilder();
+
+                    ShaderGenerator elseBranch = null;
+                    var isFirstVariant = true;
+                    foreach (var pair in results)
+                    {
+                        if (pair.Key.IsAlwaysTrue())
+                            elseBranch = pair.Value;
+                        else
+                        {
+                            var condition = string.Empty;
+                            condition = isFirstVariant
+                                ? $"#if {pair.Key.ToString()}"
+                                : $"#elif {pair.Key.ToString()}";
+                            isFirstVariant = false;
+
+                            sb.AppendLine(condition);
+                            sb.AppendLine(pair.Value.GetShaderString(indentLevel, newLines));
+                        }
+                    }
+
+                    if (elseBranch != null)
+                    {
+                        sb.AppendLine("#else");
+                        sb.AppendLine(elseBranch.GetShaderString(indentLevel, newLines));
+                    }
+
+                    sb.AppendLine("#endif");
+                    return sb.ToString();
+                }
+                else if (results.Count == 1)
+                {
+                    var entry = results.First();
+                    return entry.Key.IsAlwaysTrue()
+                        ? entry.Value.GetShaderString(indentLevel, newLines)
+                        : $@"#if {entry.Key}
+    {entry.Value.GetShaderString(indentLevel, newLines)}
+#endif";
+                }
+                else
+                    return string.Empty;
+            }
+        }
+    }
+
+    internal static class KeywordSupport
+    {
+        internal struct KeywordExpr : IDisposable
+        {
+            // List of or(s) to and(s)
+            // ex: [(a, b), (a, d, f)] => a && b || a && d && f
+            private List<HashSet<string>> m_Values;
+
+            public static KeywordExpr FromSet(KeywordSet variant)
+            {
+                var values = UnityEngine.Experimental.Rendering.ListPool<HashSet<string>>.Get();
+                var variantCopy = HashSetPool<string>.Get();
+                variantCopy.UnionWith(variant.keywords);
+                values.Add(variantCopy);
+
+                return new KeywordExpr
+                {
+                    m_Values = values
+                };
+            }
+
+            public void Merge(KeywordSet variant)
+            {
+                var variantCopy = HashSetPool<string>.Get();
+                variantCopy.UnionWith(variant.keywords);
+                m_Values.Add(variantCopy);
+            }
+
+            public bool IsAlwaysTrue()
+                => m_Values.Count == 0 || m_Values.Any(s => s.Count == 0 || s.Count == 1 && s.Contains(string.Empty));
+
+            public override string ToString()
+            {
+                var sb = new StringBuilder();
+                var isFirstAndGroup = true;
+                // Skip the default case (empty keyword)
+                foreach (var keywordSet in m_Values.Where(s => s.Count > 0))
+                {
+                    if (!isFirstAndGroup)
+                        sb.Append(" || ");
+                    isFirstAndGroup = false;
+
+                    var isFirst = true;
+                    foreach (var keyword in keywordSet.Where(s => s.Length > 0))
+                    {
+                        if (!isFirst)
+                            sb.Append(" && ");
+                        sb.Append(keyword);
+                        isFirst = false;
+                    }
+                }
+
+                return sb.ToString();
+            }
+
+            public void Dispose()
+            {
+                foreach (var keywords in m_Values)
+                    HashSetPool<string>.Release(keywords);
+                UnityEngine.Experimental.Rendering.ListPool<HashSet<string>>.Release(m_Values);
+            }
+        }
+
+        /// <summary>
+        /// Store generated code per variants.
+        ///
+        /// Tries to minimize the number of variants to emit.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public struct GeneratedCodePerVariant<T> : IDisposable
+        {
+            List<T> m_GeneratedCode;
+            List<KeywordExpr> m_KeywordExpressions;
+            Dictionary<string, int> m_KeyIndex;
+            Func<T, string> m_Hasher;
+
+            /// <summary>
+            /// Return a dictionary of keyword expression -> generated code
+            ///
+            /// * Both keys and values are borrowed.
+            /// </summary>
+            internal void ToDictionary(Dictionary<KeywordExpr, T> result)
+            {
+                Assert.IsNotNull(result);
+                for (var i = 0; i < m_GeneratedCode.Count; ++i)
+                    result[m_KeywordExpressions[i]] = m_GeneratedCode[i];
+            }
+
+            public static GeneratedCodePerVariant<T> New(Func<T, string> hasher)
+            {
+                return new GeneratedCodePerVariant<T>
+                {
+                    m_GeneratedCode = UnityEngine.Experimental.Rendering.ListPool<T>.Get(),
+                    m_KeywordExpressions = UnityEngine.Experimental.Rendering.ListPool<KeywordExpr>.Get(),
+                    m_KeyIndex = UnityEngine.Experimental.Rendering.DictionaryPool<string, int>.Get(),
+                    m_Hasher = hasher
+                };
+            }
+
+            /// <summary>
+            /// Add a value for a variant.
+            ///
+            /// * Throws when the variant already exists.
+            /// * The variant provided is cloned.
+            /// * If two variants share the same result, then they will be merged.
+            /// </summary>
+            /// <param name="value"></param>
+            public void Add(KeywordSet variant, T value)
+            {
+                var key = m_Hasher(value);
+                if (m_KeyIndex.TryGetValue(key, out var index))
+                {
+                    m_KeywordExpressions[index].Merge(variant);
+                }
+                else
+                {
+                    var newIndex = m_GeneratedCode.Count;
+                    m_GeneratedCode.Add(value);
+                    m_KeywordExpressions.Add(KeywordExpr.FromSet(variant));
+                    m_KeyIndex.Add(key, newIndex);
                 }
             }
 
-            if (includeSelf == NodeUtils.IncludeSelf.Include)
-                nodeList.Add(node);
+            public void Dispose()
+            {
+                foreach (var expr in m_KeywordExpressions)
+                    expr.Dispose();
+
+                UnityEngine.Experimental.Rendering.ListPool<T>.Release(m_GeneratedCode);
+                UnityEngine.Experimental.Rendering.ListPool<KeywordExpr>.Release(m_KeywordExpressions);
+                UnityEngine.Experimental.Rendering.DictionaryPool<string, int>.Release(m_KeyIndex);
+            }
+        }
+
+        public static GeneratedCodePerVariant<ShaderStringBuilder> NewShaderStringBuilderPerVariant()
+            => GeneratedCodePerVariant<ShaderStringBuilder>.New(s => s.ToString());
+        public static GeneratedCodePerVariant<ShaderGenerator> NewShaderGeneratorPerVariant()
+            => GeneratedCodePerVariant<ShaderGenerator>.New(s => s.GetShaderString(0));
+
+        public static string ToString(GeneratedCodePerVariant<ShaderStringBuilder> value)
+        {
+            using (UnityEngine.Experimental.Rendering.DictionaryPool<KeywordExpr, ShaderStringBuilder>.Get(
+                out var results))
+            {
+                value.ToDictionary(results);
+
+                if (results.Count > 1)
+                {
+                    var sb = new StringBuilder();
+
+                    ShaderStringBuilder elseBranch = null;
+                    var isFirstVariant = true;
+                    foreach (var pair in results)
+                    {
+                        if (pair.Key.IsAlwaysTrue())
+                            elseBranch = pair.Value;
+                        else
+                        {
+                            var condition = string.Empty;
+                            condition = isFirstVariant
+                                ? $"#if {pair.Key.ToString()}"
+                                : $"#elif {pair.Key.ToString()}";
+                            isFirstVariant = false;
+
+                            sb.AppendLine(condition);
+                            sb.AppendLine(pair.Value.ToString());
+                        }
+                    }
+
+                    if (elseBranch != null)
+                    {
+                        sb.AppendLine("#else");
+                        sb.AppendLine(elseBranch.ToString());
+                    }
+
+                    sb.Append("#endif");
+                    return sb.ToString();
+                }
+                else if (results.Count == 1)
+                {
+                    var entry = results.First();
+                    return entry.Key.IsAlwaysTrue()
+                        ? entry.Value.ToString()
+                        : $@"#if {entry.Key}
+    {entry.Value}
+#endif";
+                }
+                else
+                    return string.Empty;
+            }
+        }
+
+        public static ShaderGenerator ToGenerator(GeneratedCodePerVariant<ShaderGenerator> value)
+        {
+            using (UnityEngine.Experimental.Rendering.DictionaryPool<KeywordExpr, ShaderGenerator>.Get(
+                out var results))
+            {
+                value.ToDictionary(results);
+
+                if (results.Count > 1)
+                {
+                    var sg = new ShaderGenerator();
+
+                    ShaderGenerator elseBranch = null;
+                    var isFirstVariant = true;
+                    foreach (var pair in results)
+                    {
+                        if (pair.Key.IsAlwaysTrue())
+                            elseBranch = pair.Value;
+                        else
+                        {
+                            var condition = string.Empty;
+                            condition = isFirstVariant
+                                ? $"#if {pair.Key.ToString()}"
+                                : $"#elif {pair.Key.ToString()}";
+                            isFirstVariant = false;
+
+                            sg.AddShaderChunk(condition, false);
+                            sg.AddShaderChunk(pair.Value.GetShaderString(0));
+                        }
+                    }
+
+                    if (elseBranch != null)
+                    {
+                        sg.AddShaderChunk("#else", false);
+                        sg.AddShaderChunk(elseBranch.GetShaderString(0));
+                    }
+
+                    sg.AddShaderChunk("#endif", false);
+                    return sg;
+                }
+                else if (results.Count == 1)
+                {
+                    var entry = results.First();
+                    var result = new ShaderGenerator();
+                    result.AddShaderChunk(entry.Key.IsAlwaysTrue()
+                        ? entry.Value.GetShaderString(0)
+                        : $@"#if {entry.Key}
+    {entry.Value}
+#endif", false);
+                    return result;
+                }
+                else
+                    return new ShaderGenerator();
+            }
         }
 
         public struct RequirementsPerVariant: IDisposable
@@ -1379,6 +1641,44 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 => (obj is KeywordSet set) && Equals(set);
         }
 
+        public static void DepthFirstCollectNodesFromNodeWithVariants<T>(
+            List<T> nodeList,
+            T node,
+            KeywordSet keywordSet,
+            NodeUtils.IncludeSelf includeSelf = NodeUtils.IncludeSelf.Include,
+            List<int> slotIds = null
+        )
+            where T : AbstractMaterialNode
+        {
+            // no where to start
+            if (node == null)
+                return;
+
+            // already added this node
+            if (nodeList.Contains(node))
+                return;
+
+            var inputSlots = (node is HDPipeline.IGenerateMultiCompile multiCompileNode)
+                ? multiCompileNode.GetInputSlotsFor(keywordSet.keywords)
+                : node.GetInputSlots<ISlot>().Select(x => x.id);
+
+            var ids = slotIds == null
+                ? inputSlots
+                : inputSlots.Where(slotIds.Contains);
+
+            foreach (var slot in ids)
+            {
+                foreach (var edge in node.owner.GetEdges(node.GetSlotReference(slot)))
+                {
+                    if (node.owner.GetNodeFromGuid(edge.outputSlot.nodeGuid) is T outputNode)
+                        DepthFirstCollectNodesFromNodeWithVariants(nodeList, outputNode, keywordSet);
+                }
+            }
+
+            if (includeSelf == NodeUtils.IncludeSelf.Include)
+                nodeList.Add(node);
+        }
+
         public static void CollectNodesPerVariantsFor<T>(NodesPerVariant dst, HashSet<KeywordSet> variants, T root, List<int> slotIds = null)
             where T: AbstractMaterialNode
         {
@@ -1436,6 +1736,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                         // We don't store this set, so we return it to the pool
                                         HashSetPool<string>.Release(multiCompileSet);
                                 }
+                                multiCompiles.Clear();
                             }
                         }
                     }
@@ -1503,12 +1804,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                         // Try to add the variant
                         var set = new KeywordSet(variant);
-                        if (allVariants.Add(set))
-                            // The variant may already have been added, it depends on the different
-                            // multi compile sets
-                            //
-                            // In the case the set was already added, then we need to get a new temporary HashSet
-                            variant = HashSetPool<string>.Get();
+                        if (!allVariants.Contains(set))
+                        {
+                            // We need to insert this variant.
+                            // So we make a copy here because `variant` is temporary and will be disposed
+                            // at the end of the using scope.
+                            var variantCopy = HashSetPool<string>.Get();
+                            variantCopy.UnionWith(variant);
+                            allVariants.Add(new KeywordSet(variantCopy));
+                        }
 
                         // Increment variant combination
                         var lastIndex = variantIndices[variantIndices.Count - 1];
