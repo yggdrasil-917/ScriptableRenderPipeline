@@ -446,6 +446,7 @@ namespace UnityEditor.ShaderGraph
         public class TemplatePreprocessor
         {
             // inputs
+            private Dictionary<string, HashSet<string>> activeFieldsWithConditionnals;
             HashSet<string> activeFields;
             Dictionary<string, string> namedFragments;
             string templatePath;
@@ -459,9 +460,10 @@ namespace UnityEditor.ShaderGraph
             ShaderStringBuilder result;
             List<string> sourceAssetDependencyPaths;
 
-            public TemplatePreprocessor(HashSet<string> activeFields, Dictionary<string, string> namedFragments, bool debugOutput, string templatePath, List<string> sourceAssetDependencyPaths, string buildTypeAssemblyNameFormat, ShaderStringBuilder outShaderCodeResult = null)
+            public TemplatePreprocessor(HashSet<string> activeFields, Dictionary<string, string> namedFragments, bool debugOutput, string templatePath, List<string> sourceAssetDependencyPaths, string buildTypeAssemblyNameFormat, ShaderStringBuilder outShaderCodeResult = null, Dictionary<string, HashSet<string>> activeFieldsWithConditionnals = null)
             {
                 this.activeFields = activeFields;
+                this.activeFieldsWithConditionnals = activeFieldsWithConditionnals;
                 this.namedFragments = namedFragments;
                 this.debugOutput = debugOutput;
                 this.templatePath = templatePath;
@@ -699,9 +701,77 @@ namespace UnityEditor.ShaderGraph
                         else
                         {
                             result.AppendLine("// Generated Type: " + typeName);
-                            ShaderGenerator temp = new ShaderGenerator();
-                            BuildType(type, activeFields, temp);
-                            result.AppendLine(temp.GetShaderString(0, false));
+
+                            if (activeFieldsWithConditionnals != null && activeFieldsWithConditionnals.Count > 0)
+                            {
+                                // Generate for all variants the shader chunk and store it in `variantCache`
+                                var variantCache = DictionaryPool<string, List<string>>.Get();
+                                foreach (var pair in activeFieldsWithConditionnals)
+                                {
+                                    var temp = new ShaderGenerator();
+                                    BuildType(type, pair.Value, temp);
+                                    var generated = temp.GetShaderString(0, false);
+                                    List<string> variants;
+                                    if (variantCache.TryGetValue(generated, out variants))
+                                        variants.Add(pair.Key);
+                                    else
+                                    {
+                                        variants = ListPool<string>.Get();
+                                        variants.Add(pair.Key);
+                                        variantCache.Add(generated, variants);
+                                    }
+                                }
+
+                                // Generate default variant
+                                string defaultGen;
+                                {
+                                    var temp = new ShaderGenerator();
+                                    BuildType(type, activeFields, temp);
+                                    defaultGen = temp.GetShaderString(0, false);
+                                }
+
+                                // Remove variants that generated the same code as the default case
+                                if (variantCache.TryGetValue(defaultGen, out var toRemove))
+                                {
+                                    variantCache.Remove(defaultGen);
+                                    ListPool<string>.Release(toRemove);
+                                }
+
+                                // Generate all variants surrounded by ifdefs
+                                string finalGeneration;
+                                if (variantCache.Count == 0)
+                                    finalGeneration = defaultGen;
+                                else
+                                {
+                                    var isFirst = true;
+                                    foreach (var pair in variantCache)
+                                    {
+                                        result.Append(isFirst ? "#if " : "#elif ");
+                                        isFirst = false;
+                                        var isFirstVariant = true;
+                                        foreach (var variant in pair.Value)
+                                        {
+                                            if (!isFirstVariant)
+                                                result.Append(" && ");
+                                            isFirstVariant = false;
+                                            result.Append("(");
+                                            result.Append(variant);
+                                            result.Append(")");
+                                        }
+                                        result.AppendLine(string.Empty);
+                                        result.AppendLines(pair.Key);
+                                    }
+                                    result.AppendLine("#else");
+                                    result.AppendLines(defaultGen);
+                                    result.AppendLine("#endif");
+                                }
+                            }
+                            else
+                            {
+                                var temp = new ShaderGenerator();
+                                BuildType(type, activeFields, temp);
+                                result.AppendLine(temp.GetShaderString(0, false));
+                            }
                         }
                     }
                 }
@@ -710,19 +780,23 @@ namespace UnityEditor.ShaderGraph
             private bool ProcessPredicate(Token predicate, int endLine, ref int cur, ref bool appendEndln)
             {
                 // eval if(param)
-                string fieldName = predicate.GetString();
-                int nonwhitespace = SkipWhitespace(predicate.s, predicate.end + 1, endLine);
-                if (activeFields.Contains(fieldName))
-                {
-                    // predicate is active
-                    // append everything before the beginning of the escape sequence
-                    AppendSubstring(predicate.s, cur, true, predicate.start-1, false);
+                var fieldName = predicate.GetString();
+                var nonwhitespace = SkipWhitespace(predicate.s, predicate.end + 1, endLine);
 
-                    // continue parsing the rest of the line, starting with the first nonwhitespace character
-                    cur = nonwhitespace;
-                    return true;
+                // Find all variants where the predicate is active
+                var activeVariants = ListPool<string>.Get();
+                if (activeFieldsWithConditionnals != null && activeFieldsWithConditionnals.Count > 0)
+                {
+                    activeVariants.AddRange(activeFieldsWithConditionnals
+                        .Where(p => p.Value.Contains(fieldName))
+                        .Select(p => p.Key));
                 }
-                else
+                // Always insert last the empty variant (else case)
+                if (activeFields.Contains(fieldName))
+                    activeVariants.Add(string.Empty);
+
+                var continueProcessingTheLine = false;
+                if (activeVariants.Count == 0)
                 {
                     // predicate is not active
                     if (debugOutput)
@@ -738,8 +812,45 @@ namespace UnityEditor.ShaderGraph
                         // don't append anything
                         appendEndln = false;
                     }
-                    return false;
                 }
+                else
+                {
+                    var isVariantAlwaysTrue = activeVariants.Any(s => s == string.Empty);
+                    if (isVariantAlwaysTrue)
+                    {
+                        // predicate is active in this variant (this variant can have no condition)
+                        // append everything before the beginning of the escape sequence
+                        AppendSubstring(predicate.s, cur, true, predicate.start-1, false);
+
+                        // continue parsing the rest of the line, starting with the first nonwhitespace character
+                        cur = nonwhitespace;
+                        continueProcessingTheLine = true;
+                    }
+                    else
+                    {
+                        // We have multiple conditionals on this predicate but not the default case
+
+                        // Append the conditions
+                        result.Append("#if ");
+                        for (var i = 0; i < activeVariants.Count; ++i)
+                        {
+                            if (i > 0)
+                                result.Append(" || ");
+                            result.Append($"{activeVariants[i]}");
+                        }
+                        result.AppendLine(string.Empty);
+
+                        // In that case, we include directly the end of the line (commands are not supported with multicompiles)
+                        AppendSubstring(predicate.s, nonwhitespace, true, endLine, false);
+                        result.AppendLine(string.Empty);
+
+                        result.AppendLine("#endif");
+                    }
+                }
+
+                ListPool<string>.Release(activeVariants);
+
+                return continueProcessingTheLine;
             }
 
             private Token ParseIdentifier(string code, int start, int end)
@@ -1147,13 +1258,13 @@ namespace UnityEditor.ShaderGraph
         public static void GenerateSurfaceInputTransferCode(ShaderStringBuilder sb, ShaderGraphRequirements requirements, string structName, string variableName)
         {
             sb.AppendLine($"{structName} {variableName};");
-            
+
             ShaderGenerator.GenerateSpaceTranslationSurfaceInputs(requirements.requiresNormal, InterpolatorType.Normal, sb, $"{variableName}.{{0}} = IN.{{0}};");
             ShaderGenerator.GenerateSpaceTranslationSurfaceInputs(requirements.requiresTangent, InterpolatorType.Tangent, sb, $"{variableName}.{{0}} = IN.{{0}};");
             ShaderGenerator.GenerateSpaceTranslationSurfaceInputs(requirements.requiresBitangent, InterpolatorType.BiTangent, sb, $"{variableName}.{{0}} = IN.{{0}};");
             ShaderGenerator.GenerateSpaceTranslationSurfaceInputs(requirements.requiresViewDir, InterpolatorType.ViewDirection, sb, $"{variableName}.{{0}} = IN.{{0}};");
             ShaderGenerator.GenerateSpaceTranslationSurfaceInputs(requirements.requiresPosition, InterpolatorType.Position, sb, $"{variableName}.{{0}} = IN.{{0}};");
-            
+
             if (requirements.requiresVertexColor)
                 sb.AppendLine($"{variableName}.{ShaderGeneratorNames.VertexColor} = IN.{ShaderGeneratorNames.VertexColor};");
 

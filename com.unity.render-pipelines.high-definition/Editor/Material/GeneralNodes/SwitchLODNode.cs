@@ -20,8 +20,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         const string kInputIdLowName = "Low";
         const string kInputIdMedName = "Med";
         const string kInputIdHighName = "High";
-        const string kKeywordLow = "HDRP_MATERIAL_LOD_LOW";
-        const string kKeywordHigh = "HDRP_MATERIAL_LOD_HIGH";
+        const string kKeywordLow = "MATERIAL_QUALITY_LOW";
+        const string kKeywordHigh = "MATERIAL_QUALITY_HIGH";
 
         public override bool hasPreview { get { return true; } }
 
@@ -55,9 +55,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var outputType = NodeUtils.ConvertConcreteSlotValueTypeToString(precision, slot.concreteValueType);
 
             var result = $@"
-#if HDRP_MATERIAL_LOD_LOW
+#if MATERIAL_QUALITY_LOW
     {outputType} {outputName} = {lowValue};
-#elif HDRP_MATERIAL_LOD_HIGH
+#elif MATERIAL_QUALITY_HIGH
     {outputType} {outputName} = {highValue};
 #else
     {outputType} {outputName} = {medValue};

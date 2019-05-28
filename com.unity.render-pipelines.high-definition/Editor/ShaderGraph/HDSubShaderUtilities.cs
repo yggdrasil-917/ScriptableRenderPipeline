@@ -553,12 +553,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     shaderPassIncludes.AddShaderChunk(include);
             }
 
-            // Function Registry tracks functions to remove duplicates, it wraps a string builder that stores the combined function string
-            // Will contains the function library for all variants.
-            ShaderStringBuilder graphNodeFunctions = new ShaderStringBuilder();
-            graphNodeFunctions.IncreaseIndent();
-            var functionRegistry = new FunctionRegistry(graphNodeFunctions);
-
             // Build the list of active slots based on what the pass requires
             var pixelSlots = HDSubShaderUtilities.FindMaterialSlotsOnNode(pass.PixelShaderSlots, masterNode);
             var vertexSlots = HDSubShaderUtilities.FindMaterialSlotsOnNode(pass.VertexShaderSlots, masterNode);
@@ -577,6 +571,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             const string vertexGraphEvalFunctionName = "VertexDescriptionFunction";
 
             // Output of the per variant code gen
+            string graphNodeFunctionsOut;
             string sharedPropertiesDeclarationsOut;
             string vertexGraphOutputsOut;
             string pixelGraphOutputsOut;
@@ -585,257 +580,313 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             string definesOut;
             ShaderGenerator vertexGraphInputsOut;
             ShaderGenerator pixelGraphInputsOut;
+            HashSet<string> alwaysTrueVariantActiveFields = HashSetPool<string>.Get();
 
-            // structure to contains generated code per variant
-            using (var pixelGraphEvalFunctionPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
-            using (var pixelGraphOutputsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
-            using (var vertexGraphEvalFunctionPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
-            using (var vertexGraphOutputsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
-            using (var pixelGraphInputsPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
-            using (var vertexGraphInputsPerVariant =  KeywordSupport.NewShaderGeneratorPerVariant())
-            using (var definesPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
-            using (var sharedPropertiesDeclarationsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
-            using (var interpolatorDefinesPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
-            // grab all of the active nodes (for pixel and vertex graphs) per variant
-            using (var vertexNodesPerVariant = KeywordSupport.NodesPerVariant.New())
-            using (var pixelNodesPerVariant = KeywordSupport.NodesPerVariant.New())
+            using (UnityEngine.Experimental.Rendering.DictionaryPool<string, HashSet<string>>.Get(
+                out var activeFieldsPerVariant))
             {
-                using (HashSetPool<KeywordSupport.KeywordSet>.Get(out var variants))
+
+                // structure to contains generated code per variant
+                using (var graphNodeFunctionsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+                using (var pixelGraphEvalFunctionPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+                using (var pixelGraphOutputsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+                using (var vertexGraphEvalFunctionPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+                using (var vertexGraphOutputsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+                using (var pixelGraphInputsPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
+                using (var vertexGraphInputsPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
+                using (var definesPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
+                using (var sharedPropertiesDeclarationsPerVariant = KeywordSupport.NewShaderStringBuilderPerVariant())
+                using (var interpolatorDefinesPerVariant = KeywordSupport.NewShaderGeneratorPerVariant())
+                    // grab all of the active nodes (for pixel and vertex graphs) per variant
+                using (var vertexNodesPerVariant = KeywordSupport.NodesPerVariant.New())
+                using (var pixelNodesPerVariant = KeywordSupport.NodesPerVariant.New())
                 {
-                    KeywordSupport.CollectVariantsFor(variants, masterNode, pass.VertexShaderSlots);
-                    KeywordSupport.CollectVariantsFor(variants, masterNode, pass.PixelShaderSlots);
-
-                    KeywordSupport.CollectNodesPerVariantsFor(vertexNodesPerVariant, variants, masterNode, pass.VertexShaderSlots);
-                    KeywordSupport.CollectNodesPerVariantsFor(pixelNodesPerVariant, variants, masterNode, pass.PixelShaderSlots);
-
-                    // release KeywordSets in variants
-                    foreach (var variant in variants)
-                        variant.Dispose();
-                    variants.Clear();
-                }
-
-                // graph requirements describe what the graph itself requires
-                using (var pixelRequirementsPerVariant =
-                    new KeywordSupport.RequirementsPerVariant(pixelNodesPerVariant, masterNode, ShaderStageCapability.Fragment,
-                        false)) // TODO: is ShaderStageCapability.Fragment correct?
-                using (var vertexRequirementsPerVariant =
-                    new KeywordSupport.RequirementsPerVariant(vertexNodesPerVariant, masterNode, ShaderStageCapability.Vertex, false))
-                {
-                    var graphRequirementsPerVariant = pixelRequirementsPerVariant.Union(vertexRequirementsPerVariant);
-
-                    var isFirstVariant = true;
-
-                    foreach (var variant in graphRequirementsPerVariant.keywordSets)
+                    using (HashSetPool<KeywordSupport.KeywordSet>.Get(out var variants))
                     {
-                        var pixelGraphEvalFunction = new ShaderStringBuilder();
-                        var pixelGraphOutputs = new ShaderStringBuilder();
-                        var vertexGraphEvalFunction = new ShaderStringBuilder();
-                        var vertexGraphOutputs = new ShaderStringBuilder();
-                        var pixelGraphInputs = new ShaderGenerator();
-                        var vertexGraphInputs = new ShaderGenerator();
-                        var defines = new ShaderGenerator();
-                        var sharedPropertiesDeclarations = new ShaderStringBuilder();
-                        var interpolatorDefines = new ShaderGenerator();
+                        KeywordSupport.CollectVariantsFor(variants, masterNode, pass.VertexShaderSlots);
+                        KeywordSupport.CollectVariantsFor(variants, masterNode, pass.PixelShaderSlots);
 
-                        var pixelRequirements = pixelRequirementsPerVariant[variant];
-                        var vertexRequirements = vertexRequirementsPerVariant[variant];
-                        var pixelNodes = pixelNodesPerVariant[variant];
-                        var vertexNodes = vertexNodesPerVariant[variant];
-                        var graphRequirements = graphRequirementsPerVariant[variant];
+                        KeywordSupport.CollectNodesPerVariantsFor(vertexNodesPerVariant, variants, masterNode,
+                            pass.VertexShaderSlots);
+                        KeywordSupport.CollectNodesPerVariantsFor(pixelNodesPerVariant, variants, masterNode,
+                            pass.PixelShaderSlots);
 
-                        // TODO: this can be a shared function for all HDRP master nodes -- From here through GraphUtil.GenerateSurfaceDescription(..)
-
-                        // properties used by either pixel and vertex shader
-                        PropertyCollector sharedProperties = new PropertyCollector();
-
-                        // build the graph outputs structure to hold the results of each active slots (and fill out activeFields to indicate they are active)
-
-                        // build initial requirements
-                        HDRPShaderStructs.AddActiveFieldsFromPixelGraphRequirements(activeFields, pixelRequirements);
-
-                        // build the graph outputs structure, and populate activeFields with the fields of that structure
-                        GraphUtil.GenerateSurfaceDescriptionStruct(pixelGraphOutputs, pixelSlots, pixelGraphOutputStructName, activeFields);
-
-                        // Build the graph evaluation code, to evaluate the specified slots
-                        GraphUtil.GenerateSurfaceDescriptionFunction(
-                            pixelNodes,
-                            masterNode,
-                            masterNode.owner as GraphData,
-                            pixelGraphEvalFunction,
-                            functionRegistry,
-                            sharedProperties,
-                            pixelRequirements,  // TODO : REMOVE UNUSED
-                            mode,
-                            pixelGraphEvalFunctionName,
-                            pixelGraphOutputStructName,
-                            null,
-                            pixelSlots,
-                            pixelGraphInputStructName);
-
-                        // check for vertex animation -- enables HAVE_VERTEX_MODIFICATION
-                        if (vertexActive)
-                        {
-                            vertexActive = true;
-                            activeFields.Add("features.modifyMesh");
-                            HDRPShaderStructs.AddActiveFieldsFromVertexGraphRequirements(activeFields, vertexRequirements);
-
-                            // -------------------------------------
-                            // Generate Output structure for Vertex Description function
-                            GraphUtil.GenerateVertexDescriptionStruct(vertexGraphOutputs, vertexSlots, vertexGraphOutputStructName, activeFields);
-
-                            // -------------------------------------
-                            // Generate Vertex Description function
-                            GraphUtil.GenerateVertexDescriptionFunction(
-                                masterNode.owner as GraphData,
-                                vertexGraphEvalFunction,
-                                functionRegistry,
-                                sharedProperties,
-                                mode,
-                                vertexNodes,
-                                vertexSlots,
-                                vertexGraphInputStructName,
-                                vertexGraphEvalFunctionName,
-                                vertexGraphOutputStructName);
-                        }
-
-                        sharedPropertiesDeclarations.AppendLines(sharedProperties.GetPropertiesDeclaration(1, mode));
-
-                        // propagate active field requirements using dependencies
-                        ShaderSpliceUtil.ApplyDependencies(
-                            activeFields,
-                            new List<Dependency[]>()
-                            {
-                                HDRPShaderStructs.FragInputs.dependencies,
-                                HDRPShaderStructs.VaryingsMeshToPS.standardDependencies,
-                                HDRPShaderStructs.SurfaceDescriptionInputs.dependencies,
-                                HDRPShaderStructs.VertexDescriptionInputs.dependencies
-                            });
-
-                        // debug output all active fields
-                        if (debugOutput)
-                        {
-                            interpolatorDefines.AddShaderChunk("// ACTIVE FIELDS:");
-                            foreach (string f in activeFields)
-                            {
-                                interpolatorDefines.AddShaderChunk("//   " + f);
-                            }
-                        }
-
-                        // build graph inputs structures
-                        ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.SurfaceDescriptionInputs), activeFields, pixelGraphInputs);
-                        ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.VertexDescriptionInputs), activeFields, vertexGraphInputs);
-
-                        // Defines
-                        {
-                            defines.AddShaderChunk($"#define SHADERPASS {pass.ShaderPassName}", true);
-                            if (pass.ExtraDefines != null)
-                            {
-                                foreach (var define in pass.ExtraDefines)
-                                    defines.AddShaderChunk(define);
-                            }
-                            if (graphRequirements.requiresDepthTexture)
-                                defines.AddShaderChunk("#define REQUIRE_DEPTH_TEXTURE");
-                            if (graphRequirements.requiresCameraOpaqueTexture)
-                                defines.AddShaderChunk("#define REQUIRE_OPAQUE_TEXTURE");
-                        }
-
-                        pixelGraphEvalFunctionPerVariant.Add(variant, pixelGraphEvalFunction);
-                        pixelGraphOutputsPerVariant.Add(variant, pixelGraphOutputs);
-                        vertexGraphEvalFunctionPerVariant.Add(variant, vertexGraphEvalFunction);
-                        vertexGraphOutputsPerVariant.Add(variant, vertexGraphOutputs);
-                        pixelGraphInputsPerVariant.Add(variant, pixelGraphInputs);
-                        vertexGraphInputsPerVariant.Add(variant, vertexGraphInputs);
-                        definesPerVariant.Add(variant, defines);
-                        sharedPropertiesDeclarationsPerVariant.Add(variant, sharedPropertiesDeclarations);
-                        interpolatorDefinesPerVariant.Add(variant, interpolatorDefines);
+                        // release KeywordSets in variants
+                        foreach (var variant in variants)
+                            variant.Dispose();
+                        variants.Clear();
                     }
 
-                    graphRequirementsPerVariant.Dispose();
-                }
+                    // graph requirements describe what the graph itself requires
+                    using (var pixelRequirementsPerVariant =
+                        new KeywordSupport.RequirementsPerVariant(pixelNodesPerVariant, masterNode,
+                            ShaderStageCapability.Fragment,
+                            false)) // TODO: is ShaderStageCapability.Fragment correct?
+                    using (var vertexRequirementsPerVariant =
+                        new KeywordSupport.RequirementsPerVariant(vertexNodesPerVariant, masterNode,
+                            ShaderStageCapability.Vertex, false))
+                    {
+                        var graphRequirementsPerVariant =
+                            pixelRequirementsPerVariant.Union(vertexRequirementsPerVariant);
 
-                sharedPropertiesDeclarationsOut = KeywordSupport.ToString(sharedPropertiesDeclarationsPerVariant);
-                vertexGraphInputsOut = KeywordSupport.ToGenerator(vertexGraphInputsPerVariant);
-                vertexGraphOutputsOut = KeywordSupport.ToString(vertexGraphOutputsPerVariant);
-                pixelGraphInputsOut = KeywordSupport.ToGenerator(pixelGraphInputsPerVariant);
-                pixelGraphOutputsOut = KeywordSupport.ToString(pixelGraphOutputsPerVariant);
-                vertexGraphEvalFunctionOut = KeywordSupport.ToString(vertexGraphEvalFunctionPerVariant);
-                pixelGraphEvalFunctionOut = KeywordSupport.ToString(pixelGraphEvalFunctionPerVariant);
-                definesOut = definesPerVariant.GetShaderString(2, false) +
+                        foreach (var variant in graphRequirementsPerVariant.keywordSets)
+                        {
+                            var pixelGraphEvalFunction = new ShaderStringBuilder();
+                            var pixelGraphOutputs = new ShaderStringBuilder();
+                            var vertexGraphEvalFunction = new ShaderStringBuilder();
+                            var vertexGraphOutputs = new ShaderStringBuilder();
+                            var pixelGraphInputs = new ShaderGenerator();
+                            var vertexGraphInputs = new ShaderGenerator();
+                            var defines = new ShaderGenerator();
+                            var sharedPropertiesDeclarations = new ShaderStringBuilder();
+                            var interpolatorDefines = new ShaderGenerator();
+                            var graphNodeFunctions = new ShaderStringBuilder();
+                            graphNodeFunctions.IncreaseIndent();
+                            var functionRegistry = new FunctionRegistry(graphNodeFunctions);
+
+                            var pixelRequirements = pixelRequirementsPerVariant[variant];
+                            var vertexRequirements = vertexRequirementsPerVariant[variant];
+                            var pixelNodes = pixelNodesPerVariant[variant];
+                            var vertexNodes = vertexNodesPerVariant[variant];
+                            var graphRequirements = graphRequirementsPerVariant[variant];
+
+                            // TODO: this can be a shared function for all HDRP master nodes -- From here through GraphUtil.GenerateSurfaceDescription(..)
+
+                            // properties used by either pixel and vertex shader
+                            PropertyCollector sharedProperties = new PropertyCollector();
+
+                            // build the graph outputs structure to hold the results of each active slots (and fill out activeFields to indicate they are active)
+
+                            var activeFieldsForThisVariant = HashSetPool<string>.Get();
+                            {
+                                // Duplicate the activeFields for this variant, so one variant does not leak to another.
+                                activeFieldsForThisVariant.UnionWith(activeFields);
+
+                                // build initial requirements
+                                HDRPShaderStructs.AddActiveFieldsFromPixelGraphRequirements(activeFieldsForThisVariant,
+                                    pixelRequirements);
+
+                                // build the graph outputs structure, and populate activeFields with the fields of that structure
+                                GraphUtil.GenerateSurfaceDescriptionStruct(pixelGraphOutputs, pixelSlots,
+                                    pixelGraphOutputStructName, activeFields);
+
+                                // Build the graph evaluation code, to evaluate the specified slots
+                                GraphUtil.GenerateSurfaceDescriptionFunction(
+                                    pixelNodes,
+                                    masterNode,
+                                    masterNode.owner as GraphData,
+                                    pixelGraphEvalFunction,
+                                    functionRegistry,
+                                    sharedProperties,
+                                    pixelRequirements, // TODO : REMOVE UNUSED
+                                    mode,
+                                    pixelGraphEvalFunctionName,
+                                    pixelGraphOutputStructName,
+                                    null,
+                                    pixelSlots,
+                                    pixelGraphInputStructName);
+
+                                // check for vertex animation -- enables HAVE_VERTEX_MODIFICATION
+                                if (vertexActive)
+                                {
+                                    vertexActive = true;
+                                    activeFieldsForThisVariant.Add("features.modifyMesh");
+                                    HDRPShaderStructs.AddActiveFieldsFromVertexGraphRequirements(
+                                        activeFieldsForThisVariant, vertexRequirements);
+
+                                    // -------------------------------------
+                                    // Generate Output structure for Vertex Description function
+                                    GraphUtil.GenerateVertexDescriptionStruct(vertexGraphOutputs, vertexSlots,
+                                        vertexGraphOutputStructName, activeFieldsForThisVariant);
+
+                                    // -------------------------------------
+                                    // Generate Vertex Description function
+                                    GraphUtil.GenerateVertexDescriptionFunction(
+                                        masterNode.owner as GraphData,
+                                        vertexGraphEvalFunction,
+                                        functionRegistry,
+                                        sharedProperties,
+                                        mode,
+                                        vertexNodes,
+                                        vertexSlots,
+                                        vertexGraphInputStructName,
+                                        vertexGraphEvalFunctionName,
+                                        vertexGraphOutputStructName);
+                                }
+
+                                sharedPropertiesDeclarations.AppendLines(
+                                    sharedProperties.GetPropertiesDeclaration(1, mode));
+
+                                // propagate active field requirements using dependencies
+                                ShaderSpliceUtil.ApplyDependencies(
+                                    activeFieldsForThisVariant,
+                                    new List<Dependency[]>()
+                                    {
+                                        HDRPShaderStructs.FragInputs.dependencies,
+                                        HDRPShaderStructs.VaryingsMeshToPS.standardDependencies,
+                                        HDRPShaderStructs.SurfaceDescriptionInputs.dependencies,
+                                        HDRPShaderStructs.VertexDescriptionInputs.dependencies
+                                    });
+
+                                // debug output all active fields
+                                if (debugOutput)
+                                {
+                                    interpolatorDefines.AddShaderChunk("// ACTIVE FIELDS:");
+                                    foreach (string f in activeFieldsForThisVariant)
+                                    {
+                                        interpolatorDefines.AddShaderChunk("//   " + f);
+                                    }
+                                }
+
+                                // build graph inputs structures
+                                ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.SurfaceDescriptionInputs),
+                                    activeFieldsForThisVariant, pixelGraphInputs);
+                                ShaderSpliceUtil.BuildType(typeof(HDRPShaderStructs.VertexDescriptionInputs),
+                                    activeFieldsForThisVariant, vertexGraphInputs);
+                            }
+
+                            // Defines
+                            {
+                                defines.AddShaderChunk($"#define SHADERPASS {pass.ShaderPassName}", true);
+                                if (pass.ExtraDefines != null)
+                                {
+                                    foreach (var define in pass.ExtraDefines)
+                                        defines.AddShaderChunk(define);
+                                }
+
+                                if (graphRequirements.requiresDepthTexture)
+                                    defines.AddShaderChunk("#define REQUIRE_DEPTH_TEXTURE");
+                                if (graphRequirements.requiresCameraOpaqueTexture)
+                                    defines.AddShaderChunk("#define REQUIRE_OPAQUE_TEXTURE");
+                            }
+
+                            pixelGraphEvalFunctionPerVariant.Add(variant, pixelGraphEvalFunction);
+                            pixelGraphOutputsPerVariant.Add(variant, pixelGraphOutputs);
+                            vertexGraphEvalFunctionPerVariant.Add(variant, vertexGraphEvalFunction);
+                            vertexGraphOutputsPerVariant.Add(variant, vertexGraphOutputs);
+                            pixelGraphInputsPerVariant.Add(variant, pixelGraphInputs);
+                            vertexGraphInputsPerVariant.Add(variant, vertexGraphInputs);
+                            definesPerVariant.Add(variant, defines);
+                            sharedPropertiesDeclarationsPerVariant.Add(variant, sharedPropertiesDeclarations);
+                            interpolatorDefinesPerVariant.Add(variant, interpolatorDefines);
+
+                            if (variant.keywords.Count == 0 || variant.keywords.Any(s => s.Length == 0))
+                            {
+                                if (alwaysTrueVariantActiveFields != null)
+                                    HashSetPool<string>.Release(alwaysTrueVariantActiveFields);
+                                alwaysTrueVariantActiveFields = activeFieldsForThisVariant;
+                            }
+                            else
+                            {
+                                var key = variant.ToString();
+
+                                if (activeFieldsPerVariant.TryGetValue(key, out var activeFieldsFromDic)
+                                    && !(activeFieldsFromDic.IsSubsetOf(activeFieldsForThisVariant)
+                                        && activeFieldsFromDic.IsSupersetOf(activeFieldsForThisVariant)))
+                                    throw new Exception($"Unreachable: Variant must have different evaluation ({key} => {activeFieldsFromDic} and {activeFieldsForThisVariant})");
+
+                                activeFieldsPerVariant.Add(key, activeFieldsForThisVariant);
+                            }
+
+                        }
+
+                        graphRequirementsPerVariant.Dispose();
+                    }
+
+                    graphNodeFunctionsOut = KeywordSupport.ToString(graphNodeFunctionsPerVariant);
+                    sharedPropertiesDeclarationsOut = KeywordSupport.ToString(sharedPropertiesDeclarationsPerVariant);
+                    vertexGraphInputsOut = KeywordSupport.ToGenerator(vertexGraphInputsPerVariant);
+                    vertexGraphOutputsOut = KeywordSupport.ToString(vertexGraphOutputsPerVariant);
+                    pixelGraphInputsOut = KeywordSupport.ToGenerator(pixelGraphInputsPerVariant);
+                    pixelGraphOutputsOut = KeywordSupport.ToString(pixelGraphOutputsPerVariant);
+                    vertexGraphEvalFunctionOut = KeywordSupport.ToString(vertexGraphEvalFunctionPerVariant);
+                    pixelGraphEvalFunctionOut = KeywordSupport.ToString(pixelGraphEvalFunctionPerVariant);
+                    definesOut = definesPerVariant.GetShaderString(2, false) +
                                  interpolatorDefinesPerVariant.GetShaderString(2, false);
-            }
+                }
 
-            // build graph code
-            var graph = new ShaderGenerator();
-            {
-                graph.AddShaderChunk("// Shared Graph Properties (uniform inputs)");
-                graph.AddShaderChunk(sharedPropertiesDeclarationsOut);
-
-                if (vertexActive)
+                // build graph code
+                var graph = new ShaderGenerator();
                 {
-                    graph.AddShaderChunk("// Vertex Graph Inputs");
+                    graph.AddShaderChunk("// Shared Graph Properties (uniform inputs)");
+                    graph.AddShaderChunk(sharedPropertiesDeclarationsOut);
+
+                    if (vertexActive)
+                    {
+                        graph.AddShaderChunk("// Vertex Graph Inputs");
+                        graph.Indent();
+                        graph.AddGenerator(vertexGraphInputsOut);
+                        graph.Deindent();
+                        graph.AddShaderChunk("// Vertex Graph Outputs");
+                        graph.Indent();
+                        graph.AddShaderChunk(vertexGraphOutputsOut);
+                        graph.Deindent();
+                    }
+
+                    graph.AddShaderChunk("// Pixel Graph Inputs");
                     graph.Indent();
-                    graph.AddGenerator(vertexGraphInputsOut);
+                    graph.AddGenerator(pixelGraphInputsOut);
                     graph.Deindent();
-                    graph.AddShaderChunk("// Vertex Graph Outputs");
+                    graph.AddShaderChunk("// Pixel Graph Outputs");
                     graph.Indent();
-                    graph.AddShaderChunk(vertexGraphOutputsOut);
+                    graph.AddShaderChunk(pixelGraphOutputsOut);
+                    graph.Deindent();
+
+                    graph.AddShaderChunk("// Shared Graph Node Functions");
+                    graph.AddShaderChunk(graphNodeFunctionsOut);
+
+                    if (vertexActive)
+                    {
+                        graph.AddShaderChunk("// Vertex Graph Evaluation");
+                        graph.Indent();
+                        graph.AddShaderChunk(vertexGraphEvalFunctionOut);
+                        graph.Deindent();
+                    }
+
+                    graph.AddShaderChunk("// Pixel Graph Evaluation");
+                    graph.Indent();
+                    graph.AddShaderChunk(pixelGraphEvalFunctionOut);
                     graph.Deindent();
                 }
 
-                graph.AddShaderChunk("// Pixel Graph Inputs");
-                graph.Indent();
-                graph.AddGenerator(pixelGraphInputsOut);
-                graph.Deindent();
-                graph.AddShaderChunk("// Pixel Graph Outputs");
-                graph.Indent();
-                graph.AddShaderChunk(pixelGraphOutputsOut);
-                graph.Deindent();
-
-                graph.AddShaderChunk("// Shared Graph Node Functions");
-                graph.AddShaderChunk(graphNodeFunctions.ToString());
-
-                if (vertexActive)
+                // build the hash table of all named fragments      TODO: could make this Dictionary<string, ShaderGenerator / string>  ?
+                var namedFragments = new Dictionary<string, string>
                 {
-                    graph.AddShaderChunk("// Vertex Graph Evaluation");
-                    graph.Indent();
-                    graph.AddShaderChunk(vertexGraphEvalFunctionOut);
-                    graph.Deindent();
-                }
+                    {"InstancingOptions", instancingOptions.GetShaderString(0, false)},
+                    {"Defines", definesOut},
+                    {"Graph", graph.GetShaderString(2, false)},
+                    {"LightMode", pass.LightMode},
+                    {"PassName", pass.Name},
+                    {"Includes", shaderPassIncludes.GetShaderString(2, false)},
+                    {"Blending", blendCode.ToString()},
+                    {"Culling", cullCode.ToString()},
+                    {"ZTest", zTestCode.ToString()},
+                    {"ZWrite", zWriteCode.ToString()},
+                    {"ZClip", zClipCode.ToString()},
+                    {"Stencil", stencilCode.ToString()},
+                    {"ColorMask", colorMaskCode.ToString()},
+                    {"LOD", materialOptions.lod.ToString()}
+                };
 
-                graph.AddShaderChunk("// Pixel Graph Evaluation");
-                graph.Indent();
-                graph.AddShaderChunk(pixelGraphEvalFunctionOut);
-                graph.Deindent();
+                // this is the format string for building the 'C# qualified assembly type names' for $buildType() commands
+                var buildTypeAssemblyNameFormat =
+                    "UnityEditor.Experimental.Rendering.HDPipeline.HDRPShaderStructs+{0}, " +
+                    typeof(HDSubShaderUtilities).Assembly.FullName.ToString();
+
+                var sharedTemplatePath = Path.Combine(Path.Combine(HDUtils.GetHDRenderPipelinePath(), "Editor"),
+                    "ShaderGraph");
+                // process the template to generate the shader code for this pass
+                var templatePreprocessor =
+                    new ShaderSpliceUtil.TemplatePreprocessor(alwaysTrueVariantActiveFields, namedFragments, debugOutput,
+                        sharedTemplatePath, sourceAssetDependencyPaths, buildTypeAssemblyNameFormat, activeFieldsWithConditionnals: activeFieldsPerVariant);
+
+                templatePreprocessor.ProcessTemplateFile(templateLocation);
+
+                result.AddShaderChunk(templatePreprocessor.GetShaderCode().ToString(), false);
+
+                foreach (var pair in activeFieldsPerVariant)
+                    HashSetPool<string>.Release(pair.Value);
             }
-
-            // build the hash table of all named fragments      TODO: could make this Dictionary<string, ShaderGenerator / string>  ?
-            Dictionary<string, string> namedFragments = new Dictionary<string, string>();
-            namedFragments.Add("InstancingOptions", instancingOptions.GetShaderString(0, false));
-            namedFragments.Add("Defines", definesOut);
-            namedFragments.Add("Graph", graph.GetShaderString(2, false));
-            namedFragments.Add("LightMode", pass.LightMode);
-            namedFragments.Add("PassName", pass.Name);
-            namedFragments.Add("Includes", shaderPassIncludes.GetShaderString(2, false));
-            namedFragments.Add("Blending", blendCode.ToString());
-            namedFragments.Add("Culling", cullCode.ToString());
-            namedFragments.Add("ZTest", zTestCode.ToString());
-            namedFragments.Add("ZWrite", zWriteCode.ToString());
-            namedFragments.Add("ZClip", zClipCode.ToString());
-            namedFragments.Add("Stencil", stencilCode.ToString());
-            namedFragments.Add("ColorMask", colorMaskCode.ToString());
-            namedFragments.Add("LOD", materialOptions.lod.ToString());
-
-            // this is the format string for building the 'C# qualified assembly type names' for $buildType() commands
-            string buildTypeAssemblyNameFormat = "UnityEditor.Experimental.Rendering.HDPipeline.HDRPShaderStructs+{0}, " + typeof(HDSubShaderUtilities).Assembly.FullName.ToString();
-
-            string sharedTemplatePath = Path.Combine(Path.Combine(HDUtils.GetHDRenderPipelinePath(), "Editor"), "ShaderGraph");
-            // process the template to generate the shader code for this pass
-            ShaderSpliceUtil.TemplatePreprocessor templatePreprocessor =
-                new ShaderSpliceUtil.TemplatePreprocessor(activeFields, namedFragments, debugOutput, sharedTemplatePath, sourceAssetDependencyPaths, buildTypeAssemblyNameFormat);
-
-            templatePreprocessor.ProcessTemplateFile(templateLocation);
-
-            result.AddShaderChunk(templatePreprocessor.GetShaderCode().ToString(), false);
 
             return true;
         }
@@ -1301,13 +1352,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     isFirstAndGroup = false;
 
                     var isFirst = true;
+                    var group = keywordSet.Count > 0;
+                    if (group)
+                        sb.Append("(");
                     foreach (var keyword in keywordSet.Where(s => s.Length > 0))
                     {
+
                         if (!isFirst)
                             sb.Append(" && ");
-                        sb.Append(keyword);
+                        sb.Append($"defined({keyword})");
                         isFirst = false;
                     }
+                    if (group)
+                        sb.Append(")");
                 }
 
                 return sb.ToString();
@@ -1639,6 +1696,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public override bool Equals(object obj)
                 => (obj is KeywordSet set) && Equals(set);
+
+            public override string ToString()
+            {
+                var sb = new StringBuilder();
+                var isFirst = true;
+                foreach (var keyword in m_Keywords.Where(s => s.Length > 0))
+                {
+                    if (!isFirst)
+                        sb.Append(" && ");
+                    sb.Append($"defined({keyword})");
+                    isFirst = false;
+                }
+
+                return sb.ToString();
+            }
         }
 
         public static void DepthFirstCollectNodesFromNodeWithVariants<T>(
