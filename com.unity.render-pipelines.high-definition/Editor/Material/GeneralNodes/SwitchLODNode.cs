@@ -3,11 +3,23 @@ using UnityEditor.Graphing;
 using UnityEngine;
 using UnityEditor.ShaderGraph;
 using System.Collections.Generic;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+using UnityEditor.ShaderGraph.Drawing;
+using System;
+using UnityEditor.Graphing.Util;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+    enum SwitchLOD
+    {
+        Low,
+        Medium,
+        High
+    }
+
     [Title("Math", "HDRP/Material", "Switch LOD")]
-    class SwitchLODNode : AbstractMaterialNode, IGeneratesBodyCode, IGenerateMultiCompile
+    class SwitchLODNode : AbstractMaterialNode, IGeneratesBodyCode, IGenerateMultiCompile, IHasSettings
     {
         List<MaterialSlot> m_TempSlots = new List<MaterialSlot>();
 
@@ -25,11 +37,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override bool hasPreview { get { return true; } }
 
+        // TODO: the previewed LOD should be a propertty of the graph, not of the node
+        internal SwitchLOD previewedLOD;
+
         public SwitchLODNode()
         {
             name = "Switch LOD";
             UpdateNodeAfterDeserialization();
         }
+
+        public VisualElement CreateSettingsElement()
+            => new SwitchLODSettingsView(this);
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
@@ -54,7 +72,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             var outputType = NodeUtils.ConvertConcreteSlotValueTypeToString(precision, slot.concreteValueType);
 
-            var result = $@"
+
+            string result = $@"
 #if MATERIAL_QUALITY_LOW
     {outputType} {outputName} = {lowValue};
 #elif MATERIAL_QUALITY_HIGH
@@ -83,6 +102,36 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 slotIds.Add(InputIdLow);
             else
                 slotIds.Add(InputIdMed);
+        }
+    }
+
+    class SwitchLODSettingsView : VisualElement
+    {
+        SwitchLODNode m_Node;
+
+        public SwitchLODSettingsView(SwitchLODNode node)
+        {
+            m_Node = node;
+            var ps = new PropertySheet();
+            ps.Add(new PropertyRow(new Label("LOD Preview")), row =>
+            {
+                row.Add(new EnumField(SwitchLOD.Medium), field =>
+                {
+                    field.value = m_Node.previewedLOD;
+                    field.RegisterValueChangedCallback(ChangeLOD);
+                });
+            });
+            Add(ps);
+        }
+
+        void ChangeLOD(ChangeEvent<Enum> evt)
+        {
+            if (Equals(m_Node.previewedLOD, evt.newValue))
+                return;
+
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Previewed LOD");
+            m_Node.Dirty(ModificationScope.Graph);
+            m_Node.previewedLOD = (SwitchLOD)evt.newValue;
         }
     }
 }
