@@ -668,7 +668,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                                 // build the graph outputs structure, and populate activeFields with the fields of that structure
                                 GraphUtil.GenerateSurfaceDescriptionStruct(pixelGraphOutputs, pixelSlots,
-                                    pixelGraphOutputStructName, activeFields);
+                                    pixelGraphOutputStructName, activeFieldsForThisVariant);
 
                                 // Build the graph evaluation code, to evaluate the specified slots
                                 GraphUtil.GenerateSurfaceDescriptionFunction(

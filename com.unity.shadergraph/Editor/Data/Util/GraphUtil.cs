@@ -738,9 +738,8 @@ namespace UnityEditor.ShaderGraph
                                 }
 
                                 // Generate all variants surrounded by ifdefs
-                                string finalGeneration;
                                 if (variantCache.Count == 0)
-                                    finalGeneration = defaultGen;
+                                    result.AppendLines(defaultGen);
                                 else
                                 {
                                     var isFirst = true;
