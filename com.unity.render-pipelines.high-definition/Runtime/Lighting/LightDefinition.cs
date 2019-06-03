@@ -79,7 +79,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public int     contactShadowIndex;      // -1 if unused (TODO: 16 bit)
 
         public Vector3 color;
-        public float   minRoughness;            // Hack
+        public int     contactShadowMask;      // 0 if unused (TODO: 16 bit)
 
         public float   shadowDimmer;
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
@@ -119,15 +119,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public CookieMode cookieMode;
         public int     cookieIndex;             // Texture array index of the point and rectangle light cookies
         public int     shadowIndex;             // -1 if unused (TODO: 16 bit)
-#if ENABLE_RAYTRACING
-        // We store the ray traced area shadow index as a negative value inside the contactShadowIndex.
-        // Contact shadows are disabled for area lights and setting the index as negative allows for still
-        // disabling contact shadows in the shader code (checks for => 0)
-        public int     rayTracedAreaShadowIndex { get => -contactShadowIndex; set => contactShadowIndex = -value; }
-#endif
-        public int     contactShadowIndex;      // negative if unused (TODO: 16 bit)
-
+        
         public Vector4 cookieScaleOffset;       // coordinates of the cookie texture in the atlas
+        public int     contactShadowMask;       // negative if unused (TODO: 16 bit)
+
+        // TODO: Instead of doing this, we should pack the ray traced shadow index into the tile cookie for instance
+        public int     rayTracedAreaShadowIndex;
 
         public float   shadowDimmer;
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'

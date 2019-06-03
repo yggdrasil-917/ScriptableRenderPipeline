@@ -17,6 +17,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         proxyMirrorPositionProxySpace = 1 << 8,
         proxyMirrorRotationProxySpace = 1 << 9,
         resolution = 1 << 10,
+        frustumFieldOfViewMode = 1 << 10,
+        frustumFixedValue = 1 << 11,
+        frustumAutomaticScale = 1 << 12,
+        frustumViewerScale = 1 << 13
     }
 
     [Serializable]
@@ -121,6 +125,44 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Quaternion mirrorRotationProxySpace;
         }
 
+        /// <summary>Describe how frustum is handled when rendering probe.</summary>
+        [Serializable]
+        public struct Frustum
+        {
+            public static readonly Frustum @default = new Frustum
+            {
+                fieldOfViewMode = FOVMode.Viewer,
+                fixedValue = 90,
+                automaticScale = 1.0f,
+                viewerScale = 1.0f
+            };
+
+            public enum FOVMode
+            {
+                /// <summary>FOV is fixed, its value is <paramref name="fixedValue"/> in degree.</summary>
+                Fixed,
+                /// <summary>FOV is the one used by the viewer's camera.</summary>
+                Viewer,
+                /// <summary>FOV is computed to encompass the influence volume, then it is multiplied by <paramref name="automaticScale"/>.</summary>
+                Automatic
+            }
+
+            /// <summary>
+            /// Mode to use when computing the field of view.
+            ///
+            /// For planar reflection probes: this value is used.
+            /// For reflection probes: this value is ignored, FOV will be 90°.
+            /// </summary>
+            public FOVMode fieldOfViewMode;
+            /// <summary>Value to use when FOV is fixed.</summary>
+            [Range(0, 180)]
+            public float fixedValue;
+            /// <summary>The automatic value of the FOV is multiplied by this factor at the end.</summary>
+            public float automaticScale;
+            /// <summary>The viewer's FOV is multiplied by this factor at the end.</summary>
+            public float viewerScale;
+        }
+
         /// <summary>Default value.</summary>
         public static ProbeSettings @default = new ProbeSettings
         {
@@ -133,8 +175,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             proxy = null,
             proxySettings = ProxySettings.@default,
             resolution = PlanarReflectionAtlasResolution.PlanarReflectionResolution512,
+            frustum = Frustum.@default
         };
 
+        /// <summary>The way the frustum is handled by the probe.</summary>
+        public Frustum frustum;
         /// <summary>The type of the probe.</summary>
         public ProbeType type;
         /// <summary>The mode of the probe.</summary>
