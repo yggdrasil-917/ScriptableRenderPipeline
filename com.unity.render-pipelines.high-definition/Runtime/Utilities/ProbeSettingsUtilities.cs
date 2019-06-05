@@ -208,11 +208,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
             var mirrorForward = proxyMatrix.MultiplyVector(settings.proxySettings.mirrorRotationProxySpace * Vector3.forward);
 
+            var debug = (UnityEditor.SceneView.sceneViews[0] as UnityEditor.SceneView) ==
+                        UnityEditor.SceneView.currentDrawingSceneView;
+            if (debug)
+                UnityEditor.CameraEditorUtils.DrawFrustumGizmo(UnityEditor.SceneView.currentDrawingSceneView.camera);
             if (visibleInfluenceVolumeBounds == null)
             {
                 visibleInfluenceVolumeBounds = new VolumeBounds();
                 settings.influence.GetBoundsPoints(visibleInfluenceVolumeBounds.pointsWS);
                 visibleInfluenceVolumeBounds.MultiplyPoint(probePosition.influenceToWorld);
+                if (debug)
+                {
+                    for (var i = 0; i < visibleInfluenceVolumeBounds.pointsWS.Count; i++)
+                        Debug.DrawLine(mirrorPosition, visibleInfluenceVolumeBounds.pointsWS[i], Color.red, 1);
+                }
 
                 visibleInfluenceVolumeBounds.ClampWithMatrix(referenceWorldToClip);
             }
@@ -222,6 +231,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 for (var i = 0; i < visibleInfluenceVolumeBounds.pointsWS.Count; i++)
                 {
+                    if (debug)
+                        Debug.DrawLine(mirrorPosition, visibleInfluenceVolumeBounds.pointsWS[i], Color.blue, 1);
                     visibleInfluenceVolumeCenterWS += visibleInfluenceVolumeBounds.pointsWS[i];
                 }
 
