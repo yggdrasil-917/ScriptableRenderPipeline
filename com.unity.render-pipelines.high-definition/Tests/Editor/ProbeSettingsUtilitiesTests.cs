@@ -36,10 +36,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
             var cameraSettings = CameraSettings.@default;
             var cameraPosition = CameraPositionSettings.@default;
 
-            ProbeSettingsUtilities.ApplyMirroredReferenceTransform(
+            ProbeSettingsUtilities.VolumeBounds visibleInfluenceVolumeBounds = null;
+            ProbeSettingsUtilities.ComputeWorldToCameraMatrixForPlanar(
                 ref probeSettings, ref probePosition,
-                ref cameraSettings, ref cameraPosition
+                ref cameraSettings, ref cameraPosition,
+                ref visibleInfluenceVolumeBounds
             );
+            visibleInfluenceVolumeBounds?.Dispose();
 
             Assert.AreEqual(true, cameraSettings.invertFaceCulling);
         }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -6,6 +8,48 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     /// <summary>Utilities for <see cref="ProbeSettings"/></summary>
     public static class ProbeSettingsUtilities
     {
+        internal class VolumeBounds : IDisposable
+        {
+            List<Vector3> m_PointsWS;
+
+            public List<Vector3> pointsWS => m_PointsWS;
+
+            public VolumeBounds()
+            {
+                m_PointsWS = ListPool<Vector3>.Get();
+            }
+
+            public void MultiplyPoint(Matrix4x4 value)
+            {
+                for (var i = 0; i < m_PointsWS.Count; i++)
+                    m_PointsWS[i] = value.MultiplyPoint(m_PointsWS[i]);
+            }
+
+            /// <summary>Constraint the bounds to be inside the clip space provided by the matrix.</summary>
+            public void ClampWithMatrix(Matrix4x4 worldToClip)
+            {
+                var clipToWorld = worldToClip.inverse;
+
+                for (var i = 0; i < m_PointsWS.Count; i++)
+                {
+                    var pointWS = m_PointsWS[i];
+                    var pointWS4 = new Vector4(pointWS.x, pointWS.y, pointWS.z, 1.0f);
+                    var pointCS = worldToClip * pointWS4;
+                    pointCS.x = Mathf.Clamp(pointCS.x / pointCS.w, -1.0f, 1.0f) * pointCS.w;
+                    pointCS.y = Mathf.Clamp(pointCS.y / pointCS.w, -1.0f, 1.0f) * pointCS.w;
+                    pointCS.z = Mathf.Clamp(pointCS.z / pointCS.w, 0, 1.0f) * pointCS.w;
+                    var clampedPointWS4 = clipToWorld * pointCS;
+                    m_PointsWS[i] = new Vector3(clampedPointWS4.x, clampedPointWS4.y, clampedPointWS4.z);
+                }
+            }
+
+            public void Dispose()
+            {
+                ListPool<Vector3>.Release(m_PointsWS);
+                m_PointsWS = null;
+            }
+        }
+
         internal enum PositionMode
         {
             UseProbeTransform,
@@ -25,13 +69,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ref ProbeCapturePositionSettings probePosition,         // In parameter
             ref CameraSettings cameraSettings,                      // InOut parameter
             ref CameraPositionSettings cameraPosition,              // InOut parameter
-            float referenceFieldOfView = 90
+            float referenceFieldOfView = 90,
+            Matrix4x4 referenceWorldToClip = default
         )
         {
             cameraSettings = settings.camera;
             // Compute the modes for each probe type
             PositionMode positionMode;
             bool useReferenceTransformAsNearClipPlane;
+            VolumeBounds visibleInfluenceVolumeBounds = null;
             switch (settings.type)
             {
                 case ProbeSettings.ProbeType.PlanarProbe:
@@ -40,7 +86,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     ApplyPlanarFrustumHandling(
                         ref settings, ref probePosition,
                         ref cameraSettings, ref cameraPosition,
-                        referenceFieldOfView
+                        ref visibleInfluenceVolumeBounds,
+                        referenceFieldOfView,
+                        referenceWorldToClip
                     );
                     break;
                 case ProbeSettings.ProbeType.ReflectionProbe:
@@ -74,9 +122,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 case PositionMode.MirrorReferenceTransformWithProbePlane:
                     {
                         cameraPosition.mode = CameraPositionSettings.Mode.UseWorldToCameraMatrixField;
-                        ApplyMirroredReferenceTransform(
+                        ComputeWorldToCameraMatrixForPlanar(
                             ref settings, ref probePosition,
-                            ref cameraSettings, ref cameraPosition
+                            ref cameraSettings, ref cameraPosition,
+                            ref visibleInfluenceVolumeBounds,
+                            referenceWorldToClip
                         );
                         break;
                     }
@@ -113,25 +163,75 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cameraSettings.renderingPathCustomFrameSettingsOverrideMask.mask[(int)FrameSettingsField.SpecularLighting] = true;
                     break;
             }
+
+            visibleInfluenceVolumeBounds?.Dispose();
         }
 
-        internal static void ApplyMirroredReferenceTransform(
+        /// <summary>
+        /// Compute the world to camera matrix used to capture a planar reflection.
+        ///
+        /// When sampling into a planar reflection, we will sample texels that are in the direction
+        /// of reflected lights by the meshes inside the influence volume of the probe.
+        ///
+        /// So we try to compute a direction for the capture camera that will capture as much as possible
+        /// lights rays that can be reflected to the viewer's camera.
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <param name="probePosition"></param>
+        /// <param name="cameraSettings"></param>
+        /// <param name="cameraPosition"></param>
+        internal static void ComputeWorldToCameraMatrixForPlanar(
             ref ProbeSettings settings,                             // In Parameter
             ref ProbeCapturePositionSettings probePosition,         // In parameter
             ref CameraSettings cameraSettings,                      // InOut parameter
-            ref CameraPositionSettings cameraPosition               // InOut parameter
+            ref CameraPositionSettings cameraPosition,              // InOut parameter
+            ref VolumeBounds visibleInfluenceVolumeBounds,          // InOut parameter
+            Matrix4x4 referenceWorldToClip = default
         )
         {
+            // The capture camera should capture all light rays incoming on the visible influence volume.
+            // The visible influence volume is the intersection of the influence volume of the probe with the
+            // viewer's camera frustum
+
+            // To approximate the visible volume bounds, we do:
+            //   1. Get several points on the surface of the influence volume (ex: 6 points on sphere, 8 vertices of a box)
+            //   2. Compute the clip space coordinate with viewer's matrices
+            //   3. Clamp the clip space coordinates in range ([-1..1]x[-1..1]x[0..1])
+            //   4. Convert back to the world space coordinates
+            // This way, we "project" the influence volume bounds vertices on the frustum of the viewer's camera.
+
+            // Then we can compute the center of mass of those bounds.
+            // This will be the direction we will be looking at when capturing the planar probe
+
             // Calculate mirror position and forward world space
             var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
             var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
             var mirrorForward = proxyMatrix.MultiplyVector(settings.proxySettings.mirrorRotationProxySpace * Vector3.forward);
 
+            if (visibleInfluenceVolumeBounds == null)
+            {
+                visibleInfluenceVolumeBounds = new VolumeBounds();
+                settings.influence.GetBoundsPoints(visibleInfluenceVolumeBounds.pointsWS);
+                visibleInfluenceVolumeBounds.MultiplyPoint(probePosition.influenceToWorld);
+
+                visibleInfluenceVolumeBounds.ClampWithMatrix(referenceWorldToClip);
+            }
+
+            var visibleInfluenceVolumeCenterWS = Vector3.zero;
+            if (visibleInfluenceVolumeBounds.pointsWS.Count > 0)
+            {
+                for (var i = 0; i < visibleInfluenceVolumeBounds.pointsWS.Count; i++)
+                {
+                    visibleInfluenceVolumeCenterWS += visibleInfluenceVolumeBounds.pointsWS[i];
+                }
+
+                visibleInfluenceVolumeCenterWS /= visibleInfluenceVolumeBounds.pointsWS.Count;
+            }
+
             var worldToCameraRHS = GeometryUtils.CalculateWorldToCameraMatrixRHS(
                 probePosition.referencePosition,
-                //probePosition.referenceRotation
-                // The capture always look at the center of the probe influence
-                Quaternion.LookRotation(mirrorPosition - probePosition.referencePosition, Vector3.up)
+                // The capture always look at the center of the visible probe influence volume
+                Quaternion.LookRotation(visibleInfluenceVolumeCenterWS - probePosition.referencePosition, Vector3.up)
             );
             var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(mirrorPosition, mirrorForward);
             cameraPosition.worldToCameraMatrix = worldToCameraRHS * reflectionMatrix;
@@ -150,7 +250,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ref ProbeCapturePositionSettings probePosition,         // In parameter
             ref CameraSettings cameraSettings,                      // InOut parameter
             ref CameraPositionSettings cameraPosition,              // InOut parameter
-            float referenceFieldOfView
+            ref VolumeBounds visibleInfluenceBounds,                // InOut parameter
+            float referenceFieldOfView,
+            Matrix4x4 referenceWorldToClip
         )
         {
             const float k_MaxFieldOfView = 170;
@@ -170,12 +272,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     );
                     break;
                 case ProbeSettings.Frustum.FOVMode.Automatic:
+                    if (visibleInfluenceBounds == null)
+                    {
+                        // See ComputeWorldToCameraMatrixForPlanar
+                        // for an explanation of the visible influence bounds
+                        visibleInfluenceBounds = new VolumeBounds();
+                        settings.influence.GetBoundsPoints(visibleInfluenceBounds.pointsWS);
+                        visibleInfluenceBounds.MultiplyPoint(probePosition.influenceToWorld);
+                        visibleInfluenceBounds.ClampWithMatrix(referenceWorldToClip);
+                    }
+
                     // Dynamic FOV tries to adapt the FOV to have maximum usage of the target render texture
                     //     (A lot of pixel can be discarded in the render texture). This way we can have a greater
                     //     resolution for the planar with the same cost.
                     cameraSettings.frustum.fieldOfView = Mathf.Min(
-                            settings.influence.ComputeFOVAt(
-                            probePosition.referencePosition, mirrorPosition, probePosition.influenceToWorld
+                            InfluenceVolume.ComputeFOVAt(
+                            probePosition.referencePosition, mirrorPosition, visibleInfluenceBounds.pointsWS
                         ) * settings.frustum.automaticScale,
                             k_MaxFieldOfView
                     );

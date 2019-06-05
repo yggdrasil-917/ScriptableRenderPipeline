@@ -167,7 +167,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool forceFlipY = false,
             bool forceInvertBackfaceCulling = false,
             uint staticFlags = 0,
-            float referenceFieldOfView = 90
+            HDCamera referenceCamera = null
         )
         {
             Render(
@@ -176,7 +176,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 forceFlipY,
                 forceInvertBackfaceCulling,
                 staticFlags,
-                referenceFieldOfView
+                referenceCamera
             );
         }
 
@@ -192,14 +192,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void GenerateRenderingSettingsFor(
             ProbeSettings settings, ProbeCapturePositionSettings position,
             List<CameraSettings> cameras, List<CameraPositionSettings> cameraPositions,
-            bool forceFlipY = false, float referenceFieldOfView = 90
+            bool forceFlipY = false, HDCamera referenceCamera = null
         )
         {
             // Copy settings
             ComputeCameraSettingsFromProbeSettings(
                 settings, position,
                 out var cameraSettings, out var cameraPositionSettings,
-                referenceFieldOfView
+                referenceCamera
             );
 
             if (forceFlipY)
@@ -234,7 +234,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ProbeCapturePositionSettings position,
             out CameraSettings cameraSettings,
             out CameraPositionSettings cameraPositionSettings,
-            float referenceFieldOfView = 90
+            HDCamera referenceCamera = null
         )
         {
             // Copy settings
@@ -245,7 +245,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ProbeSettingsUtilities.ApplySettings(
                 ref settings, ref position,
                 ref cameraSettings, ref cameraPositionSettings,
-                referenceFieldOfView
+                referenceCamera?.camera?.fieldOfView ?? 90,
+                referenceCamera?.camera?.projectionMatrix * referenceCamera?.camera?.worldToCameraMatrix ?? Matrix4x4.identity
             );
         }
 
@@ -258,13 +259,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool forceFlipY = false,
             bool forceInvertBackfaceCulling = false,
             uint staticFlags = 0,
-            float referenceFieldOfView = 90
+            HDCamera referenceCamera = null
         )
         {
             // Copy settings
             ComputeCameraSettingsFromProbeSettings(
                 settings, position,
-                out cameraSettings, out cameraPositionSettings
+                out cameraSettings, out cameraPositionSettings,
+                referenceCamera
             );
 
             if (forceFlipY)

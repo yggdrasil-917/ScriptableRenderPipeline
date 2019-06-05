@@ -1179,12 +1179,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 visibleProbe,
                                 viewerTransform,
                                 Enumerable.Repeat(visibleInIndex, 1),
-                                visibleInRenderRequest.hdCamera.camera.fieldOfView
+                                visibleInRenderRequest.hdCamera
                             );
                         }
                     }
                     else
-                        AddHDProbeRenderRequests(visibleProbe, null, visibleInIndices);
+                        AddHDProbeRenderRequests(visibleProbe, null, visibleInIndices, null);
                 }
                 foreach (var pair in renderRequestIndicesWhereTheProbeIsVisible)
                     ListPool<int>.Release(pair.Value);
@@ -1195,7 +1195,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     HDProbe visibleProbe,
                     Transform viewerTransform,
                     IEnumerable<int> visibleInIndices,
-                    float referenceFieldOfView = 90
+                    HDCamera referenceCamera
                 )
                 {
                     var position = ProbeCapturePositionSettings.ComputeFrom(
@@ -1207,7 +1207,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     HDRenderUtilities.GenerateRenderingSettingsFor(
                         visibleProbe.settings, position,
                         cameraSettings, cameraPositionSettings,
-                        referenceFieldOfView: referenceFieldOfView
+                        referenceCamera: referenceCamera
                     );
 
                     switch (visibleProbe.type)

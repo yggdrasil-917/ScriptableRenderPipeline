@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine.Serialization;
 using UnityEngine.Experimental.Rendering;
 
@@ -219,43 +220,48 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ///     while looking at <paramref name="lookAtPositionWS"/>.
         /// </summary>
         /// <returns></returns>
-        public float ComputeFOVAt(Vector3 viewerPositionWS, Vector3 lookAtPositionWS, Matrix4x4 influenceToWorld)
+        public static float ComputeFOVAt(Vector3 viewerPositionWS, Vector3 lookAtPositionWS, List<Vector3> boundsWS)
         {
-            void GrowFOVToInclude(ref float fieldOfView, Vector3 positionWS)
-            {
-                var halfFOV = Vector3.Angle(lookAtPositionWS - viewerPositionWS, positionWS - viewerPositionWS);
-                fieldOfView = Mathf.Max(halfFOV * 2, fieldOfView);
-            }
-
             float fov = 0;
 
-
-            switch (envShape)
+            foreach (var boundWS in boundsWS)
             {
-                case EnvShapeType.Box:
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(+boxSize.x, -boxSize.y, -boxSize.z)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(+boxSize.x, -boxSize.y, +boxSize.z)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(+boxSize.x, +boxSize.y, -boxSize.z)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(+boxSize.x, +boxSize.y, +boxSize.z)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-boxSize.x, -boxSize.y, -boxSize.z)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-boxSize.x, -boxSize.y, +boxSize.z)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-boxSize.x, +boxSize.y, -boxSize.z)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-boxSize.x, +boxSize.y, +boxSize.z)));
-                    break;
-                case EnvShapeType.Sphere:
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(+sphereRadius * 2, 0, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-sphereRadius * 2, 0, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, +sphereRadius * 2, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, -sphereRadius * 2, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, 0, +sphereRadius * 2)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, 0, -sphereRadius * 2)));
-                    break;
-                default:
-                    fov = 90;
-                    break;
+                var halfFOV = Vector3.Angle(lookAtPositionWS - viewerPositionWS, boundWS - viewerPositionWS);
+                fov = Mathf.Max(halfFOV * 2, fov);
             }
 
             return fov;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="boundsOS">(out) bounds in influence space</param>
+        internal void GetBoundsPoints(List<Vector3> boundsIS)
+        {
+            switch (envShape)
+            {
+                case EnvShapeType.Box:
+                    boundsIS.Add(new Vector3(+boxSize.x, +boxSize.y, +boxSize.z) * 0.5f);
+                    boundsIS.Add(new Vector3(+boxSize.x, +boxSize.y, -boxSize.z) * 0.5f);
+                    boundsIS.Add(new Vector3(+boxSize.x, -boxSize.y, +boxSize.z) * 0.5f);
+                    boundsIS.Add(new Vector3(+boxSize.x, -boxSize.y, -boxSize.z) * 0.5f);
+                    boundsIS.Add(new Vector3(-boxSize.x, +boxSize.y, +boxSize.z) * 0.5f);
+                    boundsIS.Add(new Vector3(-boxSize.x, +boxSize.y, -boxSize.z) * 0.5f);
+                    boundsIS.Add(new Vector3(-boxSize.x, -boxSize.y, +boxSize.z) * 0.5f);
+                    boundsIS.Add(new Vector3(-boxSize.x, -boxSize.y, -boxSize.z) * 0.5f);
+                    break;
+                case EnvShapeType.Sphere:
+                    boundsIS.Add(new Vector3(+sphereRadius * 2, 0, 0));
+                    boundsIS.Add(new Vector3(-sphereRadius * 2, 0, 0));
+                    boundsIS.Add(new Vector3(0, +sphereRadius * 2, 0));
+                    boundsIS.Add(new Vector3(0, -sphereRadius * 2, 0));
+                    boundsIS.Add(new Vector3(0, 0, +sphereRadius * 2));
+                    boundsIS.Add(new Vector3(0, 0, -sphereRadius * 2));
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
