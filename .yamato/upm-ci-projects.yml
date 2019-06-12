@@ -62,7 +62,7 @@ all_project_ci:
   triggers:
     branches:
       only:
-        - master
+        - trying
   artifacts:
     logs.zip:
       paths:
