@@ -413,6 +413,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Material[] m_deferredLightingMaterial;
         Material m_DebugViewTilesMaterial;
         Material m_DebugHDShadowMapMaterial;
+        Material m_CubeToPanoMaterial;
 
         Light m_CurrentSunLight;
         int m_CurrentShadowSortedSunLightIndex = -1;
@@ -549,7 +550,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Env2DAtlasScaleOffset.Add(Vector4.zero);
             }
 
-            GlobalLightLoopSettings gLightLoopSettings = hdAsset.currentPlatformRenderPipelineSettings.lightLoopSettings;
+            GlobalLightLoopSettings gLightLoopSettings = m_Asset.currentPlatformRenderPipelineSettings.lightLoopSettings;
 
             // Allocate cookie atlas and cube map
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
@@ -563,7 +564,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cookieCubeSize = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, cookieCubeResolution, 1);
 
             // Create the cookie manager
-            m_LightCookieManager = new LightCookieManager(hdAsset, k_MaxCacheSize);
+            m_LightCookieManager = new LightCookieManager(m_Asset, k_MaxCacheSize);
 
             // For regular reflection probes, we need to convolve with all the BSDF functions
             TextureFormat probeCacheFormat = lightLoopSettings.reflectionCacheCompressed ? TextureFormat.BC6H : TextureFormat.RGBAHalf;
@@ -576,7 +577,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // For planar reflection we only convolve with the GGX filter, otherwise it would be too expensive
             GraphicsFormat planarProbeCacheFormat = gLightLoopSettings.planarReflectionCacheCompressed ? GraphicsFormat.RGB_BC6H_UFloat : GraphicsFormat.R16G16B16A16_UNorm;
             int reflectionPlanarAtlasSize = (int)gLightLoopSettings.planarReflectionAtlasSize;
-            m_ReflectionPlanarProbeCache = new PlanarReflectionProbeCache(hdAsset, (IBLFilterGGX)iBLFilterBSDFArray[0], reflectionPlanarAtlasSize, planarProbeCacheFormat, true);
+            m_ReflectionPlanarProbeCache = new PlanarReflectionProbeCache(m_Asset, (IBLFilterGGX)iBLFilterBSDFArray[0], reflectionPlanarAtlasSize, planarProbeCacheFormat, true);
 
             s_GenAABBKernel = buildScreenAABBShader.FindKernel("ScreenBoundsAABB");
             s_GenAABBKernel_Oblique = buildScreenAABBShader.FindKernel("ScreenBoundsAABB_Oblique");

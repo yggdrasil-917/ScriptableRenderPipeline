@@ -89,6 +89,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
         
         public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
+        public float   minRoughness;            // Hack
     };
 
     [GenerateHLSL(PackingRules.Exact, false)]

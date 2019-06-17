@@ -225,7 +225,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             probe = ProbeSettingsFields.frustumFieldOfViewMode
                 | ProbeSettingsFields.frustumAutomaticScale
                 | ProbeSettingsFields.frustumViewerScale
-                | ProbeSettingsFields.frustumFixedValue,
+                | ProbeSettingsFields.frustumFixedValue
                 | ProbeSettingsFields.resolution,
             camera = new CameraSettingsOverride
             {
