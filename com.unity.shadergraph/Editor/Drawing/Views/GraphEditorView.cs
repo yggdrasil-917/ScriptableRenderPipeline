@@ -687,6 +687,15 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.AddElement(tokenNode);
                 nodeView = tokenNode;
             }
+            // @SamH: Temp to test redirect nodes
+            else if (node is RedirectNodeData)
+            {
+                var redirectNodeView = new RedirectNodeView { userData = materialNode };
+                m_GraphView.AddElement(redirectNodeView);
+                redirectNodeView.Initialize(materialNode, m_PreviewManager, m_EdgeConnectorListener, graphView);
+                //m_ColorManager.UpdateNodeView(materialNodeView);
+                nodeView = redirectNodeView;
+            }
             else
             {
                 var materialNodeView = new MaterialNodeView {userData = materialNode};
