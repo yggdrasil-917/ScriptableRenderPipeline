@@ -193,7 +193,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             if(evt.target is Edge)
             {
                 evt.menu.AppendSeparator();
-                evt.menu.AppendAction("Add Redirector", (e) => AddRedirectNode(evt.target as Edge, evt.localMousePosition));
+
+                var target = evt.target as Edge;
+                var pos = evt.localMousePosition;
+                evt.menu.AppendAction("Add Redirector", (e) => AddRedirectNode(target, pos));
             }
         }
 
