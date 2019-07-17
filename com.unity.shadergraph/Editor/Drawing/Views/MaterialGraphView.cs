@@ -189,6 +189,12 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
                 evt.menu.AppendSeparator();
             }
+
+            if(evt.target is Edge)
+            {
+                evt.menu.AppendSeparator();
+                evt.menu.AppendAction("Add Redirector", (e) => AddRedirectNode(evt.target as Edge, evt.localMousePosition));
+            }
         }
 
         private void InitializeViewSubMenu(ContextualMenuPopulateEvent evt)
@@ -308,6 +314,34 @@ namespace UnityEditor.ShaderGraph.Drawing
             graph.AddStickyNote(stickyNoteData);
         }
 
+        public void AddRedirectNode(Edge edge, Vector2 pos)
+        {
+            // Make a new Redirect Node
+            AbstractMaterialNode nodeData = new RedirectNodeData();
+            var drawstate = nodeData.drawState;
+            drawstate.position = new Rect(pos, Vector2.zero);
+            nodeData.drawState = drawstate;
+
+            graph.owner.RegisterCompleteObjectUndo("Add " + nodeData.name);
+            graph.AddNode(nodeData);
+
+            // Sanity check
+            if (edge != null)
+            {
+                var edge_outSlot = edge.output.GetSlot();
+                var edge_inSlot = edge.input.GetSlot();
+
+                var edge_outSlotRef = edge_outSlot.owner.GetSlotReference(edge_outSlot.id);
+                var edge_inSlotRef = edge_inSlot.owner.GetSlotReference(edge_inSlot.id);
+
+                // @SamH: HACKY!!! BAD!! Hard-coded nonsense :blep:
+                var node_inSlotRef = nodeData.GetSlotReference(0);
+                var node_outSlotRef = nodeData.GetSlotReference(1);
+
+                graph.Connect(edge_outSlotRef, node_inSlotRef);
+                graph.Connect(node_outSlotRef, edge_inSlotRef);
+            }
+        }
 
         void RemoveFromGroupNode(DropdownMenuAction action)
         {
