@@ -1,18 +1,10 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
-using System.Reflection;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
-using System.Reflection;
 
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing;
 using UnityEditor.Experimental.GraphView;
-using UnityEditor.ShaderGraph.Drawing.Controls;
-
-using Edge = UnityEditor.Experimental.GraphView.Edge;
 
 namespace UnityEditor.ShaderGraph
 {
@@ -68,15 +60,6 @@ namespace UnityEditor.ShaderGraph
             {
 
             }
-
-            //if(evt.target is Edge)
-            //{
-            //    if (evt.clickCount == 2 && evt.button == 0)
-            //    {
-            //        var mGraph = m_GraphView as MaterialGraphView;
-            //        mGraph.AddRedirectNode(evt.target as Edge, evt.localMousePosition);
-            //    }
-            //}
         }
 
         #region Helper functions

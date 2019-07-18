@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.ShaderGraph.Drawing.Colors;
 using UnityEngine.UIElements;
-using Edge = UnityEditor.Experimental.GraphView.Edge;
+using Edge = UnityEditor.ShaderGraph.Drawing.EdgeView;
 
 
 namespace UnityEditor.ShaderGraph.Drawing
