@@ -337,7 +337,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var edge_outSlotRef = edge_outSlot.owner.GetSlotReference(edge_outSlot.id);
                 var edge_inSlotRef = edge_inSlot.owner.GetSlotReference(edge_inSlot.id);
 
-                // @SamH: HACKY!!! BAD!! Hard-coded nonsense :blep:
+                // @SamH: Hard-coded single input-output?
                 var node_inSlotRef = nodeData.GetSlotReference(0);
                 var node_outSlotRef = nodeData.GetSlotReference(1);
 
