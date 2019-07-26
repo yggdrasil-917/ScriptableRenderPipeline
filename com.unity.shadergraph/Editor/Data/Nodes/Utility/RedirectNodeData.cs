@@ -25,7 +25,7 @@ namespace UnityEditor.ShaderGraph
 
             //Set the default state to collapsed
             DrawState temp = drawState;
-            temp.expanded = false;
+            temp.expanded = true;
             drawState = temp;
         }
 
