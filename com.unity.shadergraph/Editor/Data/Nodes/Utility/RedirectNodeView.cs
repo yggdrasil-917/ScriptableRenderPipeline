@@ -28,15 +28,15 @@ namespace UnityEditor.ShaderGraph
 
             // Set references
             node = inNode;
-            title = node.name;
+            title = node.name;  
             m_GraphView = graphView;
             m_ConnectorListener = connectorListener;
 
             viewDataKey = node.guid.ToString();
 
             // Expanded state
-            base.expanded = node.drawState.expanded;
-            RefreshExpandedState(); //This should not be needed. GraphView needs to improve the extension api here
+            //base.expanded = node.drawState.expanded;
+            //RefreshExpandedState(); //This should not be needed. GraphView needs to improve the extension api here
 
             SetPosition(new Rect(node.drawState.position.x, node.drawState.position.y, 0, 0));
             AddSlots(node.GetSlots<MaterialSlot>());
