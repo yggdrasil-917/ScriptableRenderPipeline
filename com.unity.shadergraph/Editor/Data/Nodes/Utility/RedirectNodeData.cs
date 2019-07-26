@@ -29,25 +29,6 @@ namespace UnityEditor.ShaderGraph
             drawState = temp;
         }
 
-        //public virtual void AddPortPair(int index = -1)
-        //{
-        //    AddSlot(new DynamicValueMaterialSlot(m_inSlotID, m_inSlotName, m_inSlotName, SlotType.Input, Matrix4x4.zero));
-        //    AddSlot(new DynamicValueMaterialSlot(m_outSlotID, m_outSlotName, m_outSlotName, SlotType.Output, Matrix4x4.zero));
-        //}
-
-        //public void OnDelete()
-        //{
-        //    // @SamH: hard-coded single case
-        //    var node_inSlotRef = GetSlotReference(0);
-        //    var node_outSlotRef = GetSlotReference(1);
-        //    
-        //    foreach (var inEdge in owner.GetRemovedEdges(node_inSlotRef))
-        //    {
-        //        foreach (var outEdge in owner.GetRemovedEdges(node_outSlotRef))
-        //            owner.Connect(inEdge.outputSlot, outEdge.inputSlot);
-        //    }
-        //}
-
         protected override MethodInfo GetFunctionToConvert()
         {
             return GetType().GetMethod("Unity_Redirect", BindingFlags.Static | BindingFlags.NonPublic);

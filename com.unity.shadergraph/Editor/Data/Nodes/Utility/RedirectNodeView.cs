@@ -22,7 +22,6 @@ namespace UnityEditor.ShaderGraph
         {
             // Styling
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/RedirectNodeView"));
-            AddToClassList("redirect-node");
 
             if (inNode == null)
                 return;
@@ -41,34 +40,12 @@ namespace UnityEditor.ShaderGraph
 
             SetPosition(new Rect(node.drawState.position.x, node.drawState.position.y, 0, 0));
             AddSlots(node.GetSlots<MaterialSlot>());
-
-            //callbacks
-            RegisterCallback<MouseDownEvent>(OnMouseDownEvent);
         }
 
         ///////////////////////////////////////////////////////////
         /// Callbacks
         ///////////////////////////////////////////////////////////
-        void OnMouseDownEvent(MouseDownEvent evt)
-        {
-            if (expanded == true)
-                return;
-
-            var inSlot = node.GetSlotReference(0);
-            var inNode = node.owner.GetNodeFromGuid(inSlot.nodeGuid);
-            if (inNode != null)
-            {
-
-            }
-        }
-
         #region Helper functions
-        //private void AddPortPair(Type type, int key = -1)
-        //{
-        //    var data = userData as RedirectNodeData;
-        //    data.AddPortPair();
-        //}
-
         void AddSlots(IEnumerable<MaterialSlot> slots)
         {
             foreach (var slot in slots)
