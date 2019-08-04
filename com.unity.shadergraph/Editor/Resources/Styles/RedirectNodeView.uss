@@ -118,6 +118,8 @@
 }
 
 .node.vertical #node-border {
+    width: 27px;
+    height: 57px;
     flex-direction: column;
     margin: 0px;
     border-radius: 8px;
@@ -137,12 +139,13 @@
 .node.vertical #contents > #top > #input {
     height: 50%;
     width: 100%;
-    padding-top: 1px;
+    padding-top: 0px;
     padding-left: 4px;
 }
 
 .node.vertical #contents > #top > #output {
-    height: 50%;
+    height: 100%;
     width: 100%;
     padding-right: 3px;
+    padding-top: 5px;
 }
