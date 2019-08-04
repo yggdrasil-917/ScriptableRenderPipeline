@@ -22,7 +22,8 @@ namespace UnityEditor.ShaderGraph
         {
             // Styling
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/RedirectNodeView"));
-
+            AddToClassList("vertical");
+            
             if (inNode == null)
                 return;
 
