@@ -12,7 +12,7 @@ platforms:
 mobiles:
   - name: Android
     type: Unity::mobile::android
-    image: mobile/android-execution:stable
+    image: mobile/android-execution:latest
     flavor: b1.large
 testplatforms:
   - name: Standalone
