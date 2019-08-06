@@ -5,48 +5,44 @@ using UnityEngine.UIElements;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing;
 using UnityEditor.Experimental.GraphView;
+using Edge = UnityEditor.Experimental.GraphView.Edge;
 
 namespace UnityEditor.ShaderGraph
 {
-    class RedirectNodeView : Node, IShaderNodeView
+    class RedirectNodeView : RedirectNode, IShaderNodeView
     {
         IEdgeConnectorListener m_ConnectorListener;
         VisualElement m_TitleContainer;
         GraphView m_GraphView;
 
-        public RedirectNodeView()
+        public RedirectNodeView() : base()
         {
+        }
+
+        public override void InitializeFromEdge(Edge edge)
+        {
+            orientation = edge.output.orientation;
         }
 
         public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener, GraphView graphView)
         {
-            // Styling
-            styleSheets.Add(Resources.Load<StyleSheet>("Styles/RedirectNodeView"));
-
             if (inNode == null)
                 return;
-
+            
             // Set references
             node = inNode;
-            title = node.name;  
+            title = node.name;
             m_GraphView = graphView;
             m_ConnectorListener = connectorListener;
 
             viewDataKey = node.guid.ToString();
-
-            // Expanded state
-            //base.expanded = node.drawState.expanded;
-            //RefreshExpandedState(); //This should not be needed. GraphView needs to improve the extension api here
-
+        
             SetPosition(new Rect(node.drawState.position.x, node.drawState.position.y, 0, 0));
             AddSlots(node.GetSlots<MaterialSlot>());
         }
 
-        ///////////////////////////////////////////////////////////
-        /// Callbacks
-        ///////////////////////////////////////////////////////////
         #region Helper functions
-        void AddSlots(IEnumerable<MaterialSlot> slots)
+        public void AddSlots(IEnumerable<MaterialSlot> slots)
         {
             foreach (var slot in slots)
             {
@@ -89,13 +85,6 @@ namespace UnityEditor.ShaderGraph
         }
 
         public void ResetColor()
-        {
-
-        }
-        #endregion
-
-        #region Node class overrides
-        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
 
         }

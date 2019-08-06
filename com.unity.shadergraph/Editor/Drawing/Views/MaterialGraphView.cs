@@ -189,15 +189,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
                 evt.menu.AppendSeparator();
             }
-
-            if(evt.target is Edge)
-            {
-                evt.menu.AppendSeparator();
-
-                var target = evt.target as Edge;
-                var pos = evt.localMousePosition;
-                evt.menu.AppendAction("Add Redirector", e => AddRedirectNode(target, e.eventInfo.localMousePosition));
-            }
         }
 
         private void InitializeViewSubMenu(ContextualMenuPopulateEvent evt)
@@ -317,16 +308,32 @@ namespace UnityEditor.ShaderGraph.Drawing
             graph.AddStickyNote(stickyNoteData);
         }
 
-        public void AddRedirectNode(Edge edge, Vector2 pos)
+        public override bool CanUseRedirect()
         {
-            // Make a new Redirect Node
-            AbstractMaterialNode nodeData = new RedirectNodeData();
-            var drawstate = nodeData.drawState;
-            drawstate.position = new Rect(pos, Vector2.zero);
-            nodeData.drawState = drawstate;
+            return true;
+        }
 
-            graph.owner.RegisterCompleteObjectUndo("Add " + nodeData.name);
+        protected override RedirectNode CreateNewRedirectNode(Vector2 pos)
+        {
+            var nodeData = new RedirectNodeData();
+            var node = new RedirectNodeView { userData = nodeData };
+            nodeData.nodeView = node;
+
+            var offset = node.GetOffset();
+            Rect newPos = new Rect(pos + offset, Vector2.zero);
+
+            DrawState temp = nodeData.drawState;
+            temp.position = newPos;
+            nodeData.drawState = temp;
+
             graph.AddNode(nodeData);
+
+            return node;
+        }
+
+        protected override void SpliceEdgeForRedirect(Edge edge, RedirectNode node)
+        {
+            var nodeData = node.userData as AbstractMaterialNode;
 
             // Sanity check
             if (edge != null)

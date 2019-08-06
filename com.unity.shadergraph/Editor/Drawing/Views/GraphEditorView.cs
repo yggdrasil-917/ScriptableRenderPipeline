@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.ShaderGraph.Drawing.Colors;
 using UnityEngine.UIElements;
-using Edge = UnityEditor.ShaderGraph.Drawing.EdgeView;
+using Edge = UnityEditor.Experimental.GraphView.Edge;
 
 
 namespace UnityEditor.ShaderGraph.Drawing
@@ -218,6 +218,14 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_SearchWindowProvider.Initialize(editorWindow, m_Graph, m_GraphView);
             m_GraphView.nodeCreationRequest = (c) =>
                 {
+                    if(c is RedirectNodeCreationContext)
+                    {
+                        var context = c as RedirectNodeCreationContext;
+                        graphView.AddRedirectNode(context.edge, context.screenMousePosition);
+
+                        return;
+                    }
+
                     m_SearchWindowProvider.connectedPort = null;
                     SearchWindow.Open(new SearchWindowContext(c.screenMousePosition), m_SearchWindowProvider);
                 };
@@ -690,10 +698,18 @@ namespace UnityEditor.ShaderGraph.Drawing
             // @SamH: Temp to test redirect nodes
             else if (node is RedirectNodeData)
             {
-                var redirectNodeView = new RedirectNodeView { userData = materialNode };
-                m_GraphView.AddElement(redirectNodeView);
+                var redirectNodeData = node as RedirectNodeData;
+                var redirectNodeView = redirectNodeData.nodeView;
+
+                // Create nodes from deserialization instead of Graph interaction
+                if (redirectNodeView == null)
+                {
+                    redirectNodeView = new RedirectNodeView() { userData = redirectNodeData };
+                    redirectNodeData.nodeView = redirectNodeView;
+                }
+
                 redirectNodeView.Initialize(materialNode, m_PreviewManager, m_EdgeConnectorListener, graphView);
-                //m_ColorManager.UpdateNodeView(materialNodeView);
+                m_GraphView.AddElement(redirectNodeView);
                 nodeView = redirectNodeView;
             }
             else
