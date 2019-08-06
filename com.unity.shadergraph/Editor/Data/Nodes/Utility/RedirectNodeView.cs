@@ -26,6 +26,9 @@ namespace UnityEditor.ShaderGraph
 
         public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener, GraphView graphView)
         {
+            // Styling
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/RedirectNodeView"));
+            
             if (inNode == null)
                 return;
             
