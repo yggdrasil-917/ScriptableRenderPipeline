@@ -19,32 +19,39 @@ namespace UnityEditor.ShaderGraph
         {
         }
 
-        public override void InitializeFromEdge(Edge edge)
+        public override void InitializeFromEdge(Edge edge, GraphView graphView)
         {
+            // Created from de-serialization
+            if(edge == null)
+                return;
+
             orientation = edge.output.orientation;
+            SplitEdge(edge, graphView);
         }
 
-        public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener, GraphView graphView)
+        // Tie the nodeView to its data
+        public void ConnectToData(AbstractMaterialNode inNode, IEdgeConnectorListener connectorListener, GraphView graphView)
         {
-            // Styling
-            styleSheets.Add(Resources.Load<StyleSheet>("Styles/RedirectNodeView"));
-            
             if (inNode == null)
                 return;
-            
+
             // Set references
+            var nodeData = inNode as RedirectNodeData;
+            nodeData.nodeView = this;
             node = inNode;
             title = node.name;
             m_GraphView = graphView;
             m_ConnectorListener = connectorListener;
 
             viewDataKey = node.guid.ToString();
-        
+
+            // Set the VisualElement's position
             SetPosition(new Rect(node.drawState.position.x, node.drawState.position.y, 0, 0));
             AddSlots(node.GetSlots<MaterialSlot>());
+
+            InitializeFromEdge(nodeData.m_Edge, m_GraphView);
         }
 
-        #region Helper functions
         public void AddSlots(IEnumerable<MaterialSlot> slots)
         {
             foreach (var slot in slots)
@@ -59,7 +66,28 @@ namespace UnityEditor.ShaderGraph
                     inputContainer.Add(port);
             }
         }
-        #endregion
+
+        public override void SplitEdge(Edge edge, GraphView graphView)
+        {
+            var nodeData = userData as AbstractMaterialNode;
+            var matGraphView = graphView as MaterialGraphView;
+
+            if (edge != null)
+            {
+                var edge_outSlot = edge.output.GetSlot();
+                var edge_inSlot = edge.input.GetSlot();
+
+                var edge_outSlotRef = edge_outSlot.owner.GetSlotReference(edge_outSlot.id);
+                var edge_inSlotRef = edge_inSlot.owner.GetSlotReference(edge_inSlot.id);
+
+                // Hard-coded for single input-output. Changes would be needed for multi-input redirects
+                var node_inSlotRef = nodeData.GetSlotReference(0);
+                var node_outSlotRef = nodeData.GetSlotReference(1);
+
+                matGraphView.graph.Connect(edge_outSlotRef, node_inSlotRef);
+                matGraphView.graph.Connect(node_outSlotRef, edge_inSlotRef);
+            }
+        }
 
         #region IShaderNodeView interface
         public Node gvNode => this;

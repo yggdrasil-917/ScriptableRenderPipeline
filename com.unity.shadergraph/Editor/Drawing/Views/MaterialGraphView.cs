@@ -313,46 +313,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             return true;
         }
 
-        protected override RedirectNode CreateNewRedirectNode(Vector2 pos)
-        {
-            var nodeData = new RedirectNodeData();
-            var node = new RedirectNodeView { userData = nodeData };
-            nodeData.nodeView = node;
-
-            var offset = node.GetOffset();
-            Rect newPos = new Rect(pos + offset, Vector2.zero);
-
-            DrawState temp = nodeData.drawState;
-            temp.position = newPos;
-            nodeData.drawState = temp;
-
-            graph.AddNode(nodeData);
-
-            return node;
-        }
-
-        protected override void SpliceEdgeForRedirect(Edge edge, RedirectNode node)
-        {
-            var nodeData = node.userData as AbstractMaterialNode;
-
-            // Sanity check
-            if (edge != null)
-            {
-                var edge_outSlot = edge.output.GetSlot();
-                var edge_inSlot = edge.input.GetSlot();
-
-                var edge_outSlotRef = edge_outSlot.owner.GetSlotReference(edge_outSlot.id);
-                var edge_inSlotRef = edge_inSlot.owner.GetSlotReference(edge_inSlot.id);
-
-                // @SamH: Hard-coded single input-output?
-                var node_inSlotRef = nodeData.GetSlotReference(0);
-                var node_outSlotRef = nodeData.GetSlotReference(1);
-
-                graph.Connect(edge_outSlotRef, node_inSlotRef);
-                graph.Connect(node_outSlotRef, edge_inSlotRef);
-            }
-        }
-
         void RemoveFromGroupNode(DropdownMenuAction action)
         {
             graph.owner.RegisterCompleteObjectUndo("Ungroup Node(s)");

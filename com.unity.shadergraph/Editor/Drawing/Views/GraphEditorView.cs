@@ -218,11 +218,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_SearchWindowProvider.Initialize(editorWindow, m_Graph, m_GraphView);
             m_GraphView.nodeCreationRequest = (c) =>
                 {
-                    if(c is RedirectNodeCreationContext)
+                    if(c is RedirectNodeCreationContext context)
                     {
-                        var context = c as RedirectNodeCreationContext;
-                        graphView.AddRedirectNode(context.edge, context.screenMousePosition);
-
+                        var nodeData = new RedirectNodeData();
+                        nodeData.SetPosition(context.screenMousePosition);
+                        nodeData.m_Edge = context.edge;
+                        m_Graph.AddNode(nodeData);
                         return;
                     }
 
@@ -695,20 +696,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.AddElement(tokenNode);
                 nodeView = tokenNode;
             }
-            // @SamH: Temp to test redirect nodes
-            else if (node is RedirectNodeData)
+            else if (node is RedirectNodeData redirectNodeData)
             {
-                var redirectNodeData = node as RedirectNodeData;
-                var redirectNodeView = redirectNodeData.nodeView;
-
-                // Create nodes from deserialization instead of Graph interaction
-                if (redirectNodeView == null)
-                {
-                    redirectNodeView = new RedirectNodeView() { userData = redirectNodeData };
-                    redirectNodeData.nodeView = redirectNodeView;
-                }
-
-                redirectNodeView.Initialize(materialNode, m_PreviewManager, m_EdgeConnectorListener, graphView);
+                var redirectNodeView = new RedirectNodeView { userData = redirectNodeData };
+                redirectNodeView.ConnectToData(materialNode, m_EdgeConnectorListener, graphView);
                 m_GraphView.AddElement(redirectNodeView);
                 nodeView = redirectNodeView;
             }

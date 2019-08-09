@@ -1,10 +1,14 @@
 using System.Reflection;
-using UnityEditor.Graphing;
+using UnityEngine;
+using Edge = UnityEditor.Experimental.GraphView.Edge;
 
 namespace UnityEditor.ShaderGraph
 {
+    // As soon as traversal can skip RedirectNodes, make this NOT a CodeFunctionNode
     class RedirectNodeData : CodeFunctionNode
     {
+        public Edge m_Edge;
+
         public RedirectNodeData() : base()
         {
             name = "Redirect Node";
@@ -24,6 +28,13 @@ namespace UnityEditor.ShaderGraph
                 if (value != m_nodeView)
                     m_nodeView = value;
             }
+        }
+
+        public void SetPosition(Vector2 pos)
+        {
+            var temp = drawState;
+            temp.position = new Rect(pos, Vector2.zero);
+            drawState = temp;
         }
 
         static string Unity_Redirect(
