@@ -87,6 +87,17 @@ namespace UnityEditor.ShaderGraph
                 matGraphView.graph.Connect(edge_outSlotRef, node_inSlotRef);
                 matGraphView.graph.Connect(node_outSlotRef, edge_inSlotRef);
             }
+
+            // Set the color of the ports
+            foreach (var port in inputContainer.Query<Port>().ToList())
+            {
+                port.visualClass = edge.output.GetSlot().concreteValueType.ToClassName();
+            }
+
+            foreach (var port in outputContainer.Query<Port>().ToList())
+            {
+                port.visualClass = edge.output.GetSlot().concreteValueType.ToClassName();
+            }
         }
 
         #region IShaderNodeView interface

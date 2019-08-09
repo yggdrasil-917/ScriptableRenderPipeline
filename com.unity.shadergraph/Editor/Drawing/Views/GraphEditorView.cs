@@ -221,7 +221,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     if(c is RedirectNodeCreationContext context)
                     {
                         var nodeData = new RedirectNodeData();
-                        nodeData.SetPosition(context.screenMousePosition);
+                        nodeData.SetPositionCentered(context.screenMousePosition);
                         nodeData.m_Edge = context.edge;
                         m_Graph.AddNode(nodeData);
                         return;

@@ -30,6 +30,7 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
+        // Center the node's position?
         public void SetPosition(Vector2 pos)
         {
             var temp = drawState;
@@ -38,8 +39,8 @@ namespace UnityEditor.ShaderGraph
         }
 
         static string Unity_Redirect(
-            [Slot(0, Binding.None)] DynamicDimensionVector In,
-            [Slot(1, Binding.None)] out DynamicDimensionVector Out)
+            [Slot(0, Binding.None)] DynamicDimensionMatrix In,
+            [Slot(1, Binding.None)] out DynamicDimensionMatrix Out)
         {
             return
                 @"
