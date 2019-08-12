@@ -177,6 +177,30 @@ namespace UnityEngine.Rendering.HighDefinition
                                                 HDShaderPassNames.s_MeshDecalsMSName, HDShaderPassNames.s_MeshDecalsAOSName, HDShaderPassNames.s_MeshDecalsMAOSName, HDShaderPassNames.s_ShaderGraphMeshDecalsName4RT};
         ShaderTagId[] m_Decals3RTPassNames = { HDShaderPassNames.s_MeshDecals3RTName , HDShaderPassNames.s_ShaderGraphMeshDecalsName3RT };
 
+        [Flags]
+        internal enum StencilUsageBeforeTransparent
+        {
+            Clear                = 0,            // 0x0  - 0 bit : Clear
+            MaterialFeature      = (1 << 3) - 1, // 0x7  - 3 bit : 1 = Standard, 2 = SSS + Transmission, 3 = Anisotropic, 4 = Iridescence, 5-6 = Reserved for future use, 7 = Forward material
+            SubsurfaceScattering = (1 << 3),     // 0x8  - 1 bit : SSS, Split Lighting
+            TraceReflectionRay   = (1 << 4),     // 0x10 - 1 bit : SSR or RTR
+            Decal                = (1 << 5),     // 0x20 - 1 bit : Decal
+            ObjectMotionVector   = (1 << 6),     // 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
+            UserBit              = (1 << 7),     // 0x80 - 1 bit : Reserved for user (application-specific)
+        }
+
+        // Note: we must preserve (avoid clearing) the last 2 bits for the entire frame.
+        [Flags]
+        internal enum StencilUsageAfterTransparent
+        {
+            Clear                = 0,            // 0x0  - 0 bit : Clear
+            Reserved             = (1 << 3) - 1, // 0x7  - 3 bit : Reserved for future use
+            ExcludeFromTAA       = (1 << 3),     // 0x8  - 1 bit : Disable Temporal Antialiasing for certain objects
+            SMAA                 = (1 << 4),     // 0x10 - 1 bit : Subpixel Morphological Antialiasing
+            DistortionVector     = (1 << 5),     // 0x20 - 1 bit : Distortion pass
+            ObjectMotionVector   = (1 << 6),     // 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
+            UserBit              = (1 << 7),     // 0x80 - 1 bit : Reserved for user (application-specific)
+        }
 
         // Stencil usage in HDRenderPipeline.
         // Currently we use only 2 bits to identify the kind of lighting that is expected from the render pipeline
@@ -1917,7 +1941,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     SSAOTask.Start(cmd, asyncParams, AsyncSSAODispatch, !haveAsyncTaskWithShadows);
                     haveAsyncTaskWithShadows = true;
-                    
+
                     void AsyncSSAODispatch(CommandBuffer c, HDGPUAsyncTaskParams a)
                         => m_AmbientOcclusionSystem.Dispatch(c, a.hdCamera, a.frameCount);
                 }
