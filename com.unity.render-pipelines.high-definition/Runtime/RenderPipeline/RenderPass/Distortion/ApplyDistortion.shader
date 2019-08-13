@@ -104,11 +104,12 @@ Shader "Hidden/HDRP/ApplyDistortion"
         {
             Stencil
             {
-                WriteMask 64
-                ReadMask 64 // StencilBitMask.DistortionVectors
-                Ref  64     // StencilBitMask.DistortionVectors
+                WriteMask 0
+                ReadMask  32 // StencilUsageAfterTransparent.DistortionVector
+                Ref       32 // StencilUsageAfterTransparent.DistortionVector
                 Comp Equal
-                Pass Zero   // We can clear the bit since we won't need anymore.
+                Pass Keep
+                Fail Keep
             }
 
             ZWrite Off Blend Off Cull Off
