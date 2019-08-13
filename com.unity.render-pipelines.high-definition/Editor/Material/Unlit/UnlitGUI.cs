@@ -43,48 +43,18 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             material.SetupBaseUnlitKeywords();
             material.SetupBaseUnlitPass();
+            BaseUnlitGUI.SetupStencilState(material);
 
+            // TODO: why the hell are these two keywords in this function (and not the base function)??
             if (material.HasProperty(kEmissiveColorMap))
+            {
                 CoreUtils.SetKeyword(material, "_EMISSIVE_COLOR_MAP", material.GetTexture(kEmissiveColorMap));
+            }
 
             if (material.HasProperty(kAddPrecomputedVelocity))
             {
                 CoreUtils.SetKeyword(material, "_ADD_PRECOMPUTED_VELOCITY", material.GetInt(kAddPrecomputedVelocity) != 0);
             }
-
-            // Set up the stencil state.
-            // 0 disables the stencil test.
-            int stencilRef       = 0;
-            int stencilReadMask  = 0;
-            int stencilWriteMask = 0;
-
-            if (material.GetSurfaceType() == SurfaceType.Opaque)
-            {
-                stencilRef       |= (int)HDRenderPipeline.StencilMaterialFeatures.Forward; // Unlit is forward-only
-                stencilReadMask  |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
-                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
-            }
-            else // SurfaceType.Transparent
-            {
-                // Distortion must be able to write to the stencil buffer, but does not need to read it.
-                if (material.GetShaderPassEnabled(HDShaderPassNames.s_DistortionVectorsStr))
-                {
-                    stencilRef       |= (int)HDRenderPipeline.StencilUsageAfterTransparent.DistortionVector;
-                    stencilWriteMask |= (int)HDRenderPipeline.StencilUsageAfterTransparent.DistortionVector;
-                }
-            }
-
-            // Motion vectors are supported by all surface types.
-            if (material.GetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr))
-            {
-                // The location of this bit is persistent (before and after transparent).
-                stencilRef       |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
-                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
-            }
-
-            material.SetInt(kStencilRef,       stencilRef);
-            material.SetInt(kStencilReadMask,  stencilReadMask);
-            material.SetInt(kStencilWriteMask, stencilWriteMask);
         }
     }
 } // namespace UnityEditor
