@@ -47,40 +47,43 @@ namespace UnityEditor.Rendering.HighDefinition
             if (material.HasProperty("_EMISSIVE_COLOR_MAP"))
                 CoreUtils.SetKeyword(material, "_EMISSIVE_COLOR_MAP", material.GetTexture(kEmissiveColorMap));
 
-            // Stencil usage rules:
-            // DoesntReceiveSSR and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
-            // LightingMask need to be tagged during either GBuffer or Forward pass
-            // ObjectVelocity need to be tagged in velocity pass.
-            // As velocity pass can be use as a replacement of depth prepass it also need to have DoesntReceiveSSR and DecalsForwardOutputNormalBuffer
-            // As GBuffer pass can have no depth prepass, it also need to have DoesntReceiveSSR and DecalsForwardOutputNormalBuffer
-            // Object velocity is always render after a full depth buffer (if there is no depth prepass for GBuffer all object motion vectors are render after GBuffer)
-            // so we have a guarantee than when we write object velocity no other object will be draw on top (and so would have require to overwrite velocity).
-            // Final combination is:
-            // Prepass: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer
-            // Motion vectors: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer, ObjectVelocity
-            // Forward: LightingMask
-
-            int stencilRef = (int)StencilLightingUsage.NoLighting;
-            int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
-            int stencilRefDepth = (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
-            int stencilWriteMaskDepth = (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-            int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors | (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
-            int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors | (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-
-            // As we tag both during velocity pass and Gbuffer pass we need a separate state and we need to use the write mask
-            material.SetInt(kStencilRef, stencilRef);
-            material.SetInt(kStencilWriteMask, stencilWriteMask);
-            material.SetInt(kStencilRefDepth, stencilRefDepth);
-            material.SetInt(kStencilWriteMaskDepth, stencilWriteMaskDepth);
-            material.SetInt(kStencilRefMV, stencilRefMV);
-            material.SetInt(kStencilWriteMaskMV, stencilWriteMaskMV);
-            material.SetInt(kStencilRefDistortionVec, (int)HDRenderPipeline.StencilBitMask.DistortionVectors);
-            material.SetInt(kStencilWriteMaskDistortionVec, (int)HDRenderPipeline.StencilBitMask.DistortionVectors);
             if (material.HasProperty(kAddPrecomputedVelocity))
             {
                 CoreUtils.SetKeyword(material, "_ADD_PRECOMPUTED_VELOCITY", material.GetInt(kAddPrecomputedVelocity) != 0);
             }
 
+            // Set up the stencil state.
+            // 0 disables the stencil test.
+            int stencilRef       = 0;
+            int stencilReadMask  = 0;
+            int stencilWriteMask = 0;
+
+            if (material.GetSurfaceType() == SurfaceType.Opaque)
+            {
+                stencilRef       |= (int)HDRenderPipeline.StencilMaterialFeatures.Forward; // Unlit is forward-only
+                stencilReadMask  |= (int)HDRenderPipeline.StencilMaterialFeatures.MaxValue;
+                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
+            }
+            else // SurfaceType.Transparent
+            {
+                // Distortion must be able to write to the stencil buffer, but does not need to read it.
+                if (material.GetShaderPassEnabled(HDShaderPassNames.s_DistortionVectorsStr))
+                {
+                    stencilRef       |= (int)HDRenderPipeline.StencilUsageAfterTransparent.DistortionVector;
+                    stencilWriteMask |= (int)HDRenderPipeline.StencilUsageAfterTransparent.MaxValue;
+                }
+            }
+
+            // Motion vectors are supported by all surface types.
+            if (material.GetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr))
+            {
+                stencilRef       |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
+                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
+            }
+
+            material.SetInt(kStencilRef,       stencilRef);
+            material.SetInt(kStencilReadMask,  stencilReadMask);
+            material.SetInt(kStencilWriteMask, stencilWriteMask);
         }
     }
 } // namespace UnityEditor

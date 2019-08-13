@@ -177,16 +177,28 @@ namespace UnityEngine.Rendering.HighDefinition
                                                 HDShaderPassNames.s_MeshDecalsMSName, HDShaderPassNames.s_MeshDecalsAOSName, HDShaderPassNames.s_MeshDecalsMAOSName, HDShaderPassNames.s_ShaderGraphMeshDecalsName4RT};
         ShaderTagId[] m_Decals3RTPassNames = { HDShaderPassNames.s_MeshDecals3RTName , HDShaderPassNames.s_ShaderGraphMeshDecalsName3RT };
 
+        internal enum StencilMaterialFeatures
+        {
+            Standard        = 1,
+            SssTransmission = 2,
+            Anisotropic     = 3,
+            Iridescence     = 4,
+            // Reserved     = 5, 6,
+            Forward         = 7,
+            MaxValue        = 7
+        }
+
         [Flags]
         internal enum StencilUsageBeforeTransparent
         {
             Clear                = 0,            // 0x0  - 0 bit : Clear
-            MaterialFeature      = (1 << 3) - 1, // 0x7  - 3 bit : 1 = Standard, 2 = SSS + Transmission, 3 = Anisotropic, 4 = Iridescence, 5-6 = Reserved for future use, 7 = Forward material
+            MaterialFeature      = (1 << 3) - 1, // 0x7  - 3 bit : StencilMaterialFeatures
             SubsurfaceScattering = (1 << 3),     // 0x8  - 1 bit : SSS, Split Lighting
             TraceReflectionRay   = (1 << 4),     // 0x10 - 1 bit : SSR or RTR
             Decal                = (1 << 5),     // 0x20 - 1 bit : Decal
             ObjectMotionVector   = (1 << 6),     // 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
             UserBit              = (1 << 7),     // 0x80 - 1 bit : Reserved for user (application-specific)
+            MaxValue             = (1 << 8) - 1  // 0xFF
         }
 
         // Note: we must preserve (avoid clearing) the last 2 bits for the entire frame.
@@ -200,6 +212,7 @@ namespace UnityEngine.Rendering.HighDefinition
             DistortionVector     = (1 << 5),     // 0x20 - 1 bit : Distortion pass
             ObjectMotionVector   = (1 << 6),     // 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
             UserBit              = (1 << 7),     // 0x80 - 1 bit : Reserved for user (application-specific)
+            MaxValue             = (1 << 8) - 1  // 0xFF
         }
 
         // Stencil usage in HDRenderPipeline.

@@ -60,20 +60,11 @@ Shader "HDRP/Unlit"
         [ToggleUI] _DoubleSidedEnable("Double sided enable", Float) = 0.0
 
         // Stencil state
-        [HideInInspector] _StencilRef("_StencilRef", Int) = 0 // StencilLightingUsage.NoLighting
-        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 3 // StencilMask.Lighting
-        // Depth prepass
-        [HideInInspector] _StencilRefDepth("_StencilRefDepth", Int) = 0 // Nothing
-        [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 32 // DoesntReceiveSSR
-        // Motion vector pass
-        [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
-        [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
+        [HideInInspector] _StencilRef("_StencilRef", Int) = 0
+        [HideInInspector] _StencilReadMask("_StencilReadMask", Int) = 0
+        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 0
 
         [ToggleUI] _AddPrecomputedVelocity("AddPrecomputedVelocity", Float) = 0.0
-
-        // Distortion vector pass
-        [HideInInspector] _StencilRefDistortionVec("_StencilRefDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
-        [HideInInspector] _StencilWriteMaskDistortionVec("_StencilWriteMaskDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
 
         // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
         // value that exist to identify if the GI emission need to be enabled.
@@ -179,12 +170,15 @@ Shader "HDRP/Unlit"
             Name "DepthForwardOnly"
             Tags{ "LightMode" = "DepthForwardOnly" }
 
+            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
-                WriteMask [_StencilWriteMaskDepth]
-                Ref  [_StencilRefDepth]
-                Comp Always
-                Pass Replace
+                Ref       [_StencilRef]
+                ReadMask  0
+                WriteMask [_StencilWriteMask] // 0xFF or 0
+                Comp      Always
+                Pass      Replace
+                Fail      Keep
             }
 
             Cull[_CullMode]
@@ -220,13 +214,15 @@ Shader "HDRP/Unlit"
             Name "MotionVectors"
             Tags{ "LightMode" = "MotionVectors" } // Caution, this need to be call like this to setup the correct parameters by C++ (legacy Unity)
 
-            // If velocity pass (motion vectors) is enabled we tag the stencil so it don't perform CameraMotionVelocity
+            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
-                WriteMask [_StencilWriteMaskMV]
-                Ref [_StencilRefMV]
-                Comp Always
-                Pass Replace
+                Ref       [_StencilRef]
+                ReadMask  0
+                WriteMask [_StencilWriteMask] // 0xFF or 0
+                Comp      Always
+                Pass      Replace
+                Fail      Keep
             }
 
             Cull[_CullMode]
@@ -267,12 +263,15 @@ Shader "HDRP/Unlit"
             ZWrite [_ZWrite]
             ZTest [_ZTestDepthEqualForOpaque]
 
+            // #define UNITY_STENCIL_STATE_TEST
             Stencil
             {
-                WriteMask[_StencilWriteMask]
-                Ref[_StencilRef]
-                Comp Always
-                Pass Replace
+                Ref       [_StencilRef]
+                ReadMask  [_StencilReadMask] // 0x7 or 0
+                WriteMask 0
+                Comp      Equal
+                Pass      Keep
+                Fail      Keep
             }
 
             Cull [_CullMode]
@@ -361,12 +360,15 @@ Shader "HDRP/Unlit"
             Name "DistortionVectors"
             Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
 
+            // #define UNITY_STENCIL_STATE_TEST
             Stencil
             {
-                WriteMask [_StencilRefDistortionVec]
-                Ref [_StencilRefDistortionVec]
-                Comp Always
-                Pass Replace
+                Ref       [_StencilRef]
+                ReadMask  [_StencilReadMask] // 0x7 or 0
+                WriteMask 0
+                Comp      Equal
+                Pass      Keep
+                Fail      Keep
             }
 
             Blend [_DistortionSrcBlend] [_DistortionDstBlend], [_DistortionBlurSrcBlend] [_DistortionBlurDstBlend]

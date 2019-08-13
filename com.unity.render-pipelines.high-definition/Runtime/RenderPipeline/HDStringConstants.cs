@@ -800,6 +800,7 @@ namespace UnityEngine.Rendering.HighDefinition
     {
         // Stencil properties
         public const string kStencilRef = "_StencilRef";
+        public const string kStencilReadMask = "_StencilReadMask";
         public const string kStencilWriteMask = "_StencilWriteMask";
         public const string kStencilRefDepth = "_StencilRefDepth";
         public const string kStencilWriteMaskDepth = "_StencilWriteMaskDepth";
