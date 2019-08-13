@@ -44,7 +44,7 @@ namespace UnityEditor.Rendering.HighDefinition
             material.SetupBaseUnlitKeywords();
             material.SetupBaseUnlitPass();
 
-            if (material.HasProperty("_EMISSIVE_COLOR_MAP"))
+            if (material.HasProperty(kEmissiveColorMap))
                 CoreUtils.SetKeyword(material, "_EMISSIVE_COLOR_MAP", material.GetTexture(kEmissiveColorMap));
 
             if (material.HasProperty(kAddPrecomputedVelocity))
@@ -61,7 +61,7 @@ namespace UnityEditor.Rendering.HighDefinition
             if (material.GetSurfaceType() == SurfaceType.Opaque)
             {
                 stencilRef       |= (int)HDRenderPipeline.StencilMaterialFeatures.Forward; // Unlit is forward-only
-                stencilReadMask  |= (int)HDRenderPipeline.StencilMaterialFeatures.MaxValue;
+                stencilReadMask  |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
                 stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
             }
             else // SurfaceType.Transparent
@@ -70,15 +70,16 @@ namespace UnityEditor.Rendering.HighDefinition
                 if (material.GetShaderPassEnabled(HDShaderPassNames.s_DistortionVectorsStr))
                 {
                     stencilRef       |= (int)HDRenderPipeline.StencilUsageAfterTransparent.DistortionVector;
-                    stencilWriteMask |= (int)HDRenderPipeline.StencilUsageAfterTransparent.MaxValue;
+                    stencilWriteMask |= (int)HDRenderPipeline.StencilUsageAfterTransparent.DistortionVector;
                 }
             }
 
             // Motion vectors are supported by all surface types.
             if (material.GetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr))
             {
+                // The location of this bit is persistent (before and after transparent).
                 stencilRef       |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
-                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
+                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
             }
 
             material.SetInt(kStencilRef,       stencilRef);

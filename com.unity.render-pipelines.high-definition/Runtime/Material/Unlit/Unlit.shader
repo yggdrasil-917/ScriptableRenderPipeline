@@ -267,7 +267,7 @@ Shader "HDRP/Unlit"
             Stencil
             {
                 Ref       [_StencilRef]
-                ReadMask  [_StencilReadMask] // 0x7 or 0
+                ReadMask  [_StencilReadMask] // 0xFF or 0
                 WriteMask 0
                 Comp      Equal
                 Pass      Keep
@@ -360,14 +360,14 @@ Shader "HDRP/Unlit"
             Name "DistortionVectors"
             Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
 
-            // #define UNITY_STENCIL_STATE_TEST
+            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
                 Ref       [_StencilRef]
-                ReadMask  [_StencilReadMask] // 0x7 or 0
-                WriteMask 0
-                Comp      Equal
-                Pass      Keep
+                ReadMask  0
+                WriteMask [_StencilWriteMask] // 0xFF or 0
+                Comp      Always
+                Pass      Replace
                 Fail      Keep
             }
 
