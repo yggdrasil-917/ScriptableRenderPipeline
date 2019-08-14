@@ -339,12 +339,15 @@ namespace UnityEditor.Rendering.HighDefinition
             // It is supposed to contain the HDRenderPipeline.StencilMaterialType.
             // Lit materials can be switched from forward to deferred at runtime.
             // Due to the inflexible design of Unity and the HDRP, we are unable to alter (patch)
-            // this value before it is passed to the stencil state (at runtime), which means that,
+            // this value before it is used as a stencil state (at runtime), which means that,
             // within this function call, we cannot say whether the material is forward or deferred.
             // Our workaround is to lie (in the stencil reference), and to say that the material
             // is forward during every single pass except for the G-Buffer pass (which is the only
             // deferred-only pass), at which point we can overwrite the stencil with the correct
             // HDRenderPipeline.StencilMaterialType.
+            // Note that this means that we can NOT support any stencil-writing passes
+            // (such as the motion vector pass) between the G-buffer pass and the Lighting pass,
+            // as they may write wrong stencil values again.
             int stencilRef        = (int)HDRenderPipeline.StencilMaterialType.Forward;
             int stencilRefGBuffer = 0;
             int stencilReadMask   = 0; // 0 disabled reads

@@ -516,9 +516,9 @@ Shader "HDRP/Lit"
 
             Stencil
             {
-                Ref       64
+                Ref       [_StencilRef]
                 ReadMask  0
-                WriteMask 64
+                WriteMask [_StencilWriteMask]
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
@@ -556,9 +556,9 @@ Shader "HDRP/Lit"
 
             Stencil
             {
-                Ref       32
+                Ref       [_StencilRef]
                 ReadMask  0
-                WriteMask 32
+                WriteMask [_StencilWriteMask]
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
