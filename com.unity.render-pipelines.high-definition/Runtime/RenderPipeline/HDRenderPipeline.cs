@@ -177,14 +177,14 @@ namespace UnityEngine.Rendering.HighDefinition
                                                 HDShaderPassNames.s_MeshDecalsMSName, HDShaderPassNames.s_MeshDecalsAOSName, HDShaderPassNames.s_MeshDecalsMAOSName, HDShaderPassNames.s_ShaderGraphMeshDecalsName4RT};
         ShaderTagId[] m_Decals3RTPassNames = { HDShaderPassNames.s_MeshDecals3RTName , HDShaderPassNames.s_ShaderGraphMeshDecalsName3RT };
 
-        internal enum StencilMaterialFeatures
+        internal enum StencilMaterialType
         {
-            Standard        = 1,
-            SssTransmission = 2,
-            Anisotropic     = 3,
-            Iridescence     = 4,
-            // Reserved     = 5, 6,
-            Forward         = 7,
+            Standard        = 1,   // Deferred
+            SssTranslucent  = 2,   // Deferred
+            Anisotropic     = 3,   // Deferred
+            Iridescencent   = 4,   // Deferred
+            // Reserved     = 5-6, // Deferred
+            Forward         = 7,   // Forward
             MaxValue        = 7
         }
 
@@ -192,7 +192,7 @@ namespace UnityEngine.Rendering.HighDefinition
         internal enum StencilUsageBeforeTransparent
         {
             Clear                = 0,            // 0x0  - 0 bit : Clear
-            MaterialFeature      = (1 << 3) - 1, // 0x7  - 3 bit : StencilMaterialFeatures
+            MaterialType         = (1 << 3) - 1, // 0x7  - 3 bit : StencilMaterialType
             SubsurfaceScattering = (1 << 3),     // 0x8  - 1 bit : SSS, Split Lighting
             TraceReflectionRay   = (1 << 4),     // 0x10 - 1 bit : SSR or RTR
             Decal                = (1 << 5),     // 0x20 - 1 bit : Decal

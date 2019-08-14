@@ -167,7 +167,8 @@ namespace UnityEditor.Rendering.HighDefinition
             BaseLitGUI.SetupBaseLitKeywords(material);
             BaseLitGUI.SetupBaseLitMaterialPass(material);
             SetupLayersMappingKeywords(material);
-            BaseLitGUI.SetupStencil(material, material.GetInt(kReceivesSSR) != 0, material.GetMaterialId() == MaterialId.LitSSS);
+
+            BaseUnlitGUI.SetupStencilState(material, UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Forward);
 
             if (material.HasProperty(kAddPrecomputedVelocity))
             {

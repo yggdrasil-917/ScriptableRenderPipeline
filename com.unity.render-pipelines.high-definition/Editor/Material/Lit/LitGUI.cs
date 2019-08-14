@@ -108,7 +108,33 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             BaseLitGUI.SetupBaseLitKeywords(material);
             BaseLitGUI.SetupBaseLitMaterialPass(material);
-            BaseLitGUI.SetupStencil(material, material.GetInt(kReceivesSSR) != 0, material.GetMaterialId() == MaterialId.LitSSS);
+
+            // TODO: support forward materials.
+            HDRenderPipeline.StencilMaterialType materialType = HDRenderPipeline.StencilMaterialType.Forward;
+
+            switch (material.GetMaterialId())
+            {
+                case MaterialId.LitStandard:
+                case MaterialId.LitSpecular:
+                    materialType = HDRenderPipeline.StencilMaterialType.Standard;
+                    break;
+                case MaterialId.LitSSS:
+                case MaterialId.LitTranslucent:
+                    materialType = HDRenderPipeline.StencilMaterialType.SssTranslucent;
+                    break;
+                case MaterialId.LitAniso:
+                    materialType = HDRenderPipeline.StencilMaterialType.Anisotropic;
+                    break;
+                case MaterialId.LitIridescence:
+                    materialType = HDRenderPipeline.StencilMaterialType.Iridescencent;
+                    break;
+                default:
+                    // TODO: support forward materials.
+                    Debug.Assert(false, "Unhandled case.");
+                    break;
+            }
+
+            BaseUnlitGUI.SetupStencilState(material, materialType);
 
             if (material.HasProperty(kNormalMapSpace))
             {

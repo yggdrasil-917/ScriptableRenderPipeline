@@ -329,10 +329,11 @@ namespace UnityEditor.Rendering.HighDefinition
                 material.SetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr, addPrecomputedVelocity);
 
              }
-
         }
 
-        static public void SetupStencilState(Material material)
+        // This function can be used by all materials (Lit, Unlit, Cloth, Hair, etc).
+        // All shader passes must be pre-configured as enabled/disabled before calling this function.
+        static public void SetupStencilState(Material material, HDRenderPipeline.StencilMaterialType materialType)
         {
             // 0 disables the stencil test.
             int stencilRef       = 0;
@@ -341,9 +342,24 @@ namespace UnityEditor.Rendering.HighDefinition
 
             if (material.GetSurfaceType() == SurfaceType.Opaque)
             {
-                stencilRef       |= (int)HDRenderPipeline.StencilMaterialFeatures.Forward; // Unlit is forward-only
+                stencilRef       |= (int)materialType;
                 stencilReadMask  |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
                 stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
+
+                if (material.HasProperty(kUseSplitLighting) && material.GetInt(kUseSplitLighting) != 0)
+                {
+                    stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.SubsurfaceScattering;
+                }
+
+                if (material.HasProperty(kReceivesSSR) && material.GetInt(kReceivesSSR) != 0)
+                {
+                    stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.TraceReflectionRay;
+                }
+
+                if (material.HasProperty(kSupportDecals) && material.GetInt(kSupportDecals) != 0)
+                {
+                    stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.Decal;
+                }
             }
             else // SurfaceType.Transparent
             {

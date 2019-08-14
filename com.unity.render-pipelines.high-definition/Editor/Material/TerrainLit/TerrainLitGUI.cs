@@ -137,7 +137,33 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             BaseLitGUI.SetupBaseLitKeywords(material);
             BaseLitGUI.SetupBaseLitMaterialPass(material);
-            BaseLitGUI.SetupStencil(material, material.GetInt(kReceivesSSR) != 0, material.GetMaterialId() == MaterialId.LitSSS);
+
+            // TODO: support forward materials.
+            UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Forward;
+
+            switch (material.GetMaterialId())
+            {
+                case MaterialId.LitStandard:
+                case MaterialId.LitSpecular:
+                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Standard;
+                    break;
+                case MaterialId.LitSSS:
+                case MaterialId.LitTranslucent:
+                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.SssTranslucent;
+                    break;
+                case MaterialId.LitAniso:
+                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Anisotropic;
+                    break;
+                case MaterialId.LitIridescence:
+                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Iridescencent;
+                    break;
+                default:
+                    // TODO: support forward materials.
+                    Debug.Assert(false, "Unhandled case.");
+                    break;
+            }
+
+            BaseUnlitGUI.SetupStencilState(material, materialType);
 
             // TODO: planar/triplannar support
             //SetupLayersMappingKeywords(material);

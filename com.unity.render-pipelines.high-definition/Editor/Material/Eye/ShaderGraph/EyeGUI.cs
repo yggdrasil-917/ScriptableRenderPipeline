@@ -44,9 +44,8 @@ namespace UnityEditor.Rendering.HighDefinition
             BaseLitGUI.SetupBaseLitKeywords(material);
             BaseLitGUI.SetupBaseLitMaterialPass(material);
 
-            bool receiveSSR = material.HasProperty(kReceivesSSR) ? material.GetInt(kReceivesSSR) != 0 : false;
-            bool useSplitLighting = material.HasProperty(kUseSplitLighting) ? material.GetInt(kUseSplitLighting) != 0: false;
-            BaseLitGUI.SetupStencil(material, receiveSSR, useSplitLighting);
+            BaseUnlitGUI.SetupStencilState(material, UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Forward);
+
             if (material.HasProperty(kAddPrecomputedVelocity))
             {
                 CoreUtils.SetKeyword(material, "_ADD_PRECOMPUTED_VELOCITY", material.GetInt(kAddPrecomputedVelocity) != 0);
