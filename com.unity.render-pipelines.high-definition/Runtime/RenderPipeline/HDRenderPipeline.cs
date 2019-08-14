@@ -179,40 +179,40 @@ namespace UnityEngine.Rendering.HighDefinition
 
         internal enum StencilMaterialType
         {
-            Standard        = 1,   // Deferred
-            SssTranslucent  = 2,   // Deferred
-            Anisotropic     = 3,   // Deferred
-            Iridescencent   = 4,   // Deferred
-            // Reserved     = 5-6, // Deferred
-            Forward         = 7,   // Forward
-            MaxValue        = 7
+            Forward                = 1,
+            DeferredStandard       = 2,
+            DeferredSssTranslucent = 3,
+            DeferredAnisotropic    = 4,
+            DeferredIridescencent  = 5,
+            // Reserved            = 6-7,
+            MaxValue               = 7
         }
 
         [Flags]
         internal enum StencilUsageBeforeTransparent
         {
-            Clear                = 0,            // 0x0  - 0 bit : Clear
-            MaterialType         = (1 << 3) - 1, // 0x7  - 3 bit : StencilMaterialType
-            SubsurfaceScattering = (1 << 3),     // 0x8  - 1 bit : SSS, Split Lighting
-            TraceReflectionRay   = (1 << 4),     // 0x10 - 1 bit : SSR or RTR
-            Decal                = (1 << 5),     // 0x20 - 1 bit : Decal
-            ObjectMotionVector   = (1 << 6),     // 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
-            UserBit              = (1 << 7),     // 0x80 - 1 bit : Reserved for user (application-specific)
-            MaxValue             = (1 << 8) - 1  // 0xFF
+            Clear                = 0,            //   0 0x0  - 0 bit : Clear
+            MaterialType         = (1 << 3) - 1, //   7 0x7  - 3 bit : StencilMaterialType
+            SubsurfaceScattering = (1 << 3),     //   8 0x8  - 1 bit : SSS, Split Lighting
+            TraceReflectionRay   = (1 << 4),     //  16 0x10 - 1 bit : SSR or RTR
+            Decal                = (1 << 5),     //  32 0x20 - 1 bit : Decal
+            ObjectMotionVector   = (1 << 6),     //  64 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
+            UserBit              = (1 << 7),     // 128 0x80 - 1 bit : Reserved for user (application-specific)
+            MaxValue             = (1 << 8) - 1  // 255 0xFF
         }
 
         // Note: we must preserve (avoid clearing) the last 2 bits for the entire frame.
         [Flags]
         internal enum StencilUsageAfterTransparent
         {
-            Clear                = 0,            // 0x0  - 0 bit : Clear
-            Reserved             = (1 << 3) - 1, // 0x7  - 3 bit : Reserved for future use
-            ExcludeFromTAA       = (1 << 3),     // 0x8  - 1 bit : Disable Temporal Antialiasing for certain objects
-            SMAA                 = (1 << 4),     // 0x10 - 1 bit : Subpixel Morphological Antialiasing
-            DistortionVector     = (1 << 5),     // 0x20 - 1 bit : Distortion pass
-            ObjectMotionVector   = (1 << 6),     // 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
-            UserBit              = (1 << 7),     // 0x80 - 1 bit : Reserved for user (application-specific)
-            MaxValue             = (1 << 8) - 1  // 0xFF
+            Clear                = 0,            //   0 0x0  - 0 bit : Clear
+            Reserved             = (1 << 3) - 1, //   7 0x7  - 3 bit : Reserved for future use
+            ExcludeFromTAA       = (1 << 3),     //   8 0x8  - 1 bit : Disable Temporal Antialiasing for certain objects
+            SMAA                 = (1 << 4),     //  16 0x10 - 1 bit : Subpixel Morphological Antialiasing
+            DistortionVector     = (1 << 5),     //  32 0x20 - 1 bit : Distortion pass
+            ObjectMotionVector   = (1 << 6),     //  64 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
+            UserBit              = (1 << 7),     // 128 0x80 - 1 bit : Reserved for user (application-specific)
+            MaxValue             = (1 << 8) - 1  // 255 0xFF
         }
 
         // Stencil usage in HDRenderPipeline.

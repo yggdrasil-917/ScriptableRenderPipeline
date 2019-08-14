@@ -335,14 +335,23 @@ namespace UnityEditor.Rendering.HighDefinition
         // All shader passes must be pre-configured as enabled/disabled before calling this function.
         static public void SetupStencilState(Material material, HDRenderPipeline.StencilMaterialType materialType)
         {
-            // 0 disables the stencil test.
-            int stencilRef       = 0;
-            int stencilReadMask  = 0;
-            int stencilWriteMask = 0;
+            // The stencil reference is computed and serialized at the material authoring time.
+            // It is supposed to contain the HDRenderPipeline.StencilMaterialType.
+            // Lit materials can be switched from forward to deferred at runtime.
+            // Due to the inflexible design of Unity and the HDRP, we are unable to alter (patch)
+            // this value before it is passed to the stencil state (at runtime), which means that,
+            // within this function call, we cannot say whether the material is forward or deferred.
+            // Our workaround is to lie (in the stencil reference), and to say that the material
+            // is forward during every single pass except for the G-Buffer pass (which is the only
+            // deferred-only pass), at which point we can overwrite the stencil with the correct
+            // HDRenderPipeline.StencilMaterialType.
+            int stencilRef        = (int)HDRenderPipeline.StencilMaterialType.Forward;
+            int stencilRefGBuffer = 0;
+            int stencilReadMask   = 0; // 0 disabled reads
+            int stencilWriteMask  = 0; // 0 disables writes
 
             if (material.GetSurfaceType() == SurfaceType.Opaque)
             {
-                stencilRef       |= (int)materialType;
                 stencilReadMask  |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
                 stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
 
@@ -363,7 +372,6 @@ namespace UnityEditor.Rendering.HighDefinition
             }
             else // SurfaceType.Transparent
             {
-                // Distortion must be able to write to the stencil buffer, but does not need to read it.
                 if (material.GetShaderPassEnabled(HDShaderPassNames.s_DistortionVectorsStr))
                 {
                     stencilRef       |= (int)HDRenderPipeline.StencilUsageAfterTransparent.DistortionVector;
@@ -374,14 +382,23 @@ namespace UnityEditor.Rendering.HighDefinition
             // Motion vectors are supported by all surface types.
             if (material.GetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr))
             {
-                // The location of this bit is persistent (before and after transparent).
+                Debug.Assert((int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector ==
+                             (int)HDRenderPipeline.StencilUsageAfterTransparent.ObjectMotionVector);
+
                 stencilRef       |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
                 stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
             }
 
-            material.SetInt(kStencilRef,       stencilRef);
-            material.SetInt(kStencilReadMask,  stencilReadMask);
-            material.SetInt(kStencilWriteMask, stencilWriteMask);
+            if (materialType != HDRenderPipeline.StencilMaterialType.Forward)
+            {
+                // Clear the Forward flag, and set the material bits.
+                stencilRefGBuffer = (stencilRef & ~(int)HDRenderPipeline.StencilMaterialType.Forward) | (int)materialType;
+            }
+
+            material.SetInt(kStencilRef,        stencilRef);
+            material.SetInt(kStencilRefGBuffer, stencilRefGBuffer);
+            material.SetInt(kStencilReadMask,   stencilReadMask);
+            material.SetInt(kStencilWriteMask,  stencilWriteMask);
         }
     }
 }

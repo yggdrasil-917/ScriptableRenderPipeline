@@ -60,9 +60,9 @@ Shader "HDRP/Unlit"
         [ToggleUI] _DoubleSidedEnable("Double sided enable", Float) = 0.0
 
         // Stencil state
-        [HideInInspector] _StencilRef("_StencilRef", Int) = 0
-        [HideInInspector] _StencilReadMask("_StencilReadMask", Int) = 0
-        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 0
+        [HideInInspector] _StencilRef       ("_StencilRef",       Int) = 0
+        [HideInInspector] _StencilReadMask  ("_StencilReadMask",  Int) = 0
+        [HideInInspector] _StencilWriteMask ("_StencilWriteMask", Int) = 0
 
         [ToggleUI] _AddPrecomputedVelocity("AddPrecomputedVelocity", Float) = 0.0
 
@@ -170,12 +170,11 @@ Shader "HDRP/Unlit"
             Name "DepthForwardOnly"
             Tags{ "LightMode" = "DepthForwardOnly" }
 
-            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
                 Ref       [_StencilRef]
                 ReadMask  0
-                WriteMask [_StencilWriteMask] // 0xFF or 0
+                WriteMask [_StencilWriteMask]
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
@@ -214,12 +213,11 @@ Shader "HDRP/Unlit"
             Name "MotionVectors"
             Tags{ "LightMode" = "MotionVectors" } // Caution, this need to be call like this to setup the correct parameters by C++ (legacy Unity)
 
-            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
-                Ref       [_StencilRef]
+                Ref       64
                 ReadMask  0
-                WriteMask [_StencilWriteMask] // 0xFF or 0
+                WriteMask 64
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
@@ -263,11 +261,10 @@ Shader "HDRP/Unlit"
             ZWrite [_ZWrite]
             ZTest [_ZTestDepthEqualForOpaque]
 
-            // #define UNITY_STENCIL_STATE_TEST
             Stencil
             {
                 Ref       [_StencilRef]
-                ReadMask  [_StencilReadMask] // 0xFF or 0
+                ReadMask  [_StencilReadMask]
                 WriteMask 0
                 Comp      Equal
                 Pass      Keep
@@ -360,12 +357,11 @@ Shader "HDRP/Unlit"
             Name "DistortionVectors"
             Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
 
-            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
-                Ref       [_StencilRef]
+                Ref       32
                 ReadMask  0
-                WriteMask [_StencilWriteMask] // 0xFF or 0
+                WriteMask 32
                 Comp      Always
                 Pass      Replace
                 Fail      Keep

@@ -116,17 +116,17 @@ namespace UnityEditor.Rendering.HighDefinition
             {
                 case MaterialId.LitStandard:
                 case MaterialId.LitSpecular:
-                    materialType = HDRenderPipeline.StencilMaterialType.Standard;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
                     break;
                 case MaterialId.LitSSS:
                 case MaterialId.LitTranslucent:
-                    materialType = HDRenderPipeline.StencilMaterialType.SssTranslucent;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredSssTranslucent;
                     break;
                 case MaterialId.LitAniso:
-                    materialType = HDRenderPipeline.StencilMaterialType.Anisotropic;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredAnisotropic;
                     break;
                 case MaterialId.LitIridescence:
-                    materialType = HDRenderPipeline.StencilMaterialType.Iridescencent;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredIridescencent;
                     break;
                 default:
                     // TODO: support forward materials.

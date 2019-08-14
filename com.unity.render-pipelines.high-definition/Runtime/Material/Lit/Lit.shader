@@ -130,9 +130,10 @@ Shader "HDRP/Lit"
         [ToggleUI] _TransparentWritingMotionVec("_TransparentWritingMotionVec", Float) = 0.0
 
         // Stencil state
-        [HideInInspector] _StencilRef("_StencilRef", Int) = 0
-        [HideInInspector] _StencilReadMask("_StencilReadMask", Int) = 0
-        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 0
+        [HideInInspector] _StencilRef       ("_StencilRef",        Int) = 0
+        [HideInInspector] _StencilRefGBuffer("_StencilRefGBuffer", Int) = 0
+        [HideInInspector] _StencilReadMask  ("_StencilReadMask",   Int) = 0
+        [HideInInspector] _StencilWriteMask ("_StencilWriteMask",  Int) = 0
 
         // Blending state
         [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
@@ -363,12 +364,11 @@ Shader "HDRP/Lit"
             Cull [_CullMode]
             ZTest [_ZTestGBuffer]
 
-            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
-                Ref       [_StencilRef]
+                Ref       [_StencilRefGBuffer]
                 ReadMask  0
-                WriteMask [_StencilWriteMask] // 0xFF or 0
+                WriteMask [_StencilWriteMask]
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
@@ -471,12 +471,11 @@ Shader "HDRP/Lit"
 
             Cull[_CullMode]
 
-            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
                 Ref       [_StencilRef]
                 ReadMask  0
-                WriteMask [_StencilWriteMask] // 0xFF or 0
+                WriteMask [_StencilWriteMask]
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
@@ -515,12 +514,11 @@ Shader "HDRP/Lit"
             Name "MotionVectors"
             Tags{ "LightMode" = "MotionVectors" } // Caution, this need to be call like this to setup the correct parameters by C++ (legacy Unity)
 
-            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
-                Ref       [_StencilRef]
+                Ref       64
                 ReadMask  0
-                WriteMask [_StencilWriteMask] // 0xFF or 0
+                WriteMask 64
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
@@ -556,12 +554,11 @@ Shader "HDRP/Lit"
             Name "DistortionVectors"
             Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
 
-            // #define UNITY_STENCIL_STATE_FILL
             Stencil
             {
-                Ref       [_StencilRef]
+                Ref       32
                 ReadMask  0
-                WriteMask [_StencilWriteMask] // 0xFF or 0
+                WriteMask 32
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
@@ -676,11 +673,10 @@ Shader "HDRP/Lit"
             Name "Forward"
             Tags { "LightMode" = "Forward" } // This will be only for transparent object based on the RenderQueue index
 
-            // #define UNITY_STENCIL_STATE_TEST
             Stencil
             {
                 Ref       [_StencilRef]
-                ReadMask  [_StencilReadMask] // 0xFF or 0
+                ReadMask  [_StencilReadMask]
                 WriteMask 0
                 Comp      Equal
                 Pass      Keep

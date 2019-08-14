@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 using System;
 
 // Include material common properties names
@@ -139,23 +140,23 @@ namespace UnityEditor.Rendering.HighDefinition
             BaseLitGUI.SetupBaseLitMaterialPass(material);
 
             // TODO: support forward materials.
-            UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Forward;
+            HDRenderPipeline.StencilMaterialType materialType = HDRenderPipeline.StencilMaterialType.Forward;
 
             switch (material.GetMaterialId())
             {
                 case MaterialId.LitStandard:
                 case MaterialId.LitSpecular:
-                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Standard;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
                     break;
                 case MaterialId.LitSSS:
                 case MaterialId.LitTranslucent:
-                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.SssTranslucent;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredSssTranslucent;
                     break;
                 case MaterialId.LitAniso:
-                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Anisotropic;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredAnisotropic;
                     break;
                 case MaterialId.LitIridescence:
-                    materialType = UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Iridescencent;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredIridescencent;
                     break;
                 default:
                     // TODO: support forward materials.
