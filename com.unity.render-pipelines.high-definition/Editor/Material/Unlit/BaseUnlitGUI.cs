@@ -331,6 +331,41 @@ namespace UnityEditor.Rendering.HighDefinition
              }
         }
 
+        public static HDRenderPipeline.StencilMaterialType GetStencilMaterialType(Material material)
+        {
+            // TODO: support forward materials.
+            HDRenderPipeline.StencilMaterialType materialType = HDRenderPipeline.StencilMaterialType.Forward;
+
+            switch (material.GetMaterialId())
+            {
+                case MaterialId.LitStandard:
+                case MaterialId.LitSpecular:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
+                    break;
+                case MaterialId.LitTranslucent:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredTranslucent;
+                    break;
+                case MaterialId.LitSSS:
+                    if (material.HasProperty(kTransmissionEnable) && material.GetInt(kTransmissionEnable) != 0)
+                        materialType = HDRenderPipeline.StencilMaterialType.DeferredTranslucent;
+                    else // We flag HDRenderPipeline.StencilUsageBeforeTransparent.SubsurfaceScattering
+                        materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
+                    break;
+                case MaterialId.LitAniso:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredAnisotropic;
+                    break;
+                case MaterialId.LitIridescence:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredIridescencent;
+                    break;
+                default:
+                    // TODO: support forward materials.
+                    Debug.Assert(false, "Unhandled case.");
+                    break;
+            }
+
+            return materialType;
+        }
+
         // This function can be used by all materials (Lit, Unlit, Cloth, Hair, etc).
         // All shader passes must be pre-configured as enabled/disabled before calling this function.
         static public void SetupStencilState(Material material, HDRenderPipeline.StencilMaterialType materialType)
