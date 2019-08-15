@@ -619,6 +619,32 @@ void EncodeIntoGBuffer( SurfaceData surfaceData
 #endif
 }
 
+// See StencilMaterialType and StencilUsageBeforeTransparent.
+uint GetMaterialFeatureFlagsFromStencil(uint stencilValue)
+{
+    bool pixelHasStandard     = (stencilValue & 7) >= 2;
+    bool pixelHasTranslucency = (stencilValue & 7) == 3;
+    bool pixelHasAnisotropy   = (stencilValue & 7) == 4;
+    bool pixelHasIridescence  = (stencilValue & 7) == 5;
+    bool pixelHasSubsurface   = (stencilValue & (1 << 3)) != 0;
+
+    uint pixelFeatureFlags = 0;
+
+    if (pixelHasStandard)
+    {
+        // Only sky/background do not have the Standard flag.
+        // TODO: will the compiler optimize this?
+        pixelFeatureFlags |= pixelHasStandard     ? MATERIALFEATUREFLAGS_LIT_STANDARD              : 0;
+        pixelFeatureFlags |= pixelHasSubsurface   ? MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING : 0;
+        pixelFeatureFlags |= pixelHasTranslucency ? MATERIALFEATUREFLAGS_LIT_TRANSMISSION          : 0;
+        pixelFeatureFlags |= pixelHasAnisotropy   ? MATERIALFEATUREFLAGS_LIT_ANISOTROPY            : 0;
+        pixelFeatureFlags |= pixelHasIridescence  ? MATERIALFEATUREFLAGS_LIT_IRIDESCENCE           : 0;
+        // pixelFeatureFlags |= pixelHasClearCoat    ? MATERIALFEATUREFLAGS_LIT_CLEAR_COAT            : 0);
+    }
+
+    return pixelFeatureFlags;
+}
+
 // Fills the BSDFData. Also returns the (per-pixel) material feature flags inferred
 // from the contents of the G-buffer, which can be used by the feature classification system.
 // Note that return type is not part of the MACRO DECODE_FROM_GBUFFER, so it is safe to use return value for our need

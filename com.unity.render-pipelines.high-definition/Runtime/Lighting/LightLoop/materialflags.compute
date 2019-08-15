@@ -30,7 +30,7 @@ CBUFFER_END
 groupshared uint ldsFeatureFlags;
 RWStructuredBuffer<uint> g_TileFeatureFlags;
 
-TEXTURE2D_X(_StencilTexture);               // DXGI_FORMAT_R8_UINT is not supported by Unity
+TEXTURE2D_X_UINT2(_StencilTexture); // Use the Green channel
 
 [numthreads(NR_THREADS, 1, 1)]
 void MATERIALFLAGSGEN(uint3 dispatchThreadId : SV_DispatchThreadID, uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
@@ -62,14 +62,7 @@ void MATERIALFLAGSGEN(uint3 dispatchThreadId : SV_DispatchThreadID, uint threadI
         int idx = i * NR_THREADS + threadID;
         uint2 uCrd = min( uint2(viTilLL.x + (idx & 0xf), viTilLL.y + (idx >> 4)), uint2(iWidth - 1, iHeight - 1));
 
-        // StencilTexture here contain the result of testing if we are not equal to stencil usage NoLighting. i.e (stencil value != NoLighting). A value > 0 means true.
-        // This test if we are the sky/background or a forward opaque (which tag the stencil as NoLighting)
-        uint stencilVal = UnpackByte(LOAD_TEXTURE2D_X(_StencilTexture, uCrd).r);
-        if (stencilVal > 0)
-        {
-            PositionInputs posInput = GetPositionInput(uCrd, invScreenSize);
-            materialFeatureFlags |= MATERIAL_FEATURE_FLAGS_FROM_GBUFFER(posInput.positionSS);
-        }
+        materialFeatureFlags |= GetMaterialFeatureFlagsFromStencil(LOAD_TEXTURE2D_X(_StencilTexture, uCrd).g);
     }
 
     InterlockedOr(ldsFeatureFlags, materialFeatureFlags);   //TODO: driver might optimize this or we might have to do a manual reduction

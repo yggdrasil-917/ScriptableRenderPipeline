@@ -181,7 +181,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             Forward                = 1,
             DeferredStandard       = 2,
-            DeferredSssTranslucent = 3,
+            DeferredTranslucent    = 3, // SSS may or may not be enabled, check the flag in StencilUsageBeforeTransparent below as well
             DeferredAnisotropic    = 4,
             DeferredIridescencent  = 5,
             // Reserved            = 6-7,

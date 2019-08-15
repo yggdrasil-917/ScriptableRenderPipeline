@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 
 // Include material common properties names
 using static UnityEngine.Rendering.HighDefinition.HDMaterialProperties;
@@ -16,7 +17,7 @@ namespace UnityEditor.Rendering.HighDefinition
             ^ SurfaceOptionUIBlock.Features.AlphaCutoff
             ^ SurfaceOptionUIBlock.Features.BackThenFrontRendering
             ^ SurfaceOptionUIBlock.Features.ShowAfterPostProcessPass;
-        
+
         MaterialUIBlockList uiBlocks = new MaterialUIBlockList
         {
             new SurfaceOptionUIBlock(MaterialUIBlock.Expandable.Base, features: surfaceOptionFeatures),
@@ -45,7 +46,31 @@ namespace UnityEditor.Rendering.HighDefinition
             BaseLitGUI.SetupBaseLitKeywords(material);
             BaseLitGUI.SetupBaseLitMaterialPass(material);
 
-            BaseUnlitGUI.SetupStencilState(material, UnityEngine.Rendering.HighDefinition.HDRenderPipeline.StencilMaterialType.Forward);
+            // TODO: support forward materials.
+            HDRenderPipeline.StencilMaterialType materialType = HDRenderPipeline.StencilMaterialType.Forward;
+
+            switch (material.GetMaterialId())
+            {
+                case MaterialId.LitStandard:
+                case MaterialId.LitSpecular:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
+                    break;
+                case MaterialId.LitTranslucent:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredTranslucent;
+                    break;
+                case MaterialId.LitAniso:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredAnisotropic;
+                    break;
+                case MaterialId.LitIridescence:
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredIridescencent;
+                    break;
+                default:
+                    // TODO: support forward materials.
+                    Debug.Assert(false, "Unhandled case.");
+                    break;
+            }
+
+            BaseUnlitGUI.SetupStencilState(material, materialType);
 
             if (material.HasProperty(kAddPrecomputedVelocity))
             {

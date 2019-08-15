@@ -92,7 +92,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     bool tileFlagsWritten = false;
 
-                    data.buildGPULightListResources.depthBuffer = context.resources.GetTexture(data.depthBuffer);
+                    data.buildGPULightListResources.depthStencilBuffer = context.resources.GetTexture(data.depthBuffer);
                     data.buildGPULightListResources.stencilTexture = context.resources.GetTexture(data.stencilTexture);
                     if (passData.buildGPULightListParameters.computeMaterialVariants && passData.buildGPULightListParameters.enableFeatureVariants)
                     {

@@ -118,9 +118,8 @@ namespace UnityEditor.Rendering.HighDefinition
                 case MaterialId.LitSpecular:
                     materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
                     break;
-                case MaterialId.LitSSS:
                 case MaterialId.LitTranslucent:
-                    materialType = HDRenderPipeline.StencilMaterialType.DeferredSssTranslucent;
+                    materialType = HDRenderPipeline.StencilMaterialType.DeferredTranslucent;
                     break;
                 case MaterialId.LitAniso:
                     materialType = HDRenderPipeline.StencilMaterialType.DeferredAnisotropic;
