@@ -331,6 +331,11 @@ namespace UnityEditor.Rendering.HighDefinition
              }
         }
 
+        static bool IsMaterialPropertyNotZero(Material material, string name)
+        {
+            return material.HasProperty(name) && material.GetInt(name) != 0;
+        }
+
         public static HDRenderPipeline.StencilMaterialType GetStencilMaterialType(Material material)
         {
             // TODO: support forward materials.
@@ -346,7 +351,7 @@ namespace UnityEditor.Rendering.HighDefinition
                     materialType = HDRenderPipeline.StencilMaterialType.DeferredTranslucent;
                     break;
                 case MaterialId.LitSSS:
-                    if (material.HasProperty(kTransmissionEnable) && material.GetInt(kTransmissionEnable) != 0)
+                    if (IsMaterialPropertyNotZero(material, kTransmissionEnable))
                         materialType = HDRenderPipeline.StencilMaterialType.DeferredTranslucent;
                     else // We flag HDRenderPipeline.StencilUsageBeforeTransparent.SubsurfaceScattering
                         materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
@@ -373,7 +378,7 @@ namespace UnityEditor.Rendering.HighDefinition
             // The stencil reference is computed and serialized at the material authoring time.
             // It is supposed to contain the HDRenderPipeline.StencilMaterialType.
             // Lit materials can be switched from forward to deferred at runtime.
-            // Due to the inflexible design of Unity and the HDRP, we are unable to alter (patch)
+            // Due to the way Unity and the HDRP work, we are unable to alter (patch)
             // this value before it is used as a stencil state (at runtime), which means that,
             // within this function call, we cannot say whether the material is forward or deferred.
             // Our workaround is to lie (in the stencil reference), and to say that the material
@@ -393,17 +398,17 @@ namespace UnityEditor.Rendering.HighDefinition
                 stencilReadMask  |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
                 stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
 
-                if (material.HasProperty(kUseSplitLighting) && material.GetInt(kUseSplitLighting) != 0)
+                if (IsMaterialPropertyNotZero(material, kUseSplitLighting))
                 {
                     stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.SubsurfaceScattering;
                 }
 
-                if (material.HasProperty(kReceivesSSR) && material.GetInt(kReceivesSSR) != 0)
+                if (IsMaterialPropertyNotZero(material, kReceivesSSR))
                 {
                     stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.TraceReflectionRay;
                 }
 
-                if (material.HasProperty(kSupportDecals) && material.GetInt(kSupportDecals) != 0)
+                if (IsMaterialPropertyNotZero(material, kSupportDecals))
                 {
                     stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.Decal;
                 }

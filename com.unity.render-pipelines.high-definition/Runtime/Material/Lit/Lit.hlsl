@@ -626,7 +626,7 @@ uint GetMaterialFeatureFlagsFromStencil(uint stencilValue)
     bool pixelHasTranslucency = (stencilValue & 7) == 3;
     bool pixelHasAnisotropy   = (stencilValue & 7) == 4;
     bool pixelHasIridescence  = (stencilValue & 7) == 5;
-    bool pixelHasSubsurface   = (stencilValue & (1 << 3)) != 0;
+    bool pixelHasSubsurface   = (stencilValue & 8) == 8;
 
     uint pixelFeatureFlags = 0;
 

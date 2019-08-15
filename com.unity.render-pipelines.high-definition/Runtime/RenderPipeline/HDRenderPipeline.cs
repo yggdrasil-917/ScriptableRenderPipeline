@@ -85,6 +85,8 @@ namespace UnityEngine.Rendering.HighDefinition
         internal float GetRaysPerFrame(RayCountManager.RayCountValues rayValues) { return m_RayTracingManager.rayCountManager.GetRaysPerFrame(rayValues); }
 #endif
 
+        ComputeShader m_BuildCoarseStencil { get { return defaultResources.shaders.buildCoarseStencilCS; } }
+
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
         PerObjectData m_CurrentRendererConfigurationBakedLighting = HDUtils.k_RendererConfigurationBakedLighting;
         MaterialPropertyBlock m_CopyDepthPropertyBlock = new MaterialPropertyBlock();
@@ -1837,6 +1839,9 @@ namespace UnityEngine.Rendering.HighDefinition
             // We can now bind the normal buffer to be use by any effect
             m_SharedRTManager.BindNormalBuffer(cmd);
 
+            // The G-Buffer is the last pass writing the stencil before the Transparent Lighting pass.
+            BuildCoarseStencil(hdCamera, m_SharedRTManager.GetCoarseStencilBuffer(), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), cmd);
+
             // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
             GenerateDepthPyramid(hdCamera, cmd, FullScreenDebugMode.DepthPyramid);
             // Depth texture is now ready, bind it (Depth buffer could have been bind before if DBuffer is enable)
@@ -1872,7 +1877,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 if (!hdCamera.frameSettings.SSAORunsAsync())
                     m_AmbientOcclusionSystem.Render(cmd, hdCamera, renderContext, m_FrameCount);
 
-                CopyStencilBufferIfNeeded(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetStencilBufferCopy(), m_CopyStencil, m_CopyStencilForSSR);
+                // CopyStencilBufferIfNeeded(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetCoarseStencilBuffer(), m_CopyStencil, m_CopyStencilForSSR);
 
                 // When debug is enabled we need to clear otherwise we may see non-shadows areas with stale values.
                 if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.ContactShadows) && m_CurrentDebugDisplaySettings.data.fullScreenDebugMode == FullScreenDebugMode.ContactShadows)
@@ -2960,6 +2965,27 @@ namespace UnityEngine.Rendering.HighDefinition
             return result;
         }
 
+        void BuildCoarseStencil(HDCamera camera, RTHandle coarseStencilBuffer, RTHandle depthStencilBuffer, CommandBuffer cmd)
+        {
+            // Since Unity has no access to the hardware HTILE implementation,
+            // we cannot use it in a computer shader for accelerted classification.
+            // So we build our own software fallback.
+            // The idea is to take the fine (full-size, full-screen) stencil buffer
+            // and OR the stencil values on a coarse 8x8 texel tile basis.
+
+            using (new ProfilingSample(cmd, "Build Coarse Stencil", CustomSamplerId.BuildCoarseStencil.GetSampler()))
+            {
+                // No firstbithigh. :-(
+                int kernelIndex         = (int)Math.Round(Math.Log((double)camera.msaaSamples, 2));
+                int coarseStencilWidth  = HDUtils.DivRoundUp((int)camera.screenSize.x, 8);
+                int coarseStencilHeight = HDUtils.DivRoundUp((int)camera.screenSize.y, 8);
+
+                cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, HDShaderIDs._StencilTexture, depthStencilBuffer, 0, RenderTextureSubElement.Stencil);
+                cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, "_CoarseStencilTexture", coarseStencilBuffer, 0);
+                cmd.DispatchCompute(m_BuildCoarseStencil, kernelIndex, coarseStencilWidth, coarseStencilHeight, camera.viewCount);
+            }
+        }
+
         void RenderForwardEmissive(CullingResults cullResults, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)
         {
             if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals))
@@ -3461,7 +3487,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 RTHandle clearCoatMask = hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred ? m_GbufferManager.GetBuffer(2) : TextureXR.GetBlackTexture();
 
                 var parameters = PrepareSSRParameters(hdCamera);
-                RenderSSR(parameters, m_SharedRTManager.GetDepthTexture(), m_SsrHitPointTexture, m_SharedRTManager.GetStencilBufferCopy(), clearCoatMask, previousColorPyramid, m_SsrLightingTexture, cmd, renderContext);
+                RenderSSR(parameters, m_SharedRTManager.GetDepthTexture(), m_SsrHitPointTexture, m_SharedRTManager.GetCoarseStencilBuffer(), clearCoatMask, previousColorPyramid, m_SsrLightingTexture, cmd, renderContext);
 
             	if (!hdCamera.colorPyramidHistoryIsValid)
             	{
@@ -3875,6 +3901,10 @@ namespace UnityEngine.Rendering.HighDefinition
                             CoreUtils.SetRenderTarget(cmd, m_SharedRTManager.GetDepthTexture(true), m_SharedRTManager.GetDepthStencilBuffer(true), ClearFlag.Color, Color.black);
                         }
                     }
+
+                    // Do not need to clear the Coarse Stencil buffer, we completely overwrite it.
+                    // CoreUtils.SetRenderTarget(cmd, m_SharedRTManager.GetCoarseStencilBuffer(), ClearFlag.Color);
+
                     m_IsDepthBufferCopyValid = false;
                 }
 

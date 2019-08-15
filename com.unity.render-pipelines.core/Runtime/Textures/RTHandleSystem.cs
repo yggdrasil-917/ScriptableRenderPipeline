@@ -411,8 +411,9 @@ namespace UnityEngine.Rendering
             if (enableMSAA)
                 Debug.Assert(m_ScaledRTSupportsMSAA);
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
+            // Must not use RoundToInt here, otherwise border texels at the edges of the screen may go missing.
+            int width  = Mathf.Max(Mathf.CeilToInt(scaleFactor.x * GetMaxWidth()),  1);
+            int height = Mathf.Max(Mathf.CeilToInt(scaleFactor.y * GetMaxHeight()), 1);
 
             var rth = AllocAutoSizedRenderTexture(width,
                     height,

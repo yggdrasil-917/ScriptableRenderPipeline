@@ -2818,7 +2818,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 var resources = PrepareBuildGPULightListResources(
                     m_TileAndClusterData,
                     m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)),
-                    m_SharedRTManager.GetStencilBufferCopy()
+                    m_SharedRTManager.GetCoarseStencilBuffer()
                 );
 
                 bool tileFlagsWritten = false;

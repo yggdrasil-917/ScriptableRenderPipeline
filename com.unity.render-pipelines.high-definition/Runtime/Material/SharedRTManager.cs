@@ -9,7 +9,7 @@ namespace UnityEngine.Rendering.HighDefinition
         RTHandle m_MotionVectorsRT = null;
         RTHandle m_CameraDepthStencilBuffer = null;
         RTHandle m_CameraDepthBufferMipChain;
-        RTHandle m_CameraStencilBufferCopy;
+        RTHandle m_CameraCoarseStencilBuffer; // A.k.a. HTILE
         RTHandle m_CameraHalfResDepthBuffer = null;
         HDUtils.PackedMipChainInfo m_CameraDepthBufferMipChainInfo; // This is metadata
 
@@ -66,8 +66,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 m_CameraHalfResDepthBuffer = RTHandles.Alloc(Vector2.one * 0.5f, TextureXR.slices, DepthBits.Depth32, dimension: TextureXR.dimension, useDynamicScale: true, name: "LowResDepthBuffer");
             }
 
-            // Technically we won't need this buffer in some cases, but nothing that we can determine at init time.
-            m_CameraStencilBufferCopy = RTHandles.Alloc(Vector2.one, TextureXR.slices, DepthBits.None, colorFormat: GraphicsFormat.R8_UNorm, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, name: "CameraStencilCopy"); // DXGI_FORMAT_R8_UINT is not supported by Unity
+            m_CameraCoarseStencilBuffer = RTHandles.Alloc(Vector2.one * 0.125f, TextureXR.slices, DepthBits.None, colorFormat: GraphicsFormat.R8_UInt, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, name: "CameraCoarseStencil");
 
             if (m_MotionVectorsSupport)
             {
@@ -227,9 +226,9 @@ namespace UnityEngine.Rendering.HighDefinition
             m_MSAASamples = msaaSamples;
         }
 
-        public RTHandle GetStencilBufferCopy()
+        public RTHandle GetCoarseStencilBuffer()
         {
-            return m_CameraStencilBufferCopy;
+            return m_CameraCoarseStencilBuffer;
         }
 
         public Vector2Int ComputeDepthBufferMipChainSize(Vector2Int screenSize)
@@ -265,7 +264,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             RTHandles.Release(m_CameraDepthStencilBuffer);
             RTHandles.Release(m_CameraDepthBufferMipChain);
-            RTHandles.Release(m_CameraStencilBufferCopy);
+            RTHandles.Release(m_CameraCoarseStencilBuffer);
             RTHandles.Release(m_CameraHalfResDepthBuffer);
 
             if (m_MSAASupported)

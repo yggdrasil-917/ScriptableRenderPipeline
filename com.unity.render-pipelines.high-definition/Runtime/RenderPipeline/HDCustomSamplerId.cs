@@ -43,6 +43,7 @@ namespace UnityEngine.Rendering.HighDefinition
         PostProcessing,
         AfterPostProcessing,
         RenderDebug,
+        BuildCoarseStencil,
         ClearBuffers,
         ClearDepthStencil,
         ClearSssLightingBuffer,

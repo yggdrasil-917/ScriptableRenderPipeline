@@ -17,7 +17,7 @@
 #define USE_MATERIAL_FEATURE_FLAGS
 
 #ifdef PLATFORM_LANE_COUNT                                          // We can infer the size of a wave. This is currently not possible on non-consoles, so we have to fallback to a sensible default in those cases.
-#define NR_THREADS              PLATFORM_LANE_COUNT  
+#define NR_THREADS              PLATFORM_LANE_COUNT
 #else
 #define NR_THREADS              64                                  // default to 64 threads per group on other platforms..
 #endif
@@ -30,7 +30,7 @@ CBUFFER_END
 groupshared uint ldsFeatureFlags;
 RWStructuredBuffer<uint> g_TileFeatureFlags;
 
-TEXTURE2D_X_UINT2(_StencilTexture); // Use the Green channel
+TEXTURE2D_X_UINT2(_StencilTexture); // Use the green channel
 
 [numthreads(NR_THREADS, 1, 1)]
 void MATERIALFLAGSGEN(uint3 dispatchThreadId : SV_DispatchThreadID, uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
