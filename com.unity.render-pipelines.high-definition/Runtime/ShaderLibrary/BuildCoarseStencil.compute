@@ -1,0 +1,75 @@
+// #pragma enable_d3d11_debug_symbols
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#pragma kernel MAIN         main=MAIN         NUM_SAMPLES=1
+#pragma kernel MAIN_MSAA_2X main=MAIN_MSAA_2X NUM_SAMPLES=2
+#pragma kernel MAIN_MSAA_4X main=MAIN_MSAA_4X NUM_SAMPLES=4
+#pragma kernel MAIN_MSAA_8X main=MAIN_MSAA_8X NUM_SAMPLES=8
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+
+#if (NUM_SAMPLES == 1)
+TEXTURE2D_X_UINT2(_StencilTexture);         // Use the green channel
+#else
+TEXTURE2D_X_MSAA(uint2, _StencilTexture);   // Use the green channel
+#endif
+RW_TEXTURE2D_X(uint, _CoarseStencilBuffer); // 8-bit
+
+#ifdef PLATFORM_SUPPORTS_WAVE_INTRINSICS
+    #define FAST_PLATFORM (PLATFORM_LANE_COUNT) == 64)
+#else
+    #define FAST_PLATFORM 0
+#endif
+
+#if (FAST_PLATFORM == 0)
+    groupshared uint coarseStencilValue;
+#endif
+
+[numthreads(8, 8, 1)]
+void main(uint3 groupId          : SV_GroupID,
+          uint3 groupThreadId    : SV_GroupThreadID,
+          uint3 dispatchThreadId : SV_DispatchThreadID)
+{
+    UNITY_STEREO_ASSIGN_COMPUTE_EYE_INDEX(dispatchThreadId.z);
+
+    uint fineStencilValue = 0;
+
+    // Don't collect garbage off-screen.
+    if (dispatchThreadId.x < (uint)_ScreenSize.x &&
+        dispatchThreadId.y < (uint)_ScreenSize.y)
+    {
+        UNITY_UNROLL
+        for (uint i = 0; i < NUM_SAMPLES; i++)
+        {
+        #if (NUM_SAMPLES == 1)
+            // TODO: use Gather?
+            fineStencilValue |= LOAD_TEXTURE2D_X(_StencilTexture, dispatchThreadId.xy).g;
+        #else
+            fineStencilValue |= LOAD_TEXTURE2D_X_MSAA(_StencilTexture, dispatchThreadId.xy, i).g;
+        #endif
+        }
+    }
+
+#if (FAST_PLATFORM != 0)
+    bool isFirstThread      = WaveIsFirstLane();
+    uint coarseStencilValue = WaveActiveBitOr(fineStencilValue);
+#else
+    bool isFirstThread = groupThreadId.x == 0 && groupThreadId.y == 0;
+
+    coarseStencilValue = 0;
+
+    // Wait for the TGSM.
+    GroupMemoryBarrierWithGroupSync();
+
+    InterlockedOr(coarseStencilValue, fineStencilValue);
+
+    // Wait for the TGSM.
+    GroupMemoryBarrierWithGroupSync();
+#endif
+
+    if (isFirstThread)
+    {
+        _CoarseStencilBuffer[COORD_TEXTURE2D_X(groupId.xy)] = coarseStencilValue;
+    }
+}
