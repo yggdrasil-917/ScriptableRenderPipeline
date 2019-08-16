@@ -15,15 +15,10 @@ Shader "HDRP/TerrainLit"
         // Following are builtin properties
 
         // Stencil state
-        // Forward
-        [HideInInspector] _StencilRef("_StencilRef", Int) = 2 // StencilLightingUsage.RegularLighting
-        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 3 // StencilMask.Lighting
-        // GBuffer
-        [HideInInspector] _StencilRefGBuffer("_StencilRefGBuffer", Int) = 2 // StencilLightingUsage.RegularLighting
-        [HideInInspector] _StencilWriteMaskGBuffer("_StencilWriteMaskGBuffer", Int) = 3 // StencilMask.Lighting
-        // Depth prepass
-        [HideInInspector] _StencilRefDepth("_StencilRefDepth", Int) = 0 // Nothing
-        [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 32 // DoesntReceiveSSR
+        [HideInInspector] _StencilRef       ("_StencilRef",        Int) = 0
+        [HideInInspector] _StencilRefGBuffer("_StencilRefGBuffer", Int) = 0
+        [HideInInspector] _StencilReadMask  ("_StencilReadMask",   Int) = 0
+        [HideInInspector] _StencilWriteMask ("_StencilWriteMask",  Int) = 0
 
         // Blending state
         [HideInInspector] _ZWrite ("__zw", Float) = 1.0
@@ -114,10 +109,12 @@ Shader "HDRP/TerrainLit"
 
             Stencil
             {
-                WriteMask [_StencilWriteMaskGBuffer]
-                Ref [_StencilRefGBuffer]
-                Comp Always
-                Pass Replace
+                Ref       [_StencilRefGBuffer]
+                ReadMask  0
+                WriteMask [_StencilWriteMask]
+                Comp      Always
+                Pass      Replace
+                Fail      Keep
             }
 
             HLSLPROGRAM
@@ -189,13 +186,14 @@ Shader "HDRP/TerrainLit"
 
             Cull[_CullMode]
 
-            // To be able to tag stencil with disableSSR information for forward
             Stencil
             {
-                WriteMask [_StencilWriteMaskDepth]
-                Ref [_StencilRefDepth]
-                Comp Always
-                Pass Replace
+                Ref       [_StencilRef]
+                ReadMask  0
+                WriteMask [_StencilWriteMask]
+                Comp      Always
+                Pass      Replace
+                Fail      Keep
             }
 
             ZWrite On
@@ -228,10 +226,12 @@ Shader "HDRP/TerrainLit"
 
             Stencil
             {
-                WriteMask [_StencilWriteMask]
-                Ref [_StencilRef]
-                Comp Always
-                Pass Replace
+                Ref       [_StencilRef]
+                ReadMask  [_StencilReadMask]
+                WriteMask 0
+                Comp      Equal
+                Pass      Keep
+                Fail      Keep
             }
 
             // In case of forward we want to have depth equal for opaque mesh
