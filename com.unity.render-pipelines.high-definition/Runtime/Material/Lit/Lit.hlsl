@@ -455,6 +455,8 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
 
 // GBuffer layout.
 // GBuffer2 and GBuffer0.a interpretation depends on material feature enabled
+// Docs: https://docs.google.com/spreadsheets/d/1-85pJ1w7elwIMKR7HQmQGaekoZuPwHvlkusFrkRTstw
+
 
 //GBuffer0      RGBA8 sRGB  Gbuffer0 encode baseColor and so is sRGB to save precision. Alpha is not affected.
 //GBuffer1      RGBA8

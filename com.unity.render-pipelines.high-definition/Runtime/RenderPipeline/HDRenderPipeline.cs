@@ -179,6 +179,7 @@ namespace UnityEngine.Rendering.HighDefinition
                                                 HDShaderPassNames.s_MeshDecalsMSName, HDShaderPassNames.s_MeshDecalsAOSName, HDShaderPassNames.s_MeshDecalsMAOSName, HDShaderPassNames.s_ShaderGraphMeshDecalsName4RT};
         ShaderTagId[] m_Decals3RTPassNames = { HDShaderPassNames.s_MeshDecals3RTName , HDShaderPassNames.s_ShaderGraphMeshDecalsName3RT };
 
+        // Docs: https://docs.google.com/spreadsheets/d/1-85pJ1w7elwIMKR7HQmQGaekoZuPwHvlkusFrkRTstw
         internal enum StencilMaterialType
         {
             Forward                = 1,
