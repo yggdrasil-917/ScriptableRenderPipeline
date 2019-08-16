@@ -12,10 +12,12 @@ Shader "Hidden/HDRP/CombineLighting"
         {
             Stencil
             {
-                ReadMask [_StencilMask]
-                Ref  1 // StencilLightingUsage.SplitLighting
+                ReadMask  8 // StencilUsageBeforeTransparent.SubsurfaceScattering
+                WriteMask 0
+                Ref       8 // StencilUsageBeforeTransparent.SubsurfaceScattering
                 Comp Equal
                 Pass Keep
+                Fail Keep
             }
 
             Cull   Off

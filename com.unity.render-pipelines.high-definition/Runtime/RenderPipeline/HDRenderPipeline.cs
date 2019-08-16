@@ -2981,7 +2981,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 int coarseStencilHeight = HDUtils.DivRoundUp((int)camera.screenSize.y, 8);
 
                 cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, HDShaderIDs._StencilTexture, depthStencilBuffer, 0, RenderTextureSubElement.Stencil);
-                cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, "_CoarseStencilTexture", coarseStencilBuffer, 0);
+                cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, HDShaderIDs._CoarseStencilBuffer, coarseStencilBuffer, 0);
                 cmd.DispatchCompute(m_BuildCoarseStencil, kernelIndex, coarseStencilWidth, coarseStencilHeight, camera.viewCount);
             }
         }

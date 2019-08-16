@@ -355,6 +355,8 @@ namespace UnityEditor.Rendering.HighDefinition
                         materialType = HDRenderPipeline.StencilMaterialType.DeferredTranslucent;
                     else // We flag HDRenderPipeline.StencilUsageBeforeTransparent.SubsurfaceScattering
                         materialType = HDRenderPipeline.StencilMaterialType.DeferredStandard;
+                    // Looks like certain materials forget to set kUseSplitLighting.
+                    material.SetInt(kUseSplitLighting, 1);
                     break;
                 case MaterialId.LitAniso:
                     materialType = HDRenderPipeline.StencilMaterialType.DeferredAnisotropic;
@@ -395,8 +397,12 @@ namespace UnityEditor.Rendering.HighDefinition
 
             if (material.GetSurfaceType() == SurfaceType.Opaque)
             {
-                stencilReadMask  |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
-                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
+                // Do not touch the user bit!
+                int mask = (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue &
+                          ~(int)HDRenderPipeline.StencilUsageBeforeTransparent.UserBit;
+
+                stencilReadMask  |= mask;
+                stencilWriteMask |= mask;
 
                 if (IsMaterialPropertyNotZero(material, kUseSplitLighting))
                 {

@@ -66,7 +66,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     resources.depthStencilBuffer = context.resources.GetTexture(data.depthStencilBuffer);
                     resources.depthTexture = context.resources.GetTexture(data.depthTexture);
                     resources.cameraFilteringBuffer = context.resources.GetTexture(data.cameraFilteringBuffer);
-                    resources.hTileBuffer = context.resources.GetTexture(data.hTileBuffer);
+                    resources.coarseStencilBuffer = context.resources.GetTexture(data.hTileBuffer);
                     resources.sssBuffer = context.resources.GetTexture(data.sssBuffer);
 
                     RenderSubsurfaceScattering(data.parameters, resources, context.cmd);
