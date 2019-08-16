@@ -878,49 +878,38 @@ namespace UnityEditor.Rendering.HighDefinition
             "#pragma multi_compile _ WRITE_MSAA_DEPTH"
         };
 
-        public static void SetStencilStateForDepth(ref Pass pass)
+        // DepthOnly, MotionVectors, DistortionVectors.
+        public static void SetStencilStateToFillGeneral(ref Pass pass)
         {
             pass.StencilOverride = new List<string>()
             {
                 "// Stencil setup",
                 "Stencil",
                 "{",
-                "   WriteMask [_StencilWriteMaskDepth]",
-                "   Ref [_StencilRefDepth]",
-                "   Comp Always",
-                "   Pass Replace",
+                "   Ref       [_StencilRef]",
+                "   ReadMask  0",
+                "   WriteMask [_StencilWriteMask]",
+                "   Comp      Always",
+                "   Pass      Replace",
+                "   Fail      Keep",
                 "}"
+
             };
+        }
+
+        public static void SetStencilStateForDepth(ref Pass pass)
+        {
+            SetStencilStateToFillGeneral(ref pass);
         }
 
         public static void SetStencilStateForMotionVector(ref Pass pass)
         {
-            pass.StencilOverride = new List<string>()
-            {
-                "// Stencil setup",
-                "Stencil",
-                "{",
-                "   WriteMask [_StencilWriteMaskMV]",
-                "   Ref [_StencilRefMV]",
-                "   Comp Always",
-                "   Pass Replace",
-                "}"
-            };
+            SetStencilStateToFillGeneral(ref pass);
         }
 
         public static void SetStencilStateForDistortionVector(ref Pass pass)
         {
-            pass.StencilOverride = new List<string>()
-            {
-                "// Stencil setup",
-                "Stencil",
-                "{",
-                "   WriteMask [_StencilRefDistortionVec]",
-                "   Ref [_StencilRefDistortionVec]",
-                "   Comp Always",
-                "   Pass Replace",
-                "}"
-            };
+            SetStencilStateToFillGeneral(ref pass);
         }
 
         public static void SetStencilStateForForward(ref Pass pass)
@@ -930,11 +919,14 @@ namespace UnityEditor.Rendering.HighDefinition
                 "// Stencil setup",
                 "Stencil",
                 "{",
-                "   WriteMask [_StencilWriteMask]",
-                "   Ref [_StencilRef]",
-                "   Comp Always",
-                "   Pass Replace",
+                "   Ref       [_StencilRef]",
+                "   ReadMask  [_StencilReadMask]",
+                "   WriteMask 0",
+                "   Comp      Equal",
+                "   Pass      Keep",
+                "   Fail      Keep",
                 "}"
+
             };
         }
 
@@ -945,11 +937,14 @@ namespace UnityEditor.Rendering.HighDefinition
                 "// Stencil setup",
                 "Stencil",
                 "{",
-                "   WriteMask [_StencilWriteMaskGBuffer]",
-                "   Ref [_StencilRefGBuffer]",
-                "   Comp Always",
-                "   Pass Replace",
+                "   Ref       [_StencilRefGBuffer]",
+                "   ReadMask  0",
+                "   WriteMask [_StencilWriteMask]",
+                "   Comp      Always",
+                "   Pass      Replace",
+                "   Fail      Keep",
                 "}"
+
             };
         }
 
