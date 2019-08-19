@@ -1822,12 +1822,24 @@ namespace UnityEngine.Rendering.HighDefinition
 
             hdCamera.xr.StartSinglePass(cmd, camera, renderContext);
 
-            bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
-            if (!shouldRenderMotionVectorAfterGBuffer)
+            bool shouldRenderMotionVectorAfterGBuffer = false;
+
+            bool isDepthPrepassActive = true;
+            if (isDepthPrepassActive)
             {
-                // If objects motion vectors if enabled, this will render the objects with motion vector into the target buffers (in addition to the depth)
-                // Note: An object with motion vector must not be render in the prepass otherwise we can have motion vector write that should have been rejected
-                RenderObjectsMotionVectors(cullingResults, hdCamera, renderContext, cmd);
+                shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
+
+                if (!shouldRenderMotionVectorAfterGBuffer)
+                {
+                    // If objects motion vectors if enabled, this will render the objects with motion vector into the target buffers (in addition to the depth)
+                    // Note: An object with motion vector must not be render in the prepass otherwise we can have motion vector write that should have been rejected
+                    RenderObjectsMotionVectors(cullingResults, hdCamera, renderContext, cmd);
+                }
+
+                // After the optional depth prepass (which may additionally include motion vectors),
+                // all opaque objects have already tagged the stencil buffer (the material part may be wrong),
+                // so we can now build the coarse representation.
+                BuildCoarseStencil(hdCamera, m_SharedRTManager.GetCoarseStencilBuffer(), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), cmd);
             }
 
             // Now that all depths have been rendered, resolve the depth buffer
@@ -1840,8 +1852,12 @@ namespace UnityEngine.Rendering.HighDefinition
             // We can now bind the normal buffer to be use by any effect
             m_SharedRTManager.BindNormalBuffer(cmd);
 
-            // The G-Buffer is the last pass writing the stencil before the Transparent Lighting pass.
-            BuildCoarseStencil(hdCamera, m_SharedRTManager.GetCoarseStencilBuffer(), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), cmd);
+            bool isGbufferPassActive = hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred;
+            if (isGbufferPassActive)
+            {
+                // The G-buffer pass is the last pass writing to the stencil buffer before the Transparent Lighting pass.
+                BuildCoarseStencil(hdCamera, m_SharedRTManager.GetCoarseStencilBuffer(), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), cmd);
+            }
 
             // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
             GenerateDepthPyramid(hdCamera, cmd, FullScreenDebugMode.DepthPyramid);
@@ -1850,6 +1866,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (shouldRenderMotionVectorAfterGBuffer)
             {
+                // THIS WILL NOT WORK WITH THE STENCIL CHANGES. It will overwrite the correct stencil value with an incorrect one.
                 // See the call RenderObjectsMotionVectors() above and comment
                 RenderObjectsMotionVectors(cullingResults, hdCamera, renderContext, cmd);
             }
