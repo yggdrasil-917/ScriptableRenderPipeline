@@ -82,11 +82,12 @@ Shader "Hidden/HDRP/Material/Decal/DecalNormalBuffer"
 
             Stencil
             {
-                WriteMask [_DecalNormalBufferStencilReadMask]
-                ReadMask [_DecalNormalBufferStencilReadMask]
-                Ref [_DecalNormalBufferStencilRef]
+                Ref       33 // StencilUsageBeforeTransparent.Decal | StencilMaterialType.Forward
+                ReadMask  33 // StencilUsageBeforeTransparent.Decal | StencilMaterialType.Forward
+                WriteMask 0
                 Comp Equal
-                Pass Zero   // Clear bits since they are not needed anymore.
+                Pass Keep
+                Fail Keep
             }
 
             HLSLPROGRAM

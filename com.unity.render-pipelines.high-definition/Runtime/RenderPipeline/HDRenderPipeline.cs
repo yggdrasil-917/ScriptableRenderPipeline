@@ -198,7 +198,7 @@ namespace UnityEngine.Rendering.HighDefinition
             MaterialType         = (1 << 3) - 1, //   7 0x7  - 3 bit : StencilMaterialType
             SubsurfaceScattering = (1 << 3),     //   8 0x8  - 1 bit : SSS, Split Lighting
             TraceReflectionRay   = (1 << 4),     //  16 0x10 - 1 bit : SSR or RTR
-            Decal                = (1 << 5),     //  32 0x20 - 1 bit : Decal
+            Decal                = (1 << 5),     //  32 0x20 - 1 bit : Decal covers geometry of the pixel
             ObjectMotionVector   = (1 << 6),     //  64 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
             UserBit              = (1 << 7),     // 128 0x80 - 1 bit : Reserved for user (application-specific)
             MaxValue             = (1 << 8) - 1  // 255 0xFF
@@ -1845,9 +1845,13 @@ namespace UnityEngine.Rendering.HighDefinition
             // Now that all depths have been rendered, resolve the depth buffer
             m_SharedRTManager.ResolveSharedRT(cmd, hdCamera);
 
-            RenderDecals(hdCamera, cmd, renderContext, cullingResults);
+            RenderDBuffer(hdCamera, cmd, renderContext, cullingResults);
 
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
+
+            // This pass needs the stencil buffer with the material flats correctly set.
+            // Therefore, it must happen after the G-buffer pass.
+            PatchDBuffer(hdCamera, cmd, renderContext, cullingResults);
 
             // We can now bind the normal buffer to be use by any effect
             m_SharedRTManager.BindNormalBuffer(cmd);
@@ -2829,7 +2833,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        void RenderDecals(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext, CullingResults cullingResults)
+        void RenderDBuffer(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext, CullingResults cullingResults)
         {
             if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals))
             {
@@ -2855,6 +2859,16 @@ namespace UnityEngine.Rendering.HighDefinition
                 cmd.SetGlobalTexture(HDShaderIDs._DecalHTileTexture, m_DbufferManager.GetHTileBuffer());  // mask per 8x8 tile used for optimization when looking up dbuffer values
 
                 m_DbufferManager.BindBufferAsTextures(cmd);
+            }
+        }
+
+        void PatchDBuffer(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext, CullingResults cullingResults)
+        {
+            if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals))
+            {
+                // We still bind black textures to make sure that something is bound (can be a problem on some platforms)
+                m_DbufferManager.BindBlackTextures(cmd);
+                return;
             }
 
             if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported

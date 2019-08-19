@@ -401,8 +401,14 @@ namespace UnityEditor.Rendering.HighDefinition
                 int mask = (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue &
                           ~(int)HDRenderPipeline.StencilUsageBeforeTransparent.UserBit;
 
-                stencilReadMask  |= mask;
+                // The decal bit is not related to the "Supports decals" flag.
+                // Rather, it indicates whether a decal is present in the pixel,
+                // regardless of whether the material supports it.
+                // It's managed by the decal system, and we should not touch it.
+                mask &= ~(int)HDRenderPipeline.StencilUsageBeforeTransparent.Decal;
+
                 stencilWriteMask |= mask;
+                stencilReadMask  |= mask;
 
                 if (IsMaterialPropertyNotZero(material, kUseSplitLighting))
                 {
@@ -412,11 +418,6 @@ namespace UnityEditor.Rendering.HighDefinition
                 if (IsMaterialPropertyNotZero(material, kReceivesSSR))
                 {
                     stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.TraceReflectionRay;
-                }
-
-                if (IsMaterialPropertyNotZero(material, kSupportDecals))
-                {
-                    stencilRef |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.Decal;
                 }
             }
             else // SurfaceType.Transparent

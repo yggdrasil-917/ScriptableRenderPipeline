@@ -31,11 +31,6 @@ Shader "HDRP/Decal"
         _EmissiveIntensity("Emissive Intensity", Float) = 1
         _EmissiveExposureWeight("Emissive Pre Exposure", Range(0.0, 1.0)) = 1.0
 
-
-        // Stencil state
-        [HideInInspector] _DecalStencilRef("_DecalStencilRef", Int) = 8
-        [HideInInspector] _DecalStencilWriteMask("_DecalStencilWriteMask", Int) = 8
-
         // Remapping
         [HideInInspector] _SmoothnessRemapMin("SmoothnessRemapMin", Float) = 0.0
         [HideInInspector] _SmoothnessRemapMax("SmoothnessRemapMax", Float) = 1.0
@@ -101,10 +96,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -153,10 +148,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			// back faces with zfail, for cases when camera is inside the decal volume
@@ -191,10 +186,10 @@ Shader "HDRP/Decal"
 													  // back faces with zfail, for cases when camera is inside the decal volume
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+				WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			Cull Front
@@ -228,10 +223,10 @@ Shader "HDRP/Decal"
 													   // back faces with zfail, for cases when camera is inside the decal volume
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			Cull Front
@@ -265,10 +260,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			// back faces with zfail, for cases when camera is inside the decal volume
@@ -304,10 +299,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			// back faces with zfail, for cases when camera is inside the decal volume
@@ -342,10 +337,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			// back faces with zfail, for cases when camera is inside the decal volume
@@ -380,10 +375,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
             // back faces with zfail, for cases when camera is inside the decal volume
@@ -424,10 +419,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -460,10 +455,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -496,10 +491,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -532,10 +527,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -568,10 +563,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -604,10 +599,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -640,10 +635,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
 
 			ZWrite Off
@@ -673,10 +668,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
             // back faces with zfail, for cases when camera is inside the decal volume
             Cull Front
@@ -704,10 +699,10 @@ Shader "HDRP/Decal"
 
             Stencil
             {
-                WriteMask[_DecalStencilWriteMask]
-                Ref[_DecalStencilRef]
-                Comp Always
-                Pass Replace
+                WriteMask 32 // StencilUsageBeforeTransparent.Decal
+                Ref       32 // StencilUsageBeforeTransparent.Decal
+                Comp 	  Always
+                Pass 	  Replace
             }
             // back faces with zfail, for cases when camera is inside the decal volume
             ZWrite Off
