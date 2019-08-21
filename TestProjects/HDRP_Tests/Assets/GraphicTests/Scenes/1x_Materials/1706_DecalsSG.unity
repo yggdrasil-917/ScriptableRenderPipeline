@@ -96,6 +96,7 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -163,7 +164,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: faaa0e0db8f02ad42b4bb42a8cf82b82, type: 2}
+  m_Version: 1
+  m_Material: {fileID: 2100000, guid: 765aa660808e73244b6594cf0f743e63, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -172,7 +174,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &110250902
 GameObject:
   m_ObjectHideFlags: 0
@@ -216,6 +217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 0
   m_Material: {fileID: 2100000, guid: faaa0e0db8f02ad42b4bb42a8cf82b82, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -225,7 +227,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.8333333, y: 0.4, z: 0.8333333}
   m_FadeFactor: 1
-  m_Version: 0
 --- !u!1 &136133827
 GameObject:
   m_ObjectHideFlags: 0
@@ -269,6 +270,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 235e456ff2b92bb48a30e758f2b3883a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -278,7 +280,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &196288473
 GameObject:
   m_ObjectHideFlags: 0
@@ -322,6 +323,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 0
   m_Material: {fileID: 2100000, guid: fb5d49fe2788b3b40a40ec1aec5ec324, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -331,7 +333,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.8333333, y: 0.4, z: 0.8333333}
   m_FadeFactor: 1
-  m_Version: 0
 --- !u!1 &296064738
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,7 +344,6 @@ GameObject:
   - component: {fileID: 296064742}
   - component: {fileID: 296064741}
   - component: {fileID: 296064740}
-  - component: {fileID: 296064739}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -351,53 +351,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &296064739
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 296064738}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6c2871f720b2af4e9210febdac74517, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Version: 1
-  shadowResolution: 512
-  shadowDimmer: 1
-  volumetricShadowDimmer: 1
-  shadowFadeDistance: 10000
-  contactShadows: 0
-  viewBiasMin: 0.5
-  viewBiasMax: 10
-  viewBiasScale: 1
-  normalBiasMin: 0.2
-  normalBiasMax: 4
-  normalBiasScale: 1
-  sampleBiasScale: 1
-  edgeLeakFixup: 1
-  edgeToleranceNormal: 1
-  edgeTolerance: 1
-  shadowCascadeCount: 4
-  shadowCascadeRatios:
-  - 0.05
-  - 0.2
-  - 0.3
-  shadowCascadeBorders:
-  - 0.2
-  - 0.2
-  - 0.2
-  - 0.2
-  shadowAlgorithm: 0
-  shadowVariant: 3
-  shadowPrecision: 0
-  shadowData:
-    format: 3
-    data: 0bd7a33b0000803f
-  shadowDatas:
-  - format: 3
-    data: 0bd7a33b0000803f
 --- !u!114 &296064740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -410,52 +363,80 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 4
-  m_Version: 4
+  m_Version: 5
   directionalIntensity: 3.1415927
   punctualIntensity: 600
   areaIntensity: 200
-  enableSpotReflector: 0
-  luxAtDistance: 1
+  lightLayers: 1
+  m_Intensity: 1
+  m_EnableSpotReflector: 0
+  m_LuxAtDistance: 1
   m_InnerSpotPercent: 0
-  lightDimmer: 1
+  m_LightDimmer: 1
   m_VolumetricDimmer: 1
-  lightUnit: 2
-  sunDiskSize: 1
-  sunHaloSize: 0.1
-  fadeDistance: 10000
-  affectDiffuse: 1
-  affectSpecular: 1
-  nonLightmappedOnly: 0
-  lightTypeExtent: 0
+  m_LightUnit: 2
+  m_FadeDistance: 10000
+  m_AffectDiffuse: 1
+  m_AffectSpecular: 1
+  m_NonLightmappedOnly: 0
+  m_LightTypeExtent: 0
   m_SpotLightShape: 0
-  shapeWidth: 0.5
-  shapeHeight: 0.5
-  aspectRatio: 1
-  shapeRadius: 0
-  maxSmoothness: 1
-  applyRangeAttenuation: 1
+  m_ShapeWidth: 0.5
+  m_ShapeHeight: 0.5
+  m_AspectRatio: 1
+  m_ShapeRadius: 0
+  m_UseCustomSpotLightShadowCone: 0
+  m_CustomSpotLightShadowCone: 30
+  m_MaxSmoothness: 1
+  m_ApplyRangeAttenuation: 1
+  m_DisplayAreaLightEmissiveMesh: 0
+  m_AreaLightCookie: {fileID: 0}
+  m_AreaLightShadowCone: 120
+  m_UseScreenSpaceShadows: 0
+  m_InteractsWithSky: 1
+  m_AngularDiameter: 0
+  m_Distance: 150000000
+  m_EvsmExponent: 15
+  m_EvsmLightLeakBias: 0
+  m_EvsmVarianceBias: 0.00001
+  m_EvsmBlurPasses: 0
+  m_LightlayersMask: 1
+  m_LinkShadowLayers: 1
+  m_ShadowNearPlane: 0.2
+  m_ShadowSoftness: 0.5
+  m_BlockerSampleCount: 24
+  m_FilterSampleCount: 32
+  m_MinFilterSize: 0.00001
+  m_KernelSize: 5
+  m_LightAngle: 1
+  m_MaxDepthBias: 0.001
+  m_ShadowResolutionTier: 1
+  m_UseShadowQualitySettings: 0
+  m_CustomShadowResolution: 512
+  m_ShadowDimmer: 1
+  m_VolumetricShadowDimmer: 1
+  m_ShadowFadeDistance: 10000
+  m_ContactShadows: 0
+  m_ShadowTint: {r: 0, g: 0, b: 0, a: 1}
+  m_NormalBias: 0.75
+  m_ConstantBias: 0.15
+  m_ShadowUpdateMode: 0
+  m_ShadowCascadeRatios:
+  - 0.05
+  - 0.2
+  - 0.3
+  m_ShadowCascadeBorders:
+  - 0.2
+  - 0.2
+  - 0.2
+  - 0.2
+  m_ShadowAlgorithm: 0
+  m_ShadowVariant: 3
+  m_ShadowPrecision: 0
   useOldInspector: 0
   useVolumetric: 1
   featuresFoldout: 1
   showAdditionalSettings: 0
-  displayLightIntensity: 1
-  displayAreaLightEmissiveMesh: 0
-  areaLightCookie: {fileID: 0}
-  areaLightShadowCone: 120
-  evsmExponent: 15
-  evsmLightLeakBias: 0
-  evsmVarianceBias: 0.00001
-  evsmBlurPasses: 0
-  lightLayers: 1
-  shadowNearPlane: 0.2
-  shadowSoftness: 0.5
-  blockerSampleCount: 24
-  filterSampleCount: 32
-  minFilterSize: 0.00001
-  kernelSize: 5
-  lightAngle: 1
-  maxDepthBias: 0.001
 --- !u!108 &296064741
 Light:
   m_ObjectHideFlags: 0
@@ -464,8 +445,9 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 296064738}
   m_Enabled: 1
-  serializedVersion: 9
+  serializedVersion: 10
   m_Type: 1
+  m_Shape: 0
   m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_Intensity: 1
   m_Range: 10
@@ -640,6 +622,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -729,6 +712,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -787,7 +771,6 @@ GameObject:
   - component: {fileID: 384391183}
   - component: {fileID: 384391182}
   - component: {fileID: 384391181}
-  - component: {fileID: 384391180}
   m_Layer: 0
   m_Name: Directional Light (1)
   m_TagString: Untagged
@@ -795,53 +778,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &384391180
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 384391179}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6c2871f720b2af4e9210febdac74517, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Version: 1
-  shadowResolution: 512
-  shadowDimmer: 1
-  volumetricShadowDimmer: 1
-  shadowFadeDistance: 10000
-  contactShadows: 0
-  viewBiasMin: 0.5
-  viewBiasMax: 10
-  viewBiasScale: 1
-  normalBiasMin: 0.2
-  normalBiasMax: 4
-  normalBiasScale: 1
-  sampleBiasScale: 1
-  edgeLeakFixup: 1
-  edgeToleranceNormal: 1
-  edgeTolerance: 1
-  shadowCascadeCount: 4
-  shadowCascadeRatios:
-  - 0.05
-  - 0.2
-  - 0.3
-  shadowCascadeBorders:
-  - 0.2
-  - 0.2
-  - 0.2
-  - 0.2
-  shadowAlgorithm: 0
-  shadowVariant: 3
-  shadowPrecision: 0
-  shadowData:
-    format: 3
-    data: 0bd7a33b0000803f
-  shadowDatas:
-  - format: 3
-    data: 0bd7a33b0000803f
 --- !u!114 &384391181
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -854,52 +790,80 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 4
-  m_Version: 4
+  m_Version: 5
   directionalIntensity: 3.1415927
   punctualIntensity: 600
   areaIntensity: 200
-  enableSpotReflector: 0
-  luxAtDistance: 1
+  lightLayers: 1
+  m_Intensity: 1
+  m_EnableSpotReflector: 0
+  m_LuxAtDistance: 1
   m_InnerSpotPercent: 0
-  lightDimmer: 1
+  m_LightDimmer: 1
   m_VolumetricDimmer: 1
-  lightUnit: 2
-  sunDiskSize: 1
-  sunHaloSize: 0.1
-  fadeDistance: 10000
-  affectDiffuse: 1
-  affectSpecular: 1
-  nonLightmappedOnly: 0
-  lightTypeExtent: 0
+  m_LightUnit: 2
+  m_FadeDistance: 10000
+  m_AffectDiffuse: 1
+  m_AffectSpecular: 1
+  m_NonLightmappedOnly: 0
+  m_LightTypeExtent: 0
   m_SpotLightShape: 0
-  shapeWidth: 0.5
-  shapeHeight: 0.5
-  aspectRatio: 1
-  shapeRadius: 0
-  maxSmoothness: 1
-  applyRangeAttenuation: 1
+  m_ShapeWidth: 0.5
+  m_ShapeHeight: 0.5
+  m_AspectRatio: 1
+  m_ShapeRadius: 0
+  m_UseCustomSpotLightShadowCone: 0
+  m_CustomSpotLightShadowCone: 30
+  m_MaxSmoothness: 1
+  m_ApplyRangeAttenuation: 1
+  m_DisplayAreaLightEmissiveMesh: 0
+  m_AreaLightCookie: {fileID: 0}
+  m_AreaLightShadowCone: 120
+  m_UseScreenSpaceShadows: 0
+  m_InteractsWithSky: 1
+  m_AngularDiameter: 0
+  m_Distance: 150000000
+  m_EvsmExponent: 15
+  m_EvsmLightLeakBias: 0
+  m_EvsmVarianceBias: 0.00001
+  m_EvsmBlurPasses: 0
+  m_LightlayersMask: 1
+  m_LinkShadowLayers: 1
+  m_ShadowNearPlane: 0.2
+  m_ShadowSoftness: 0.5
+  m_BlockerSampleCount: 24
+  m_FilterSampleCount: 32
+  m_MinFilterSize: 0.00001
+  m_KernelSize: 5
+  m_LightAngle: 1
+  m_MaxDepthBias: 0.001
+  m_ShadowResolutionTier: 1
+  m_UseShadowQualitySettings: 0
+  m_CustomShadowResolution: 512
+  m_ShadowDimmer: 1
+  m_VolumetricShadowDimmer: 1
+  m_ShadowFadeDistance: 10000
+  m_ContactShadows: 0
+  m_ShadowTint: {r: 0, g: 0, b: 0, a: 1}
+  m_NormalBias: 0.75
+  m_ConstantBias: 0.15
+  m_ShadowUpdateMode: 0
+  m_ShadowCascadeRatios:
+  - 0.05
+  - 0.2
+  - 0.3
+  m_ShadowCascadeBorders:
+  - 0.2
+  - 0.2
+  - 0.2
+  - 0.2
+  m_ShadowAlgorithm: 0
+  m_ShadowVariant: 3
+  m_ShadowPrecision: 0
   useOldInspector: 0
   useVolumetric: 1
   featuresFoldout: 1
   showAdditionalSettings: 0
-  displayLightIntensity: 1
-  displayAreaLightEmissiveMesh: 0
-  areaLightCookie: {fileID: 0}
-  areaLightShadowCone: 120
-  evsmExponent: 15
-  evsmLightLeakBias: 0
-  evsmVarianceBias: 0.00001
-  evsmBlurPasses: 0
-  lightLayers: 1
-  shadowNearPlane: 0.2
-  shadowSoftness: 0.5
-  blockerSampleCount: 24
-  filterSampleCount: 32
-  minFilterSize: 0.00001
-  kernelSize: 5
-  lightAngle: 1
-  maxDepthBias: 0.001
 --- !u!108 &384391182
 Light:
   m_ObjectHideFlags: 0
@@ -908,8 +872,9 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 384391179}
   m_Enabled: 1
-  serializedVersion: 9
+  serializedVersion: 10
   m_Type: 1
+  m_Shape: 0
   m_Color: {r: 0, g: 1, b: 0, a: 1}
   m_Intensity: 1
   m_Range: 10
@@ -1056,6 +1021,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -1150,6 +1116,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -1240,6 +1207,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 2bc99aaa1773faf4a876683aa655e27a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -1249,7 +1217,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &578096841
 GameObject:
   m_ObjectHideFlags: 0
@@ -1293,6 +1260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 0
   m_Material: {fileID: 2100000, guid: 235e456ff2b92bb48a30e758f2b3883a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -1302,7 +1270,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.8333333, y: 0.4, z: 0.8333333}
   m_FadeFactor: 1
-  m_Version: 0
 --- !u!1 &579433324
 GameObject:
   m_ObjectHideFlags: 0
@@ -1346,6 +1313,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 87bf5e43b3e983747bb10c2b1db74dd9, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -1355,7 +1323,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &634394204
 GameObject:
   m_ObjectHideFlags: 0
@@ -1399,7 +1366,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: faaa0e0db8f02ad42b4bb42a8cf82b82, type: 2}
+  m_Version: 1
+  m_Material: {fileID: 2100000, guid: 765aa660808e73244b6594cf0f743e63, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -1408,7 +1376,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &670286505
 GameObject:
   m_ObjectHideFlags: 0
@@ -1452,6 +1419,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 235e456ff2b92bb48a30e758f2b3883a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -1461,7 +1429,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &719923510
 GameObject:
   m_ObjectHideFlags: 0
@@ -1531,6 +1498,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -1620,6 +1588,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -1714,6 +1683,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -1804,7 +1774,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: faaa0e0db8f02ad42b4bb42a8cf82b82, type: 2}
+  m_Version: 1
+  m_Material: {fileID: 2100000, guid: 765aa660808e73244b6594cf0f743e63, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -1813,7 +1784,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.4800001}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &836353759
 GameObject:
   m_ObjectHideFlags: 0
@@ -1861,6 +1831,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -1985,6 +1956,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -2070,6 +2042,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 2bc99aaa1773faf4a876683aa655e27a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -2079,7 +2052,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &893842369
 GameObject:
   m_ObjectHideFlags: 0
@@ -2162,6 +2134,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -2256,6 +2229,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -2346,6 +2320,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 0
   m_Material: {fileID: 2100000, guid: 87bf5e43b3e983747bb10c2b1db74dd9, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -2355,7 +2330,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.8333333, y: 0.4, z: 0.8333333}
   m_FadeFactor: 1
-  m_Version: 0
 --- !u!1 &938463391
 GameObject:
   m_ObjectHideFlags: 0
@@ -2425,6 +2399,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -2509,6 +2484,16 @@ PrefabInstance:
     - target: {fileID: 4209882255362944, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114777190906822814, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
+      propertyPath: m_Version
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 114777190906822814, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
+      propertyPath: m_RenderingPathCustomFrameSettings.bitDatas.data1
+      value: 69456063102749
       objectReference: {fileID: 0}
     - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
         type: 3}
@@ -2602,6 +2587,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -2696,6 +2682,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -2820,6 +2807,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -2935,6 +2923,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -3046,6 +3035,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -3135,6 +3125,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -3229,6 +3220,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -3354,6 +3346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 235e456ff2b92bb48a30e758f2b3883a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -3363,7 +3356,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &1234513410
 GameObject:
   m_ObjectHideFlags: 0
@@ -3407,6 +3399,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 2bc99aaa1773faf4a876683aa655e27a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -3416,7 +3409,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &1285983877
 GameObject:
   m_ObjectHideFlags: 0
@@ -3494,6 +3486,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -3579,6 +3572,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 87bf5e43b3e983747bb10c2b1db74dd9, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -3588,7 +3582,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &1390467587
 GameObject:
   m_ObjectHideFlags: 0
@@ -3636,6 +3629,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -3730,6 +3724,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -3788,7 +3783,6 @@ GameObject:
   - component: {fileID: 1442353288}
   - component: {fileID: 1442353287}
   - component: {fileID: 1442353286}
-  - component: {fileID: 1442353285}
   m_Layer: 0
   m_Name: Directional Light (2)
   m_TagString: Untagged
@@ -3796,53 +3790,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1442353285
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1442353284}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6c2871f720b2af4e9210febdac74517, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Version: 1
-  shadowResolution: 512
-  shadowDimmer: 1
-  volumetricShadowDimmer: 1
-  shadowFadeDistance: 10000
-  contactShadows: 0
-  viewBiasMin: 0.5
-  viewBiasMax: 10
-  viewBiasScale: 1
-  normalBiasMin: 0.2
-  normalBiasMax: 4
-  normalBiasScale: 1
-  sampleBiasScale: 1
-  edgeLeakFixup: 1
-  edgeToleranceNormal: 1
-  edgeTolerance: 1
-  shadowCascadeCount: 4
-  shadowCascadeRatios:
-  - 0.05
-  - 0.2
-  - 0.3
-  shadowCascadeBorders:
-  - 0.2
-  - 0.2
-  - 0.2
-  - 0.2
-  shadowAlgorithm: 0
-  shadowVariant: 3
-  shadowPrecision: 0
-  shadowData:
-    format: 3
-    data: 0bd7a33b0000803f
-  shadowDatas:
-  - format: 3
-    data: 0bd7a33b0000803f
 --- !u!114 &1442353286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3855,52 +3802,80 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 4
-  m_Version: 4
+  m_Version: 5
   directionalIntensity: 3.1415927
   punctualIntensity: 600
   areaIntensity: 200
-  enableSpotReflector: 0
-  luxAtDistance: 1
+  lightLayers: 1
+  m_Intensity: 1
+  m_EnableSpotReflector: 0
+  m_LuxAtDistance: 1
   m_InnerSpotPercent: 0
-  lightDimmer: 1
+  m_LightDimmer: 1
   m_VolumetricDimmer: 1
-  lightUnit: 2
-  sunDiskSize: 1
-  sunHaloSize: 0.1
-  fadeDistance: 10000
-  affectDiffuse: 1
-  affectSpecular: 1
-  nonLightmappedOnly: 0
-  lightTypeExtent: 0
+  m_LightUnit: 2
+  m_FadeDistance: 10000
+  m_AffectDiffuse: 1
+  m_AffectSpecular: 1
+  m_NonLightmappedOnly: 0
+  m_LightTypeExtent: 0
   m_SpotLightShape: 0
-  shapeWidth: 0.5
-  shapeHeight: 0.5
-  aspectRatio: 1
-  shapeRadius: 0
-  maxSmoothness: 1
-  applyRangeAttenuation: 1
+  m_ShapeWidth: 0.5
+  m_ShapeHeight: 0.5
+  m_AspectRatio: 1
+  m_ShapeRadius: 0
+  m_UseCustomSpotLightShadowCone: 0
+  m_CustomSpotLightShadowCone: 30
+  m_MaxSmoothness: 1
+  m_ApplyRangeAttenuation: 1
+  m_DisplayAreaLightEmissiveMesh: 0
+  m_AreaLightCookie: {fileID: 0}
+  m_AreaLightShadowCone: 120
+  m_UseScreenSpaceShadows: 0
+  m_InteractsWithSky: 1
+  m_AngularDiameter: 0
+  m_Distance: 150000000
+  m_EvsmExponent: 15
+  m_EvsmLightLeakBias: 0
+  m_EvsmVarianceBias: 0.00001
+  m_EvsmBlurPasses: 0
+  m_LightlayersMask: 1
+  m_LinkShadowLayers: 1
+  m_ShadowNearPlane: 0.2
+  m_ShadowSoftness: 0.5
+  m_BlockerSampleCount: 24
+  m_FilterSampleCount: 32
+  m_MinFilterSize: 0.00001
+  m_KernelSize: 5
+  m_LightAngle: 1
+  m_MaxDepthBias: 0.001
+  m_ShadowResolutionTier: 1
+  m_UseShadowQualitySettings: 0
+  m_CustomShadowResolution: 512
+  m_ShadowDimmer: 1
+  m_VolumetricShadowDimmer: 1
+  m_ShadowFadeDistance: 10000
+  m_ContactShadows: 0
+  m_ShadowTint: {r: 0, g: 0, b: 0, a: 1}
+  m_NormalBias: 0.75
+  m_ConstantBias: 0.15
+  m_ShadowUpdateMode: 0
+  m_ShadowCascadeRatios:
+  - 0.05
+  - 0.2
+  - 0.3
+  m_ShadowCascadeBorders:
+  - 0.2
+  - 0.2
+  - 0.2
+  - 0.2
+  m_ShadowAlgorithm: 0
+  m_ShadowVariant: 3
+  m_ShadowPrecision: 0
   useOldInspector: 0
   useVolumetric: 1
   featuresFoldout: 1
   showAdditionalSettings: 0
-  displayLightIntensity: 1
-  displayAreaLightEmissiveMesh: 0
-  areaLightCookie: {fileID: 0}
-  areaLightShadowCone: 120
-  evsmExponent: 15
-  evsmLightLeakBias: 0
-  evsmVarianceBias: 0.00001
-  evsmBlurPasses: 0
-  lightLayers: 1
-  shadowNearPlane: 0.2
-  shadowSoftness: 0.5
-  blockerSampleCount: 24
-  filterSampleCount: 32
-  minFilterSize: 0.00001
-  kernelSize: 5
-  lightAngle: 1
-  maxDepthBias: 0.001
 --- !u!108 &1442353287
 Light:
   m_ObjectHideFlags: 0
@@ -3909,8 +3884,9 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1442353284}
   m_Enabled: 1
-  serializedVersion: 9
+  serializedVersion: 10
   m_Type: 1
+  m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
   m_Range: 10
@@ -4022,6 +3998,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -4138,6 +4115,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -4223,6 +4201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 87bf5e43b3e983747bb10c2b1db74dd9, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -4232,7 +4211,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &1708486506
 GameObject:
   m_ObjectHideFlags: 0
@@ -4280,6 +4258,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -4405,6 +4384,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 2bc99aaa1773faf4a876683aa655e27a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -4414,7 +4394,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &1762936944
 GameObject:
   m_ObjectHideFlags: 0
@@ -4484,6 +4463,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -4569,6 +4549,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 87bf5e43b3e983747bb10c2b1db74dd9, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -4578,7 +4559,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &1968355458
 GameObject:
   m_ObjectHideFlags: 0
@@ -4626,6 +4606,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -4716,7 +4697,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: faaa0e0db8f02ad42b4bb42a8cf82b82, type: 2}
+  m_Version: 1
+  m_Material: {fileID: 2100000, guid: 765aa660808e73244b6594cf0f743e63, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -4725,7 +4707,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &2006409709
 GameObject:
   m_ObjectHideFlags: 0
@@ -4813,6 +4794,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -4942,6 +4924,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
@@ -5032,6 +5015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   m_Material: {fileID: 2100000, guid: 235e456ff2b92bb48a30e758f2b3883a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
@@ -5041,7 +5025,6 @@ MonoBehaviour:
   m_Offset: {x: 0, y: 0, z: -0}
   m_Size: {x: 1, y: 1.0000002, z: 0.12000003}
   m_FadeFactor: 1
-  m_Version: 1
 --- !u!1 &2085834128
 GameObject:
   m_ObjectHideFlags: 0
@@ -5089,6 +5072,7 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
