@@ -63,6 +63,17 @@ void MATERIALFLAGSGEN(uint3 dispatchThreadId : SV_DispatchThreadID, uint threadI
         uint2 uCrd = min( uint2(viTilLL.x + (idx & 0xf), viTilLL.y + (idx >> 4)), uint2(iWidth - 1, iHeight - 1));
 
         materialFeatureFlags |= GetMaterialFeatureFlagsFromStencil(LOAD_TEXTURE2D_X(_StencilTexture, uCrd).g);
+
+        // The clear coat test currently relies on the contents of the G-buffer.
+        {
+            GBufferType2 inGBuffer2 = LOAD_TEXTURE2D_X(_GBufferTexture2, uCrd);
+
+            float coatMask;
+            uint materialFeatureId;
+            UnpackFloatInt8bit(inGBuffer2.a, 8, coatMask, materialFeatureId);
+
+            materialFeatureFlags |= (coatMask > 0) ? MATERIALFEATUREFLAGS_LIT_CLEAR_COAT : 0;
+        }
     }
 
     InterlockedOr(ldsFeatureFlags, materialFeatureFlags);   //TODO: driver might optimize this or we might have to do a manual reduction
