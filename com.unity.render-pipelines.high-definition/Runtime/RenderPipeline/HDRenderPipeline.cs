@@ -82,7 +82,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
 #if ENABLE_RAYTRACING
         internal HDRaytracingManager m_RayTracingManager = new HDRaytracingManager();
-        readonly HDRaytracingRenderer m_RaytracingRenderer = new HDRaytracingRenderer();
         internal float GetRaysPerFrame(RayCountManager.RayCountValues rayValues) { return m_RayTracingManager.rayCountManager.GetRaysPerFrame(rayValues); }
 #endif
 
@@ -409,7 +408,7 @@ namespace UnityEngine.Rendering.HighDefinition
             InitRayTracedReflections();
             InitRayTracedIndirectDiffuse();
             InitRaytracingDeferred();
-            m_RaytracingRenderer.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager);
+            InitRecursiveRenderer();
             m_AmbientOcclusionSystem.InitRaytracing(m_RayTracingManager, m_SharedRTManager);
 #endif
 
@@ -728,7 +727,7 @@ namespace UnityEngine.Rendering.HighDefinition
             ReleaseScreenSpaceShadows();
 
 #if ENABLE_RAYTRACING
-            m_RaytracingRenderer.Release();
+            ReleaseRecursiveRenderer();
             ReleaseRayTracingDeferred();
             ReleaseRayTracedIndirectDiffuse();
             ReleaseRayTracedReflections();
@@ -1687,9 +1686,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
 #if ENABLE_RAYTRACING
             // Must update after getting DebugDisplaySettings
-            m_RayTracingManager.rayCountManager.ClearRayCount(cmd, hdCamera);
+            m_RayTracingManager.rayCountManager.ClearRayCount(cmd, hdCamera, m_CurrentDebugDisplaySettings.data.countRays);
 #endif
-
 
             if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals))
             {
@@ -1775,8 +1773,7 @@ namespace UnityEngine.Rendering.HighDefinition
             ClearBuffers(hdCamera, cmd);
 
             // Render XR occlusion mesh to depth buffer early in the frame to improve performance
-            // XRTODO: add frame setting for occlusion mesh
-            if (hdCamera.xr.enabled)
+            if (hdCamera.xr.enabled && m_Asset.currentPlatformRenderPipelineSettings.xrSettings.occlusionMesh)
             {
                 var msaa = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA);
                 var colorBuffer = msaa ? m_CameraColorMSAABuffer : m_CameraColorBuffer;
@@ -2025,7 +2022,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 RenderTransparentDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
 #if ENABLE_RAYTRACING
-                m_RaytracingRenderer.Render(hdCamera, cmd, m_CameraColorBuffer, renderContext, cullingResults);
+                RaytracingRecursiveRender(hdCamera, cmd, renderContext, cullingResults);
 #endif
                 // Render pre refraction objects
                 RenderForwardTransparent(cullingResults, hdCamera, true, renderContext, cmd);
@@ -2100,7 +2097,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     var finalBlitParams = PrepareFinalBlitParameters(hdCamera);
 
-                    // Disable single-pass instancing if we need to a blit only one slice
+                    // Disable XR single-pass if we need to a blit only one slice
                     if (finalBlitParams.sliceIndex >= 0)
                         hdCamera.xr.StopSinglePass(cmd, hdCamera.camera, renderContext);
 
