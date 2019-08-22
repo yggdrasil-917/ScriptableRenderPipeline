@@ -76,7 +76,10 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 // Evaluate the clear coat mask texture based on the lit shader mode
                 var clearCoatMask = hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred ? prepassOutput.gbuffer.mrt[2] : m_RenderGraph.ImportTexture(TextureXR.GetBlackTexture());
-                lightingBuffers.ssrLightingBuffer = RenderSSR(m_RenderGraph, hdCamera, prepassOutput.resolvedNormalBuffer, prepassOutput.resolvedMotionVectorsBuffer, prepassOutput.depthPyramidTexture, prepassOutput.stencilBufferCopy, clearCoatMask);
+                var stencilTexture = ((int)hdCamera.msaaSamples > 1) ? prepassOutput.resolvedStencilBuffer : prepassOutput.depthBuffer;
+
+                lightingBuffers.ssrLightingBuffer = RenderSSR(m_RenderGraph, hdCamera, prepassOutput.depthPyramidTexture, stencilTexture, prepassOutput.coarseStencilBuffer, clearCoatMask, prepassOutput.normalBuffer, prepassOutput.motionVectorsBuffer);
+
                 lightingBuffers.contactShadowsBuffer = RenderContactShadows(m_RenderGraph, hdCamera, msaa ? prepassOutput.depthValuesMSAA : prepassOutput.depthPyramidTexture, GetDepthBufferMipChainInfo().mipLevelOffsets[1].y);
 
                 var volumetricDensityBuffer = VolumeVoxelizationPass(m_RenderGraph, hdCamera, m_VisibleVolumeBoundsBuffer, m_VisibleVolumeDataBuffer, m_TileAndClusterData.bigTileLightList);
@@ -86,6 +89,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 var volumetricLighting = VolumetricLightingPass(m_RenderGraph, hdCamera, volumetricDensityBuffer, m_TileAndClusterData.bigTileLightList, shadowResult, m_FrameCount);
 
                 StartSinglePass(m_RenderGraph, hdCamera);
+
+
 
                 var deferredLightingOutput = RenderDeferredLighting(m_RenderGraph, hdCamera, colorBuffer, prepassOutput.depthBuffer, prepassOutput.depthPyramidTexture, lightingBuffers, prepassOutput.gbuffer, shadowResult);
 

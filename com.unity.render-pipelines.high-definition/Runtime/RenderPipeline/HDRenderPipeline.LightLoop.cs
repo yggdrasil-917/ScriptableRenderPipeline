@@ -256,20 +256,24 @@ namespace UnityEngine.Rendering.HighDefinition
             public RenderSSRParameters parameters;
             public RenderGraphResource depthPyramid;
             public RenderGraphResource colorPyramid;
-            public RenderGraphResource stencilBuffer;
+            public RenderGraphResource stencilTexture;
+            public RenderGraphResource coarseStencilBuffer;
             public RenderGraphMutableResource hitPointsTexture;
             public RenderGraphMutableResource lightingTexture;
             public RenderGraphResource clearCoatMask;
             //public RenderGraphMutableResource debugTexture;
         }
 
+
         RenderGraphResource RenderSSR(  RenderGraph         renderGraph,
                                         HDCamera            hdCamera,
-                                        RenderGraphResource normalBuffer,
-                                        RenderGraphResource motionVectorsBuffer,
                                         RenderGraphResource depthPyramid,
-                                        RenderGraphResource stencilBuffer,
-                                        RenderGraphResource clearCoatMask)
+                                        RenderGraphResource stencilTexture, // Either depth-stencil, or resolved stencil
+                                        RenderGraphResource coarseStencilBuffer,
+                                        RenderGraphResource clearCoatMask,
+                                        RenderGraphResource normalBuffer,
+                                        RenderGraphResource motionVectorsBuffer
+                                        )
         {
             var ssrBlackTexture = renderGraph.ImportTexture(TextureXR.GetBlackTexture(), HDShaderIDs._SsrLightingTexture);
 
@@ -282,14 +286,18 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     builder.EnableAsyncCompute(hdCamera.frameSettings.SSRRunsAsync());
 
+                    // Must correspond to the motion vector texture.
+                    // TODO: why is it not passed explicitly?
                     var colorPyramid = renderGraph.ImportTexture(hdCamera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain));
 
                     passData.parameters = PrepareSSRParameters(hdCamera);
                     passData.depthPyramid = builder.ReadTexture(depthPyramid);
                     passData.colorPyramid = builder.ReadTexture(colorPyramid);
-                    passData.stencilBuffer = builder.ReadTexture(stencilBuffer);
+                    passData.stencilTexture = builder.ReadTexture(stencilTexture);
+                    passData.coarseStencilBuffer = builder.ReadTexture(coarseStencilBuffer);
                     passData.clearCoatMask = builder.ReadTexture(clearCoatMask);
 
+                    // TODO: why is it not in passData?
                     builder.ReadTexture(normalBuffer);
                     builder.ReadTexture(motionVectorsBuffer);
 
@@ -309,7 +317,8 @@ namespace UnityEngine.Rendering.HighDefinition
                         RenderSSR(data.parameters,
                                     res.GetTexture(data.depthPyramid),
                                     res.GetTexture(data.hitPointsTexture),
-                                    res.GetTexture(data.stencilBuffer),
+                                    res.GetTexture(data.stencilTexture),
+                                    res.GetTexture(data.coarseStencilBuffer),
                                     res.GetTexture(data.clearCoatMask),
                                     res.GetTexture(data.colorPyramid),
                                     res.GetTexture(data.lightingTexture),

@@ -70,11 +70,14 @@ namespace UnityEngine.Rendering.HighDefinition
             public RenderGraphMutableResource   resolvedDepthBuffer;
             public RenderGraphMutableResource   resolvedNormalBuffer;
             public RenderGraphMutableResource   resolvedMotionVectorsBuffer;
+            public RenderGraphMutableResource   coarseStencilBuffer;
+            public RenderGraphMutableResource   resolvedStencilBuffer;
 
             // Copy of the resolved depth buffer with mip chain
             public RenderGraphMutableResource   depthPyramidTexture;
 
             public RenderGraphResource          stencilBufferCopy;
+
         }
 
         RenderGraphMutableResource CreateDepthBuffer(RenderGraph renderGraph, bool msaa)
@@ -118,13 +121,24 @@ namespace UnityEngine.Rendering.HighDefinition
             RenderOcclusionMeshes(renderGraph, hdCamera, result.depthBuffer);
             StartSinglePass(renderGraph, hdCamera);
 
-            bool renderMotionVectorAfterGBuffer = RenderDepthPrepass(renderGraph, cullingResults, hdCamera, ref result);
+            bool shouldRenderMotionVectorAfterGBuffer = false;
 
-            if (!renderMotionVectorAfterGBuffer)
+            bool isDepthPrepassActive = true; // TODO
+            if (isDepthPrepassActive)
             {
-                // If objects motion vectors are enabled, this will render the objects with motion vector into the target buffers (in addition to the depth)
-                // Note: An object with motion vector must not be render in the prepass otherwise we can have motion vector write that should have been rejected
-                RenderObjectsMotionVectors(renderGraph, cullingResults, hdCamera, result);
+                shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(renderGraph, cullingResults, hdCamera, ref result);
+
+                if (!shouldRenderMotionVectorAfterGBuffer)
+                {
+                    // If objects motion vectors are enabled, this will render the objects with motion vector into the target buffers (in addition to the depth)
+                    // Note: An object with motion vector must not be render in the prepass otherwise we can have motion vector write that should have been rejected
+                    RenderObjectsMotionVectors(renderGraph, cullingResults, hdCamera, result);
+                }
+
+                // After the optional depth prepass (which may additionally include motion vectors),
+                // all opaque objects have already tagged the stencil buffer (the material part may be wrong),
+                // so we can now build the coarse representation.
+                BuildCoarseStencil(renderGraph, hdCamera, result.depthBuffer, ref result);
             }
 
             // At this point in forward all objects have been rendered to the prepass (depth/normal/motion vectors) so we can resolve them
@@ -134,11 +148,19 @@ namespace UnityEngine.Rendering.HighDefinition
 
             RenderGBuffer(renderGraph, sssBuffer, ref result, cullingResults, hdCamera);
 
+            bool isGbufferPassActive = hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred;
+            if (isGbufferPassActive)
+            {
+                // The G-buffer pass is the last pass writing to the stencil buffer before the Transparent Lighting pass.
+                BuildCoarseStencil(renderGraph, hdCamera, result.depthBuffer, ref result);
+            }
+
             // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
             GenerateDepthPyramid(renderGraph, hdCamera, ref result);
 
-            if (renderMotionVectorAfterGBuffer)
+            if (shouldRenderMotionVectorAfterGBuffer)
             {
+                // THIS WILL NOT WORK WITH THE STENCIL CHANGES. It will overwrite the correct stencil value with an incorrect one.
                 // See the call RenderObjectsMotionVectors() above and comment
                 RenderObjectsMotionVectors(renderGraph, cullingResults, hdCamera, result);
             }
@@ -362,6 +384,49 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
+        class BuildCoarseStencilData
+        {
+            public RenderGraphResource        depthStencilBuffer;
+            public RenderGraphMutableResource coarseStencilBuffer;
+            public RenderGraphMutableResource resolvedStencilBuffer; // Optional (MSAA-only)
+        }
+
+        void BuildCoarseStencil(RenderGraph         renderGraph,
+                                HDCamera            hdCamera,
+                                RenderGraphResource depthStencilBuffer,
+                                ref PrepassOutput   outputs)
+        {
+            using (var builder = renderGraph.AddRenderPass<BuildCoarseStencilData>("Build Coarse Stencil", out var passData))
+            {
+                passData.depthStencilBuffer = depthStencilBuffer;
+
+                passData.coarseStencilBuffer = builder.WriteTexture(renderGraph.CreateTexture(
+                    new TextureDesc(Vector2.one * 0.125f, true, true) { colorFormat = GraphicsFormat.R8_UInt, name = "CameraCoarseStencil" }));
+
+                if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA))
+                {
+                    passData.resolvedStencilBuffer = builder.WriteTexture(renderGraph.CreateTexture(
+                        new TextureDesc(Vector2.one, true, true) { colorFormat = GraphicsFormat.R8_UInt, name = "ResolvedStencilBuffer" }));
+                }
+
+                 builder.SetRenderFunc(
+                    (BuildCoarseStencilData data, RenderGraphContext context) =>
+                    {
+                        var res = context.resources;
+                        BuildCoarseStencil(hdCamera,
+                            res.GetTexture(data.depthStencilBuffer),
+                            res.GetTexture(data.coarseStencilBuffer),
+                            res.GetTexture(data.resolvedStencilBuffer),
+                            context.cmd);
+                    }
+                );
+
+                outputs.coarseStencilBuffer   = passData.coarseStencilBuffer;
+                outputs.resolvedStencilBuffer = passData.resolvedStencilBuffer;
+            }
+        }
+
+
         class ResolvePrepassData
         {
             public RenderGraphMutableResource   depthBuffer;
@@ -372,6 +437,7 @@ namespace UnityEngine.Rendering.HighDefinition
             public Material                     depthResolveMaterial;
             public int                          depthResolvePassIndex;
         }
+
 
         void ResolvePrepassBuffers(RenderGraph renderGraph, HDCamera hdCamera, ref PrepassOutput output)
         {

@@ -10,11 +10,17 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
 #if (NUM_SAMPLES == 1)
-TEXTURE2D_X_UINT2(_StencilTexture);         // Use the green channel
+TEXTURE2D_X_UINT2(_StencilTexture);
 #else
-TEXTURE2D_X_MSAA(uint2, _StencilTexture);   // Use the green channel
+TEXTURE2D_X_MSAA(uint2, _StencilTexture);
+RW_TEXTURE2D_X(uint, _ResolvedStencilBuffer);
 #endif
-RW_TEXTURE2D_X(uint, _CoarseStencilBuffer); // 8-bit
+// TODO: discuss!
+// Is using a texture a good idea? None of the loads can be scalarized on AMD.
+// But if we use a structured buffer, we have to use 4-byte buffer elements,
+// which means that we need to pack 4x 1-byte values into a single element.
+// Additionally, we would need to compute the 1D coordinate ourselves.
+RW_TEXTURE2D_X(uint, _CoarseStencilBuffer);
 
 #ifdef PLATFORM_SUPPORTS_WAVE_INTRINSICS
     #define FAST_PLATFORM (PLATFORM_LANE_COUNT) == 64)
@@ -49,6 +55,11 @@ void main(uint3 groupId          : SV_GroupID,
             fineStencilValue |= LOAD_TEXTURE2D_X_MSAA(_StencilTexture, dispatchThreadId.xy, i).g;
         #endif
         }
+
+    #if (NUM_SAMPLES != 1)
+        // Perform a "resolve" (not well-defined for stencil).
+        _ResolvedStencilBuffer[COORD_TEXTURE2D_X(dispatchThreadId.xy)] = fineStencilValue;
+    #endif
     }
 
 #if (FAST_PLATFORM != 0)
@@ -57,7 +68,11 @@ void main(uint3 groupId          : SV_GroupID,
 #else
     bool isFirstThread = groupThreadId.x == 0 && groupThreadId.y == 0;
 
-    coarseStencilValue = 0;
+    if (isFirstThread)
+    {
+        // Suppress warning 3584: WAR_POTENTIAL_RACE_CONDITION_GSM.
+        coarseStencilValue = 0;
+    }
 
     // Wait for the TGSM.
     GroupMemoryBarrierWithGroupSync();
@@ -70,6 +85,7 @@ void main(uint3 groupId          : SV_GroupID,
 
     if (isFirstThread)
     {
+        // Suppress warning 3583: WAR_POTENTIAL_RACE_CONDITION_UAV.
         _CoarseStencilBuffer[COORD_TEXTURE2D_X(groupId.xy)] = coarseStencilValue;
     }
 }

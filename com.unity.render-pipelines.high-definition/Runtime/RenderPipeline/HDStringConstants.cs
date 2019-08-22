@@ -258,6 +258,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _SSSHTile = Shader.PropertyToID("_SSSHTile");
         public static readonly int _StencilTexture = Shader.PropertyToID("_StencilTexture");
         public static readonly int _CoarseStencilBuffer = Shader.PropertyToID("_CoarseStencilBuffer");
+        public static readonly int _ResolvedStencilBuffer = Shader.PropertyToID("_ResolvedStencilBuffer");
 
         // all decal properties
         public static readonly int _NormalToWorldID = Shader.PropertyToID("_NormalToWorld");

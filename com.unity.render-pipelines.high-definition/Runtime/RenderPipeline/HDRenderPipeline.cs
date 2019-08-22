@@ -1824,7 +1824,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             bool shouldRenderMotionVectorAfterGBuffer = false;
 
-            bool isDepthPrepassActive = true;
+            bool isDepthPrepassActive = true; // TODO
             if (isDepthPrepassActive)
             {
                 shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
@@ -1839,7 +1839,11 @@ namespace UnityEngine.Rendering.HighDefinition
                 // After the optional depth prepass (which may additionally include motion vectors),
                 // all opaque objects have already tagged the stencil buffer (the material part may be wrong),
                 // so we can now build the coarse representation.
-                BuildCoarseStencil(hdCamera, m_SharedRTManager.GetCoarseStencilBuffer(), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), cmd);
+                BuildCoarseStencil(hdCamera,
+                                   m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)),
+                                   m_SharedRTManager.GetCoarseStencilBuffer(),
+                                   m_SharedRTManager.GetResolvedStencilBuffer(),
+                                   cmd);
             }
 
             // Now that all depths have been rendered, resolve the depth buffer
@@ -1860,7 +1864,11 @@ namespace UnityEngine.Rendering.HighDefinition
             if (isGbufferPassActive)
             {
                 // The G-buffer pass is the last pass writing to the stencil buffer before the Transparent Lighting pass.
-                BuildCoarseStencil(hdCamera, m_SharedRTManager.GetCoarseStencilBuffer(), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), cmd);
+                BuildCoarseStencil(hdCamera,
+                                   m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)),
+                                   m_SharedRTManager.GetCoarseStencilBuffer(),
+                                   m_SharedRTManager.GetResolvedStencilBuffer(),
+                                   cmd);
             }
 
             // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
@@ -2997,7 +3005,8 @@ namespace UnityEngine.Rendering.HighDefinition
             return result;
         }
 
-        void BuildCoarseStencil(HDCamera camera, RTHandle coarseStencilBuffer, RTHandle depthStencilBuffer, CommandBuffer cmd)
+        // 'resolvedStencilBuffer' is optional (MSAA-only).
+        void BuildCoarseStencil(HDCamera camera, RTHandle depthStencilBuffer, RTHandle coarseStencilBuffer, RTHandle resolvedStencilBuffer, CommandBuffer cmd)
         {
             // Since Unity has no access to the hardware HTILE implementation,
             // we cannot use it in a computer shader for accelerted classification.
@@ -3007,13 +3016,19 @@ namespace UnityEngine.Rendering.HighDefinition
 
             using (new ProfilingSample(cmd, "Build Coarse Stencil", CustomSamplerId.BuildCoarseStencil.GetSampler()))
             {
-                // No firstbithigh. :-(
-                int kernelIndex         = (int)Math.Round(Math.Log((double)camera.msaaSamples, 2));
+                int kernelIndex         = SampleCountToPassIndex(camera.msaaSamples);
                 int coarseStencilWidth  = HDUtils.DivRoundUp((int)camera.screenSize.x, 8);
                 int coarseStencilHeight = HDUtils.DivRoundUp((int)camera.screenSize.y, 8);
 
                 cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, HDShaderIDs._StencilTexture, depthStencilBuffer, 0, RenderTextureSubElement.Stencil);
-                cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, HDShaderIDs._CoarseStencilBuffer, coarseStencilBuffer, 0);
+                cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, HDShaderIDs._CoarseStencilBuffer, coarseStencilBuffer);
+
+                if (resolvedStencilBuffer != null)
+                {
+                    // Should we always perform the resolve?
+                    cmd.SetComputeTextureParam(m_BuildCoarseStencil, kernelIndex, HDShaderIDs._ResolvedStencilBuffer, resolvedStencilBuffer);
+                }
+
                 cmd.DispatchCompute(m_BuildCoarseStencil, kernelIndex, coarseStencilWidth, coarseStencilHeight, camera.viewCount);
             }
         }
@@ -3449,10 +3464,11 @@ namespace UnityEngine.Rendering.HighDefinition
 
         static void RenderSSR(  in RenderSSRParameters  parameters,
                                 RTHandle                depthPyramid,
-                                RTHandle                SsrHitPointTexture,
-                                RTHandle                stencilBuffer,
+                                RTHandle                ssrHitPointTexture,
+                                RTHandle                stencilTexture, // Either depth-stencil, or resolved stencil
+                                RTHandle                coarseStencilBuffer,
                                 RTHandle                clearCoatMask,
-                                RTHandle                previousColorPyramid,
+                                RTHandle                colorPyramid, // Must correspond to the motion vector texture
                                 RTHandle                ssrLightingTexture,
                                 CommandBuffer           cmd,
                                 ScriptableRenderContext renderContext)
@@ -3475,8 +3491,20 @@ namespace UnityEngine.Rendering.HighDefinition
                 // cmd.SetComputeTextureParam(cs, kernel, "_SsrDebugTexture",    m_SsrDebugTexture);
                 cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._CameraDepthTexture, depthPyramid);
                 cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._SsrClearCoatMaskTexture, clearCoatMask);
-                cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._SsrHitPointTexture, SsrHitPointTexture);
-                cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._StencilTexture, stencilBuffer);
+                cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._SsrHitPointTexture, ssrHitPointTexture);
+
+                if (stencilTexture.rt.stencilFormat == GraphicsFormat.None)
+                {
+                    // It's a resolved MSAA stencil texture.
+                    cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._StencilTexture, stencilTexture);
+                }
+                else
+                {
+                    // It's a depth-stencil texture.
+                    cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._StencilTexture, stencilTexture, 0, RenderTextureSubElement.Stencil);
+                }
+
+                cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._CoarseStencilBuffer, coarseStencilBuffer);
 
                 cmd.SetComputeBufferParam(cs, parameters.tracingKernel, HDShaderIDs._DepthPyramidMipLevelOffsets, parameters.offsetBufferData);
 
@@ -3486,10 +3514,11 @@ namespace UnityEngine.Rendering.HighDefinition
             using (new ProfilingSample(cmd, "SSR - Reprojection", CustomSamplerId.SsrReprojection.GetSampler()))
             {
                 // cmd.SetComputeTextureParam(cs, kernel, "_SsrDebugTexture",    m_SsrDebugTexture);
-                cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._SsrHitPointTexture, SsrHitPointTexture);
+                cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._SsrHitPointTexture, ssrHitPointTexture);
                 cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._SsrLightingTextureRW, ssrLightingTexture);
-                cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._ColorPyramidTexture, previousColorPyramid);
+                cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._ColorPyramidTexture, colorPyramid);
                 cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._SsrClearCoatMaskTexture, clearCoatMask);
+                cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._CoarseStencilBuffer, coarseStencilBuffer);
 
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._ColorPyramidUvScaleAndLimitPrevFrame, parameters.colorPyramidUVScaleAndLimit);
                 cmd.SetComputeIntParam(cs, HDShaderIDs._SsrColorPyramidMaxMip, parameters.colorPyramidMipCount - 1);
@@ -3519,7 +3548,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 RTHandle clearCoatMask = hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred ? m_GbufferManager.GetBuffer(2) : TextureXR.GetBlackTexture();
 
                 var parameters = PrepareSSRParameters(hdCamera);
-                RenderSSR(parameters, m_SharedRTManager.GetDepthTexture(), m_SsrHitPointTexture, m_SharedRTManager.GetCoarseStencilBuffer(), clearCoatMask, previousColorPyramid, m_SsrLightingTexture, cmd, renderContext);
+                RenderSSR(parameters, m_SharedRTManager.GetDepthPyramidTexture(), m_SsrHitPointTexture, m_SharedRTManager.GetStencilTexture(), m_SharedRTManager.GetCoarseStencilBuffer(), clearCoatMask, previousColorPyramid, m_SsrLightingTexture, cmd, renderContext);
 
             	if (!hdCamera.colorPyramidHistoryIsValid)
             	{
