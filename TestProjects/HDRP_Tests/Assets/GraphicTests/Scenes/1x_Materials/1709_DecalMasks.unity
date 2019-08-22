@@ -844,8 +844,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 348953325}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.3000002, y: -0.5, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: 0.32999992, y: -0.5, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 12
@@ -860,7 +860,7 @@ TextMesh:
   m_GameObject: {fileID: 348953325}
   m_Text: 'Mask
 
-    none metallic
+    no metallic
 
     low smooth
 
@@ -2776,8 +2776,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 979135647}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.3000002, y: 1.484, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: 0.32999992, y: 1.484, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 8
@@ -2790,13 +2790,13 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 979135647}
-  m_Text: 'Mask
+  m_Text: 'Mask LOW
 
-    high metallic
+    metallic
 
-    high smooth
+    smooth
 
-    high AO'
+    AO'
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
@@ -2973,8 +2973,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1006120700}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -3.8999996, y: 0.48072228, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: -3.92, y: 0.48072228, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 4
@@ -2987,15 +2987,13 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1006120700}
-  m_Text: 'Mask
+  m_Text: 'Mask MED
 
-    med AO
+    AO
 
-    med smooth
+    smooth
 
-    med metallic
-
-'
+    metallic'
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
@@ -4528,8 +4526,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1525625943}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -3.8999996, y: 1.484, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: -3.92, y: 1.484, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 3
@@ -4542,11 +4540,11 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1525625943}
-  m_Text: 'Mask
+  m_Text: 'Mask LOW
 
-    low AO
+    AO
 
-    low smooth
+    Smooth
 
     low metallic'
   m_OffsetZ: 0
@@ -4726,8 +4724,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1549164492}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.3000002, y: 0.5, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: 0.32999992, y: 0.5, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 11
@@ -4740,13 +4738,13 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1549164492}
-  m_Text: 'Mask
+  m_Text: 'Mask MID
 
-    med metallic
+    metallic
 
-    med smooth
+    smooth
 
-    med AO'
+    AO'
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
@@ -4977,8 +4975,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1618463603}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.3000002, y: -1.5, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: 0.32999992, y: -1.5, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 13
@@ -4993,7 +4991,7 @@ TextMesh:
   m_GameObject: {fileID: 1618463603}
   m_Text: 'Mask
 
-    none metallic
+    no metallic
 
     low smooth
 
@@ -5250,8 +5248,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1682132162}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -3.8999996, y: -1.5, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: -3.92, y: -1.5, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 7
@@ -5264,13 +5262,13 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1682132162}
-  m_Text: 'Mask
+  m_Text: 'Mask HIGH
 
-    high AO
+    AO
 
-    high smooth
+    smooth
 
-    high metallic'
+    metallic'
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
@@ -6064,8 +6062,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1904364515}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -3.8999996, y: -0.48795965, z: 0}
-  m_LocalScale: {x: 0.07788433, y: 0.07788433, z: 0.07788433}
+  m_LocalPosition: {x: -3.92, y: -0.48795965, z: 0}
+  m_LocalScale: {x: 0.105065964, y: 0.105065964, z: 0.105065964}
   m_Children: []
   m_Father: {fileID: 2006409710}
   m_RootOrder: 5
@@ -6078,13 +6076,13 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1904364515}
-  m_Text: 'Mask
+  m_Text: 'Mask HIGH
 
-    high AO
+    AO
 
-    high smooth
+    smooth
 
-    high metallic'
+    metallic'
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
