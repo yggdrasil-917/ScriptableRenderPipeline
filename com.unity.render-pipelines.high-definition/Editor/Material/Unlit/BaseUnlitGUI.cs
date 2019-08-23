@@ -390,22 +390,28 @@ namespace UnityEditor.Rendering.HighDefinition
             // Note that this means that we can NOT support any stencil-writing passes
             // (such as the motion vector pass) between the G-buffer pass and the Lighting pass,
             // as they may write wrong stencil values again.
-            int stencilRef        = (int)HDRenderPipeline.StencilMaterialType.Forward;
-            int stencilRefGBuffer = 0;
-            int stencilReadMask   = 0; // 0 disabled reads
-            int stencilWriteMask  = 0; // 0 disables writes
+            int stencilRef                = (int)HDRenderPipeline.StencilMaterialType.Forward;
+            int stencilRefObjMotion       = 0;
+            int stencilRefGBuffer         = 0;
+            int stencilReadMask           = 0; // 0 disabled reads
+            int stencilWriteMask          = 0; // 0 disables writes
+            int stencilWriteMaskObjMotion = 0; // 0 disables writes
 
             if (material.GetSurfaceType() == SurfaceType.Opaque)
             {
+                int mask = (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue;
+
                 // Do not touch the user bit!
-                int mask = (int)HDRenderPipeline.StencilUsageBeforeTransparent.MaxValue &
-                          ~(int)HDRenderPipeline.StencilUsageBeforeTransparent.UserBit;
+                mask &= ~(int)HDRenderPipeline.StencilUsageBeforeTransparent.UserBit;
 
                 // The decal bit is not related to the "Supports decals" flag.
                 // Rather, it indicates whether a decal is present in the pixel,
                 // regardless of whether the material supports it.
                 // It's managed by the decal system, and we should not touch it.
                 mask &= ~(int)HDRenderPipeline.StencilUsageBeforeTransparent.Decal;
+
+                // Motion vectors are not a material property. So they must be excluded as well.
+                mask &= ~(int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
 
                 stencilWriteMask |= mask;
                 stencilReadMask  |= mask;
@@ -429,26 +435,21 @@ namespace UnityEditor.Rendering.HighDefinition
                 }
             }
 
-            // Motion vectors are supported by all surface types.
-            if (material.GetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr))
-            {
-                Debug.Assert((int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector ==
-                             (int)HDRenderPipeline.StencilUsageAfterTransparent.ObjectMotionVector);
-
-                stencilRef       |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
-                stencilWriteMask |= (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
-            }
-
             if (materialType != HDRenderPipeline.StencilMaterialType.Forward)
             {
                 // Clear the Forward flag, and set the material bits.
                 stencilRefGBuffer = (stencilRef & ~(int)HDRenderPipeline.StencilMaterialType.Forward) | (int)materialType;
             }
 
-            material.SetInt(kStencilRef,        stencilRef);
-            material.SetInt(kStencilRefGBuffer, stencilRefGBuffer);
-            material.SetInt(kStencilReadMask,   stencilReadMask);
-            material.SetInt(kStencilWriteMask,  stencilWriteMask);
+            stencilRefObjMotion       = stencilRef       | (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
+            stencilWriteMaskObjMotion = stencilWriteMask | (int)HDRenderPipeline.StencilUsageBeforeTransparent.ObjectMotionVector;
+
+            material.SetInt(kStencilRef,                stencilRef);
+            material.SetInt(kStencilRefObjMotion,       stencilRefObjMotion);
+            material.SetInt(kStencilRefGBuffer,         stencilRefGBuffer);
+            material.SetInt(kStencilReadMask,           stencilReadMask);
+            material.SetInt(kStencilWriteMask,          stencilWriteMask);
+            material.SetInt(kStencilWriteMaskObjMotion, stencilWriteMaskObjMotion);
         }
     }
 }
