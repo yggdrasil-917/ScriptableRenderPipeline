@@ -138,6 +138,9 @@ EditorBuildSettings:
     path: Assets/GraphicTests/Scenes/1x_Materials/1708_DecalsSG_on_SG.unity
     guid: 4462c9729d14bc14ebe49f7bc1069d4b
   - enabled: 1
+    path: Assets/GraphicTests/Scenes/1x_Materials/1709_DecalMasks.unity
+    guid: 928ec3e679ef88741948c122d5f53293
+  - enabled: 1
     path: Assets/GraphicTests/Scenes/1x_Materials/1800_Classification.unity
     guid: 5043daebf48d1b740bb244b9a55508ef
   - enabled: 1
