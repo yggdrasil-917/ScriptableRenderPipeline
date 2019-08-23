@@ -232,7 +232,12 @@ namespace UnityEngine.Rendering.Universal
             SetShaderTimeValues(time, deltaTime, smoothDeltaTime);
 
             if (stereoEnabled)
+            {
                 BeginXRRendering(context, camera);
+                // Enabling XR will modify the camera render targets, so we need to reset m_FirstCameraRenderPassExecuted
+                // to ensure the XR render targets are properly cleared.
+                m_FirstCameraRenderPassExecuted = false;
+            }
 
             // In this block main rendering executes.
             ExecuteBlock(RenderPassBlock.MainRendering, blockRanges, context, ref renderingData);
