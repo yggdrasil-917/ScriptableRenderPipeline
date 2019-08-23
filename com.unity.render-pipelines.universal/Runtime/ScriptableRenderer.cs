@@ -234,7 +234,9 @@ namespace UnityEngine.Rendering.Universal
             if (stereoEnabled)
             {
                 BeginXRRendering(context, camera);
-                // Enabling XR will modify the camera render targets, so we need to reset m_FirstCameraRenderPassExecuted
+                // Enabling XR will modify the camera render targets,
+                // (the actual switch is performed in `context.SetupCameraProperties`)
+                // so we need to reset m_FirstCameraRenderPassExecuted
                 // to ensure the XR render targets are properly cleared.
                 m_FirstCameraRenderPassExecuted = false;
             }
