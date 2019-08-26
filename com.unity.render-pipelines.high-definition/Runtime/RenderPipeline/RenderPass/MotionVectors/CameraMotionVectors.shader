@@ -72,11 +72,12 @@ Shader "Hidden/HDRP/CameraMotionVectors"
             // We will perform camera motion vector only where there is no object motion vectors
             Stencil
             {
-                WriteMask 128
-                ReadMask 128
-                Ref  128 // StencilBitMask.ObjectMotionVectors
-                Comp NotEqual
-                Fail Zero   // We won't need the bit anymore.
+                Ref       64 // StencilUsageBeforeTransparent.ObjectMotionVector
+                ReadMask  64 // StencilUsageBeforeTransparent.ObjectMotionVector
+                WriteMask 0
+                Comp      NotEqual
+                Pass      Keep
+                Fail      Keep
             }
 
             Cull Off ZWrite Off
