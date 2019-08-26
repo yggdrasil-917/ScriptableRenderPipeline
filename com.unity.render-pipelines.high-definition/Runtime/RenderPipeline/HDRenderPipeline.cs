@@ -213,7 +213,7 @@ namespace UnityEngine.Rendering.HighDefinition
             ExcludeFromTAA       = (1 << 3),     //   8 0x8  - 1 bit : Disable Temporal Antialiasing for certain objects
             SMAA                 = (1 << 4),     //  16 0x10 - 1 bit : Subpixel Morphological Antialiasing
             DistortionVector     = (1 << 5),     //  32 0x20 - 1 bit : Distortion pass
-            ObjectMotionVector   = (1 << 6),     //  64 0x40 - 1 bit : Animated object (for motion blur, SSR, TAA)
+            FreeBit              = (1 << 6),     //  64 0x40 - 1 bit : Free
             UserBit              = (1 << 7),     // 128 0x80 - 1 bit : Reserved for user (application-specific)
             MaxValue             = (1 << 8) - 1  // 255 0xFF
         }
