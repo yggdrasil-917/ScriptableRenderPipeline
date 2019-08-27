@@ -23,7 +23,7 @@ testplatforms:
 mobiles:
   - name: Android
     type: Unity::mobile::android
-    image: mobile/android-execution:latest
+    image: mobile/android-execution:r19-390185
     flavor: b1.large
 projects:
   - name: Universal
