@@ -260,7 +260,7 @@ void SubsurfaceScattering(uint2 groupId          : SV_GroupID,
         uint stencilRef   = 8; // StencilUsageBeforeTransparent.SubsurfaceScattering
 
         // Perform the stencil test.
-        processGroup = (stencilValue & stencilRef != 0);
+        processGroup = ((stencilValue & stencilRef) != 0);
     }
 
     // Wait for the LDS.
