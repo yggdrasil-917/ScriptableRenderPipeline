@@ -12,7 +12,7 @@ platforms:
 mobiles:
   - name: Android
     type: Unity::mobile::android
-    image: mobile/android-execution:latest
+    image: mobile/android-execution:r19-390185
     flavor: b1.large
 testplatforms:
   - name: Standalone
@@ -90,7 +90,7 @@ projects:
       %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
    - powershell %ANDROID_SDK_ROOT%\platform-tools\adb.exe devices
    - NetSh Advfirewall set allprofiles state off
-   - utr\utr --suite=playmode --platform={{ mobile.name }} --testproject=TestProjects\{{ project.folder }} --editor-location=WindowsEditor --artifacts_path=upm-ci~\test-results --scripting-backend=il2cpp
+   - utr\utr --suite=playmode --platform={{ mobile.name }} --testproject=TestProjects\{{ project.folder }} --editor-location=WindowsEditor --artifacts_path=upm-ci~\test-results --scripting-backend=il2cpp --timeout=1200
    - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe kill-server
   artifacts:
     logs:
