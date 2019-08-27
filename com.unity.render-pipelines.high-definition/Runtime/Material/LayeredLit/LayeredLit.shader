@@ -256,10 +256,12 @@ Shader "HDRP/LayeredLit"
         _TransparentSortPriority("_TransparentSortPriority", Float) = 0
 
         // Stencil state
-        [HideInInspector] _StencilRef       ("_StencilRef",        Int) = 0
-        [HideInInspector] _StencilRefGBuffer("_StencilRefGBuffer", Int) = 0
-        [HideInInspector] _StencilReadMask  ("_StencilReadMask",   Int) = 0
-        [HideInInspector] _StencilWriteMask ("_StencilWriteMask",  Int) = 0
+        [HideInInspector] _StencilRef               ("_StencilRef",                Int) = 0
+        [HideInInspector] _StencilRefObjMotion      ("_StencilRefObjMotion",       Int) = 0
+        [HideInInspector] _StencilRefGBuffer        ("_StencilRefGBuffer",         Int) = 0
+        [HideInInspector] _StencilReadMask          ("_StencilReadMask",           Int) = 0
+        [HideInInspector] _StencilWriteMask         ("_StencilWriteMask",          Int) = 0
+        [HideInInspector] _StencilWriteMaskObjMotion("_StencilWriteMaskObjMotion", Int) = 0
 
         // Blending state
         [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
@@ -620,9 +622,9 @@ Shader "HDRP/LayeredLit"
 
             Stencil
             {
-                Ref       [_StencilRef]
+                Ref       [_StencilRefObjMotion]
                 ReadMask  0
-                WriteMask [_StencilWriteMask]
+                WriteMask [_StencilWriteMaskObjMotion]
                 Comp      Always
                 Pass      Replace
                 Fail      Keep
