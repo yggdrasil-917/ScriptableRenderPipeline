@@ -84,6 +84,8 @@ namespace UnityEngine.Rendering.HighDefinition
             public ComputeShader buildCoarseStencilCS;
             [Reload("Runtime/ShaderLibrary/CopyStencilBuffer.shader")]
             public Shader copyStencilBufferPS;
+            [Reload("Runtime/ShaderLibrary/ClearStencilBuffer.shader")]
+            public Shader clearStencilBufferPS;
             [Reload("Runtime/ShaderLibrary/CopyDepthBuffer.shader")]
             public Shader copyDepthBufferPS;
             [Reload("Runtime/ShaderLibrary/Blit.shader")]

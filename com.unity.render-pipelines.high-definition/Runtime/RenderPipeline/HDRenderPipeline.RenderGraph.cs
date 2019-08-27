@@ -107,6 +107,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 RenderSky(m_RenderGraph, hdCamera, colorBuffer, volumetricLighting, prepassOutput.depthBuffer, prepassOutput.depthPyramidTexture);
 
+                ClearStencilBuffer(m_RenderGraph, colorBuffer, prepassOutput.depthBuffer);
+
                 colorBuffer = RenderTransparency(m_RenderGraph, hdCamera, colorBuffer, prepassOutput.depthBuffer, prepassOutput.motionVectorsBuffer, currentColorPyramid, prepassOutput.depthPyramidTexture, shadowResult, cullingResults);
 
                 // Transparent objects may write to the depth and motion vectors buffers.
@@ -929,6 +931,32 @@ namespace UnityEngine.Rendering.HighDefinition
             else
             {
                 return input;
+            }
+        }
+
+        class ClearStencilBufferData
+        {
+            public RenderGraphResource        colorBuffer;
+            public RenderGraphMutableResource depthStencilBuffer;
+            public Material                   clearMaterial;
+        }
+
+        void ClearStencilBuffer(RenderGraph                renderGraph,
+                                RenderGraphResource        colorBuffer,
+                                RenderGraphMutableResource depthStencilBuffer)
+        {
+            using (var builder = renderGraph.AddRenderPass<ClearStencilBufferData>("Copy Stencil Buffer",
+                   out var passData, CustomSamplerId.ClearStencilBuffer.GetSampler()))
+            {
+                passData.colorBuffer        = colorBuffer;
+                passData.depthStencilBuffer = depthStencilBuffer;
+                passData.clearMaterial      = m_ClearStencilBuffer;
+
+                builder.SetRenderFunc((ClearStencilBufferData data, RenderGraphContext context) =>
+                {
+                    var res = context.resources;
+                    HDUtils.DrawFullScreen(context.cmd, data.clearMaterial, res.GetTexture(data.colorBuffer), res.GetTexture(data.depthStencilBuffer));
+                });
             }
         }
 

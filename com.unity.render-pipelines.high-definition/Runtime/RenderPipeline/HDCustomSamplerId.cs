@@ -55,6 +55,7 @@ namespace UnityEngine.Rendering.HighDefinition
         ClearSsrBuffers,
         HDRenderPipelineRender,
         CullResultsCull,
+        ClearStencilBuffer,
         CopyDepth,
         UpdateStencilCopyForSSRExclusion,
         GizmosPrePostprocess,

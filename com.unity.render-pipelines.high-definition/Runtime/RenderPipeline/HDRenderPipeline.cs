@@ -86,6 +86,7 @@ namespace UnityEngine.Rendering.HighDefinition
 #endif
 
         ComputeShader m_BuildCoarseStencil { get { return defaultResources.shaders.buildCoarseStencilCS; } }
+        Material      m_ClearStencilBuffer;
 
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
         PerObjectData m_CurrentRendererConfigurationBakedLighting = HDUtils.k_RendererConfigurationBakedLighting;
@@ -382,6 +383,8 @@ namespace UnityEngine.Rendering.HighDefinition
             // General material
             m_CameraMotionVectorsMaterial = CoreUtils.CreateEngineMaterial(defaultResources.shaders.cameraMotionVectorsPS);
             m_DecalNormalBufferMaterial = CoreUtils.CreateEngineMaterial(defaultResources.shaders.decalNormalBufferPS);
+
+            m_ClearStencilBuffer = CoreUtils.CreateEngineMaterial(defaultResources.shaders.clearStencilBufferPS);
 
             m_CopyDepth = CoreUtils.CreateEngineMaterial(defaultResources.shaders.copyDepthBufferPS);
             m_DownsampleDepthMaterial = CoreUtils.CreateEngineMaterial(defaultResources.shaders.downsampleDepthPS);
@@ -795,6 +798,7 @@ namespace UnityEngine.Rendering.HighDefinition
             CoreUtils.Destroy(m_Blit);
             CoreUtils.Destroy(m_BlitTexArray);
             CoreUtils.Destroy(m_BlitTexArraySingleSlice);
+            CoreUtils.Destroy(m_ClearStencilBuffer);
             CoreUtils.Destroy(m_CopyDepth);
             CoreUtils.Destroy(m_ErrorMaterial);
             CoreUtils.Destroy(m_DownsampleDepthMaterial);
@@ -2104,6 +2108,12 @@ namespace UnityEngine.Rendering.HighDefinition
                     m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraColorMSAABuffer, m_CameraColorBuffer);
 
                     RenderColorPyramid(hdCamera, cmd, true);
+                }
+
+                using (new ProfilingSample(cmd, "Clear Stencil Buffer", CustomSamplerId.ClearStencilBuffer.GetSampler()))
+                {
+                    // Clear the stencil before the transparent pass.
+                    HDUtils.DrawFullScreen(cmd, m_ClearStencilBuffer, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer());
                 }
 
                 // Bind current color pyramid for shader graph SceneColorNode on transparent objects
