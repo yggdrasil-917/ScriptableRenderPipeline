@@ -264,7 +264,12 @@ Shader "HDRP/Unlit"
             Stencil
             {
                 Ref       [_StencilRef]
-                ReadMask  [_StencilReadMask]
+                // Normally, we perform the stencil test here.
+                // Unfortunately, there is no depth-stencil prepass after postprocess,
+                // so we don't have the correct stencil values to test against.
+                // This is an exception from most other materials that do perform stencil test
+                // during the forward pass.
+                ReadMask  0 // [_StencilReadMask]
                 WriteMask 0
                 Comp      Equal
                 Pass      Keep
