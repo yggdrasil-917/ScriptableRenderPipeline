@@ -341,7 +341,9 @@ namespace UnityEditor.Rendering.HighDefinition
             // TODO: support forward materials.
             HDRenderPipeline.StencilMaterialType materialType = HDRenderPipeline.StencilMaterialType.Forward;
 
-            switch (material.GetMaterialId())
+            MaterialId matId = material.GetMaterialId();
+
+            switch (matId)
             {
                 case MaterialId.LitStandard:
                 case MaterialId.LitSpecular:

@@ -962,10 +962,33 @@ namespace UnityEditor.Rendering.HighDefinition
             return materialType == HDLitMasterNode.MaterialType.SubsurfaceScattering;
         }
 
+        static MaterialId MaterialIdFromMaterialType(MaterialType type)
+        {
+            switch (type)
+            {
+                case MaterialType.Standard:
+                    return MaterialId.LitStandard;
+                case MaterialType.SubsurfaceScattering:
+                    return MaterialId.LitSSS;
+                case MaterialType.Anisotropy:
+                    return MaterialId.LitAniso;
+                case MaterialType.Iridescence:
+                    return MaterialId.LitIridescence;
+                case MaterialType.SpecularColor:
+                    return MaterialId.LitSpecular;
+                case MaterialType.Translucent:
+                    return MaterialId.LitTranslucent;
+                default:
+                    Debug.Assert(false);
+                    return (MaterialId)(-1);
+            }
+        }
+
         public override void ProcessPreviewMaterial(Material previewMaterial)
         {
             // Fixup the material settings:
             previewMaterial.SetFloat(kSurfaceType, (int)(SurfaceType)surfaceType);
+            previewMaterial.SetFloat(kMaterialID, (int)MaterialIdFromMaterialType(materialType));
             previewMaterial.SetFloat(kDoubleSidedNormalMode, (int)doubleSidedMode);
             previewMaterial.SetFloat(kAlphaCutoffEnabled, alphaTest.isOn ? 1 : 0);
             previewMaterial.SetFloat(kBlendMode, (int)HDSubShaderUtilities.ConvertAlphaModeToBlendMode(alphaMode));

@@ -1016,15 +1016,27 @@ namespace UnityEditor.Rendering.HighDefinition
             SetStencilStateToFillGeneral(ref pass);
         }
 
-        public static void SetStencilStateForMotionVector(ref Pass pass)
-        {
-            SetStencilStateToFillGeneral(ref pass);
-        }
-
         public static void SetStencilStateForDistortionVector(ref Pass pass)
         {
             SetStencilStateToFillGeneral(ref pass);
         }
+
+        public static void SetStencilStateForMotionVector(ref Pass pass)
+        {
+            pass.StencilOverride = new List<string>()
+            {
+                "// Stencil setup",
+                "Stencil",
+                "{",
+                "   Ref       [_StencilRefObjMotion]",
+                "   ReadMask  0",
+                "   WriteMask [_StencilWriteMaskObjMotion]",
+                "   Comp      Always",
+                "   Pass      Replace",
+                "   Fail      Keep",
+                "}"
+
+            };        }
 
         public static void SetStencilStateForForward(ref Pass pass)
         {
