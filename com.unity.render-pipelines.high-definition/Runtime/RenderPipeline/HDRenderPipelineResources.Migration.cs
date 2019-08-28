@@ -2,7 +2,7 @@ using UnityEngine.Serialization;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
-    public partial class RenderPipelineResources : ScriptableObject, IVersionable<RenderPipelineResources.Version>
+    public partial class HDRenderPipelineResources : IVersionable<HDRenderPipelineResources.Version>
     {
         enum Version
         {
@@ -21,8 +21,8 @@ namespace UnityEngine.Rendering.HighDefinition
         }
 
 #if UNITY_EDITOR //formerly migration were only handled in editor for this asset
-        static readonly MigrationDescription<Version, RenderPipelineResources> k_Migration = MigrationDescription.New(
-            MigrationStep.New(Version.RemovedEditorOnlyResources, (RenderPipelineResources i) =>
+        static readonly MigrationDescription<Version, HDRenderPipelineResources> k_Migration = MigrationDescription.New(
+            MigrationStep.New(Version.RemovedEditorOnlyResources, (HDRenderPipelineResources i) =>
             {
                 //force full reimport to remove moved resources
                 i.materials = null;

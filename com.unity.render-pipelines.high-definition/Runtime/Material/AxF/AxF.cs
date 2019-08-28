@@ -127,7 +127,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public AxF() {}
 
-        public override void Build(HDRenderPipelineAsset hdAsset, RenderPipelineResources defaultResources)
+        public override void Build(HDRenderPipelineAsset hdAsset, HDRenderPipelineResources defaultResources)
         {
             var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
 

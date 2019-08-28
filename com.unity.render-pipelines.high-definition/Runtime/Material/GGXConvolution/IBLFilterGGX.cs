@@ -13,7 +13,7 @@ namespace UnityEngine.Rendering.HighDefinition
         int           m_ConditionalDensitiesKernel    = -1;
         int           m_MarginalRowDensitiesKernel    = -1;
 
-        public IBLFilterGGX(RenderPipelineResources renderPipelineResources, MipGenerator mipGenerator)
+        public IBLFilterGGX(HDRenderPipelineResources renderPipelineResources, MipGenerator mipGenerator)
         {
             m_RenderPipelineResources = renderPipelineResources;
             m_MipGenerator = mipGenerator;

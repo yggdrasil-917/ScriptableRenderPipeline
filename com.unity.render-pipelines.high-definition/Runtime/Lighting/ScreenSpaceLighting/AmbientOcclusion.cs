@@ -24,7 +24,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
     partial class AmbientOcclusionSystem
     {
-        RenderPipelineResources m_Resources;
+        HDRenderPipelineResources m_Resources;
 #if ENABLE_RAYTRACING
         HDRenderPipelineRayTracingResources m_RTResources;
 #endif
@@ -75,7 +75,7 @@ namespace UnityEngine.Rendering.HighDefinition
             hdCamera.AllocateAmbientOcclusionHistoryBuffer(scaleFactor);
         }
 
-        public AmbientOcclusionSystem(HDRenderPipelineAsset hdAsset, RenderPipelineResources defaultResources)
+        public AmbientOcclusionSystem(HDRenderPipelineAsset hdAsset, HDRenderPipelineResources defaultResources)
         {
             m_Settings = hdAsset.currentPlatformRenderPipelineSettings;
             m_Resources = defaultResources;

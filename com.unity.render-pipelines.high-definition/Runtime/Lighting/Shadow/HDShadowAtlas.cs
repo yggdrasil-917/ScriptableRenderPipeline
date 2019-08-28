@@ -33,7 +33,7 @@ namespace UnityEngine.Rendering.HighDefinition
         int                         m_AtlasSizeShaderID;
         int                         m_AtlasShaderID;
         int                         m_MomentAtlasShaderID;
-        RenderPipelineResources     m_RenderPipelineResources;
+        HDRenderPipelineResources     m_RenderPipelineResources;
 
         // Moment shadow data
         BlurAlgorithm m_BlurAlgorithm;
@@ -53,7 +53,7 @@ namespace UnityEngine.Rendering.HighDefinition
         bool m_HasResizedAtlas = false;
         int frameCounter = 0;
 
-        public HDShadowAtlas(RenderPipelineResources renderPipelineResources, int width, int height, int atlasShaderID, int atlasSizeShaderID, Material clearMaterial, int maxShadowRequests, BlurAlgorithm blurAlgorithm = BlurAlgorithm.None, FilterMode filterMode = FilterMode.Bilinear, DepthBits depthBufferBits = DepthBits.Depth16, RenderTextureFormat format = RenderTextureFormat.Shadowmap, string name = "", int momentAtlasShaderID = 0)
+        public HDShadowAtlas(HDRenderPipelineResources renderPipelineResources, int width, int height, int atlasShaderID, int atlasSizeShaderID, Material clearMaterial, int maxShadowRequests, BlurAlgorithm blurAlgorithm = BlurAlgorithm.None, FilterMode filterMode = FilterMode.Bilinear, DepthBits depthBufferBits = DepthBits.Depth16, RenderTextureFormat format = RenderTextureFormat.Shadowmap, string name = "", int momentAtlasShaderID = 0)
         {
             this.width = width;
             this.height = height;

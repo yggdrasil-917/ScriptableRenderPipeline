@@ -17,7 +17,7 @@ namespace UnityEngine.Rendering.HighDefinition
         RenderTexture m_TempRenderTexture0 = null;
         RenderTexture m_TempRenderTexture1 = null;
 
-        public LTCAreaLightCookieManager(HDRenderPipelineAsset hdAsset, RenderPipelineResources defaultResources, int maxCacheSize)
+        public LTCAreaLightCookieManager(HDRenderPipelineAsset hdAsset, HDRenderPipelineResources defaultResources, int maxCacheSize)
         {
             // Keep track of the render pipeline asset
             m_RenderPipelineAsset = hdAsset;

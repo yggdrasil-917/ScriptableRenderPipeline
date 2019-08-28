@@ -65,7 +65,7 @@ namespace UnityEngine.Rendering.HighDefinition
         readonly HDRenderPipelineAsset m_Asset;
         internal HDRenderPipelineAsset asset { get { return m_Asset; } }
         readonly HDRenderPipelineAsset m_DefaultAsset;
-        internal RenderPipelineResources defaultResources { get { return m_DefaultAsset.renderPipelineResources; } }
+        internal HDRenderPipelineResources defaultResources { get { return m_DefaultAsset.renderPipelineResources; } }
 
         internal RenderPipelineSettings currentPlatformRenderPipelineSettings { get { return m_Asset.currentPlatformRenderPipelineSettings; } }
 
@@ -434,7 +434,7 @@ namespace UnityEngine.Rendering.HighDefinition
             // Check that the serialized Resources are not broken
             if (HDRenderPipeline.defaultAsset.renderPipelineResources == null)
                 HDRenderPipeline.defaultAsset.renderPipelineResources
-                    = UnityEditor.AssetDatabase.LoadAssetAtPath<RenderPipelineResources>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/HDRenderPipelineResources.asset");
+                    = UnityEditor.AssetDatabase.LoadAssetAtPath<HDRenderPipelineResources>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/HDRenderPipelineResources.asset");
 			ResourceReloader.ReloadAllNullIn(HDRenderPipeline.defaultAsset.renderPipelineResources, HDUtils.GetHDRenderPipelinePath());
 
 #if ENABLE_RAYTRACING

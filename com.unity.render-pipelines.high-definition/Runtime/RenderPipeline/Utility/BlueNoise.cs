@@ -17,11 +17,11 @@ namespace UnityEngine.Rendering.HighDefinition
         Texture2DArray m_TextureArray16L;
         Texture2DArray m_TextureArray16RGB;
 
-        RenderPipelineResources m_RenderPipelineResources;
+        HDRenderPipelineResources m_RenderPipelineResources;
 
         static readonly System.Random m_Random = new System.Random();
 
-        public BlueNoise(RenderPipelineResources resources)
+        public BlueNoise(HDRenderPipelineResources resources)
         {
             m_RenderPipelineResources = resources;
             InitTextures(16, TextureFormat.Alpha8, resources.textures.blueNoise16LTex, out m_Textures16L, out m_TextureArray16L);

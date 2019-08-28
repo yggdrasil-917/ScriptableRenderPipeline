@@ -52,9 +52,9 @@ namespace UnityEngine.Rendering.HighDefinition
         }
 
         [SerializeField]
-        RenderPipelineResources m_RenderPipelineResources;
+        HDRenderPipelineResources m_RenderPipelineResources;
 
-        internal RenderPipelineResources renderPipelineResources
+        internal HDRenderPipelineResources renderPipelineResources
         {
             get { return m_RenderPipelineResources; }
             set { m_RenderPipelineResources = value; }
@@ -357,7 +357,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // Is ray tracing supported for this project and this platform?
             bool raytracingSupport = AggreateRayTracingSupport(currentPlatformRenderPipelineSettings);
-            
+
             // Update all the individual defines
             bool needUpdate = false;
             needUpdate |= UpdateDefineList(raytracingSupport, "ENABLE_RAYTRACING");

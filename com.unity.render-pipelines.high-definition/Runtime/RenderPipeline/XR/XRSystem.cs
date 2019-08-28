@@ -38,7 +38,7 @@ namespace UnityEngine.Rendering.HighDefinition
         MaterialPropertyBlock mirrorViewMaterialProperty = new MaterialPropertyBlock();
 #endif
 
-        internal XRSystem(RenderPipelineResources.ShaderResources shaders)
+        internal XRSystem(HDRenderPipelineResources.ShaderResources shaders)
         {
 #if ENABLE_XR_MODULE
             RefreshXrSdk();

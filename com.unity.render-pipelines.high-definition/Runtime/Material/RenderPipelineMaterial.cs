@@ -15,7 +15,7 @@ namespace UnityEngine.Rendering.HighDefinition
         }
 
         // Regular interface
-        public virtual void Build(HDRenderPipelineAsset hdAsset, RenderPipelineResources defaultResources) {}
+        public virtual void Build(HDRenderPipelineAsset hdAsset, HDRenderPipelineResources defaultResources) {}
         public virtual void Cleanup() {}
 
         // Following function can be use to initialize GPU resource (once or each frame) and bind them

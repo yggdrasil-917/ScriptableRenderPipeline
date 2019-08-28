@@ -44,7 +44,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
         }
 
-        public void InitSharedBuffers(GBufferManager gbufferManager, RenderPipelineSettings settings, RenderPipelineResources resources)
+        public void InitSharedBuffers(GBufferManager gbufferManager, RenderPipelineSettings settings, HDRenderPipelineResources resources)
         {
             // Set the flags
             m_MSAASupported = settings.supportMSAA;

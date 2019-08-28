@@ -21,7 +21,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 var newAsset = CreateInstance<HDRenderPipelineAsset>();
                 newAsset.name = Path.GetFileName(pathName);
                 // Load default renderPipelineResources / Material / Shader
-                newAsset.renderPipelineResources = AssetDatabase.LoadAssetAtPath<RenderPipelineResources>(s_RenderPipelineResourcesPath);
+                newAsset.renderPipelineResources = AssetDatabase.LoadAssetAtPath<HDRenderPipelineResources>(s_RenderPipelineResourcesPath);
 
                 //as we must init the editor resources with lazy init, it is not required here
 
@@ -47,7 +47,7 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             public override void Action(int instanceId, string pathName, string resourceFile)
             {
-                var newAsset = CreateInstance<RenderPipelineResources>();
+                var newAsset = CreateInstance<HDRenderPipelineResources>();
                 newAsset.name = Path.GetFileName(pathName);
 
                 ResourceReloader.ReloadAllNullIn(newAsset, HDUtils.GetHDRenderPipelinePath());

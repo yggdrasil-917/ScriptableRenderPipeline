@@ -22,7 +22,7 @@ namespace UnityEngine.Rendering.HighDefinition
         const GraphicsFormat k_CoCFormat           = GraphicsFormat.R16_SFloat;
         const GraphicsFormat k_ExposureFormat      = GraphicsFormat.R32G32_SFloat;
 
-        readonly RenderPipelineResources m_Resources;
+        readonly HDRenderPipelineResources m_Resources;
         bool m_ResetHistory;
         Material m_FinalPassMaterial;
         Material m_ClearBlackMaterial;
@@ -121,7 +121,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         HDRenderPipeline m_HDInstance;
 
-        public PostProcessSystem(HDRenderPipelineAsset hdAsset, RenderPipelineResources defaultResources)
+        public PostProcessSystem(HDRenderPipelineAsset hdAsset, HDRenderPipelineResources defaultResources)
         {
             m_Resources = defaultResources;
             m_FinalPassMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.finalPassPS);
