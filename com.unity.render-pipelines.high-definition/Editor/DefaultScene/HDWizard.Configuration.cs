@@ -211,7 +211,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 FixHdrpAssetUsed(async: false);
             HDRenderPipeline.defaultAsset.renderPipelineResources
                 = AssetDatabase.LoadAssetAtPath<HDRenderPipelineResources>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/HDRenderPipelineResources.asset");
-            ResourceReloader.ReloadAllNullIn(HDRenderPipeline.defaultAsset.renderPipelineResources, HDUtils.GetHDRenderPipelinePath());
+            ResourceReloader.ReloadAllNullIn(HDRenderPipeline.defaultAsset.renderPipelineResources);
         }
 
         bool IsHdrpAssetEditorResourcesCorrect()
@@ -223,7 +223,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 FixHdrpAssetUsed(async: false);
             HDRenderPipeline.defaultAsset.renderPipelineEditorResources
                 = AssetDatabase.LoadAssetAtPath<HDRenderPipelineEditorResources>(HDUtils.GetHDRenderPipelinePath() + "Editor/RenderPipelineResources/HDRenderPipelineEditorResources.asset");
-            ResourceReloader.ReloadAllNullIn(HDRenderPipeline.defaultAsset.renderPipelineEditorResources, HDUtils.GetHDRenderPipelinePath());
+            ResourceReloader.ReloadAllNullIn(HDRenderPipeline.defaultAsset.renderPipelineEditorResources);
         }
 
         bool IsHdrpAssetDiffusionProfileCorrect()
@@ -386,7 +386,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 FixHdrpAssetUsed(async: false);
             HDRenderPipeline.defaultAsset.renderPipelineRayTracingResources
                 = AssetDatabase.LoadAssetAtPath<HDRenderPipelineRayTracingResources>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/HDRenderPipelineRayTracingResources.asset");
-            ResourceReloader.ReloadAllNullIn(HDRenderPipeline.defaultAsset.renderPipelineRayTracingResources, HDUtils.GetHDRenderPipelinePath());
+            ResourceReloader.ReloadAllNullIn(HDRenderPipeline.defaultAsset.renderPipelineRayTracingResources);
         }
 
         bool IsScreenSpaceShadowCorrect()

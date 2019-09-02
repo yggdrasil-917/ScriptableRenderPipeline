@@ -3,6 +3,7 @@ using System.IO;
 using UnityEngine.Assertions;
 #if UNITY_EDITOR
 using UnityEditor;
+using System.Linq;
 using System.Reflection;
 #endif
 
@@ -20,9 +21,17 @@ namespace UnityEngine.Rendering
         /// Looks for resources in the given <paramref name="container"/> object and reload the ones
         /// that are missing or broken.
         /// </summary>
-        /// <param name="container">The object containing reload-able resources</param>
-        /// <param name="basePath">The base path for the package</param>
-        public static void ReloadAllNullIn(System.Object container, string basePath)
+        /// <param name="container">The ScriptableObject containing reload-able resources</param>
+        public static void ReloadAllNullIn(ScriptableObject container)
+        {
+            if (!IsNull(container))
+            {
+                var packageRoot = GetPackageRoot(container);
+                ReloadAllNullIn(container, packageRoot);
+            }
+        }
+
+        static void ReloadAllNullIn(System.Object container, string packageRoot)
         {
             if (IsNull(container))
                 return;
@@ -33,7 +42,7 @@ namespace UnityEngine.Rendering
                 if (IsReloadGroup(fieldInfo))
                 {
                     FixGroupIfNeeded(container, fieldInfo);
-                    ReloadAllNullIn(fieldInfo.GetValue(container), basePath);
+                    ReloadAllNullIn(fieldInfo.GetValue(container), packageRoot);
                 }
 
                 //Find null field and reload them
@@ -42,7 +51,7 @@ namespace UnityEngine.Rendering
                 {
                     if (attribute.paths.Length == 1)
                     {
-                        SetAndLoadIfNull(container, fieldInfo, GetFullPath(basePath, attribute),
+                        SetAndLoadIfNull(container, fieldInfo, GetFullPath(packageRoot, attribute),
                             attribute.package == ReloadAttribute.Package.Builtin);
                     }
                     else if (attribute.paths.Length > 1)
@@ -56,7 +65,7 @@ namespace UnityEngine.Rendering
                             for (int index = 0; index < attribute.paths.Length; ++index)
                             {
                                 FixGroupIfNeeded(array, index);
-                                ReloadAllNullIn(array.GetValue(index), basePath);
+                                ReloadAllNullIn(array.GetValue(index), packageRoot);
                             }
                         }
                         else
@@ -64,14 +73,44 @@ namespace UnityEngine.Rendering
                             bool builtin = attribute.package == ReloadAttribute.Package.Builtin;
                             //Find each null element and reload them
                             for (int index = 0; index < attribute.paths.Length; ++index)
-                                SetAndLoadIfNull(array, index, GetFullPath(basePath, attribute, index), builtin);
+                                SetAndLoadIfNull(array, index, GetFullPath(packageRoot, attribute, index), builtin);
                         }
                     }
                 }
             }
 
-            if (container is UnityEngine.Object c)
+            if (container is Object c)
                 EditorUtility.SetDirty(c);
+        }
+
+        /// <summary>
+        /// Given a <paramref name="container"/> object find the asset's base path.
+        /// </summary>
+        /// <param name="container">The ScriptableObject for which to find the path</param>
+        static public string GetPackageRoot(ScriptableObject container)
+        {
+            var script = MonoScript.FromScriptableObject(container);
+            var scriptPath = AssetDatabase.GetAssetPath(script);
+
+            string packageRoot;
+            if (scriptPath.StartsWith("Assets/"))
+                packageRoot = "Assets/";
+            else if (scriptPath.StartsWith("Packages/"))
+                packageRoot = scriptPath.Substring(0, scriptPath.IndexOf("/", "Packages/".Length) + 1);
+            else
+                throw new ArgumentException($"Expected container '{container}' to resolve to a base path.'");
+
+            return packageRoot;
+        }
+
+        /// <summary>
+        /// Given a <paramref name="container"/> object clear out all reloadable group fields.
+        /// </summary>
+        /// <param name="container">The object for which to clear out fields</param>
+        static public void ClearReloadableFields(System.Object container)
+        {
+            foreach (var fieldInfo in container.GetType().GetFields().Where(fi => fi.IsDefined(typeof(ReloadGroupAttribute))))
+                fieldInfo.SetValue(container, null);
         }
 
         static void FixGroupIfNeeded(System.Object container, FieldInfo info)

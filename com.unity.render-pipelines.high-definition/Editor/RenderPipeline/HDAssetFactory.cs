@@ -50,7 +50,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 var newAsset = CreateInstance<HDRenderPipelineResources>();
                 newAsset.name = Path.GetFileName(pathName);
 
-                ResourceReloader.ReloadAllNullIn(newAsset, HDUtils.GetHDRenderPipelinePath());
+                ResourceReloader.ReloadAllNullIn(newAsset);
 
                 AssetDatabase.CreateAsset(newAsset, pathName);
                 ProjectWindowUtil.ShowCreatedAsset(newAsset);
@@ -72,7 +72,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 var newAsset = CreateInstance<HDRenderPipelineRayTracingResources>();
                 newAsset.name = Path.GetFileName(pathName);
 
-                ResourceReloader.ReloadAllNullIn(newAsset, HDUtils.GetHDRenderPipelinePath());
+                ResourceReloader.ReloadAllNullIn(newAsset);
 
                 AssetDatabase.CreateAsset(newAsset, pathName);
                 ProjectWindowUtil.ShowCreatedAsset(newAsset);
@@ -94,7 +94,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 var newAsset = CreateInstance<HDRenderPipelineEditorResources>();
                 newAsset.name = Path.GetFileName(pathName);
 
-                ResourceReloader.ReloadAllNullIn(newAsset, HDUtils.GetHDRenderPipelinePath());
+                ResourceReloader.ReloadAllNullIn(newAsset);
 
                 AssetDatabase.CreateAsset(newAsset, pathName);
                 ProjectWindowUtil.ShowCreatedAsset(newAsset);

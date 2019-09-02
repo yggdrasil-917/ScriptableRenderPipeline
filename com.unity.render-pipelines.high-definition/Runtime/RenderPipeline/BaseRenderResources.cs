@@ -1,6 +1,3 @@
-using System.Reflection;
-using System.Linq;
-
 namespace UnityEngine.Rendering.HighDefinition
 {
     public abstract class BaseRenderResources : ScriptableObject
@@ -25,6 +22,8 @@ namespace UnityEngine.Rendering.HighDefinition
     [UnityEditor.CustomEditor(typeof(BaseRenderResources), true)]
     class BaseRenderResourcesEditor : UnityEditor.Editor
     {
+        new BaseRenderResources target => (BaseRenderResources)base.target;
+
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -42,22 +41,9 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 if (GUILayout.Button("Reload All"))
                 {
-                    // Clear out all ReloadGroup fields
-                    foreach (var fieldInfo in targets.GetType().GetFields().Where(fi => fi.IsDefined(typeof(ReloadGroupAttribute))))
-                        fieldInfo.SetValue(target, null);
-
-                    // Find appropriate base path from resource asset
-                    var script = UnityEditor.MonoScript.FromScriptableObject(target as ScriptableObject);
-                    var scriptPath = UnityEditor.AssetDatabase.GetAssetPath(script);
-                    var packageRoot = string.Empty;
-                    if (scriptPath.StartsWith("Assets/"))
-                        packageRoot = "Assets/";
-                    else if (scriptPath.StartsWith("Packages/"))
-                        packageRoot = scriptPath.Substring(0, scriptPath.IndexOf("/", "Packages/".Length));
-                    Debug.Log($"scriptPath: {scriptPath} packageRoot: {packageRoot}");
-
-                    // Reload all
-                    ResourceReloader.ReloadAllNullIn(target, packageRoot);
+                    // Force reload all resources
+                    ResourceReloader.ClearReloadableFields(target);
+                    ResourceReloader.ReloadAllNullIn(target);
                 }
             }
         }
