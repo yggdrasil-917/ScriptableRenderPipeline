@@ -3,8 +3,10 @@ using UnityEngine.Experimental.Rendering;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
-    public partial class HDRenderPipelineRayTracingResources : ScriptableObject
+    public class HDRenderPipelineRayTracingResources : BaseRenderResources
     {
+        public override int Id => 1;
+
 #if ENABLE_RAYTRACING
         // Reflection
         [Reload("Runtime/RenderPipeline/Raytracing/Shaders/Reflections/RaytracingReflections.raytrace")]
@@ -66,25 +68,5 @@ namespace UnityEngine.Rendering.HighDefinition
         [Reload("Runtime/RenderPipeline/Raytracing/Shaders/CountTracedRays.compute")]
         public ComputeShader countTracedRays;
 #endif
-
-    #if UNITY_EDITOR
-        [UnityEditor.CustomEditor(typeof(HDRenderPipelineRayTracingResources))]
-        class RenderPipelineRayTracingResourcesEditor : UnityEditor.Editor
-        {
-            public override void OnInspectorGUI()
-            {
-                DrawDefaultInspector();
-
-                // Add a "Reload All" button in inspector when we are in developer's mode
-                if (UnityEditor.EditorPrefs.GetBool("DeveloperMode")
-                    && GUILayout.Button("Reload All"))
-                {
-                    var resources = target as HDRenderPipelineRayTracingResources;
-                    resources = null;
-                    ResourceReloader.ReloadAllNullIn(target, HDUtils.GetHDRenderPipelinePath());
-                }
-            }
-        }
-    #endif
     }
 }

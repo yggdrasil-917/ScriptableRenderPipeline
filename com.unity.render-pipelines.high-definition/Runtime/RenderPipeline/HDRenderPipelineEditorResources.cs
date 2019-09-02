@@ -1,11 +1,12 @@
-#if UNITY_EDITOR //file must be in realtime assembly folder to be found in HDRPAsset
 using System;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
     [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "HDRP-Asset" + Documentation.endURL)]
-    public partial class HDRenderPipelineEditorResources : ScriptableObject
+    public partial class HDRenderPipelineEditorResources : BaseEditorRenderResources
     {
+        public override int Id => 0;
+
         [Reload("Editor/DefaultScene/DefaultSceneRoot.prefab")]
         public GameObject defaultScene;
         [Reload("Editor/DefaultScene/Sky and Fog Settings Profile.asset")]
@@ -64,32 +65,4 @@ namespace UnityEngine.Rendering.HighDefinition
         public TextureResources textures;
         public ShaderGraphResources shaderGraphs;
     }
-
-
-
-    [UnityEditor.CustomEditor(typeof(HDRenderPipelineEditorResources))]
-    class HDRenderPipelineEditorResourcesEditor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
-
-            // Add a "Reload All" button in inspector when we are in developer's mode
-            if (UnityEditor.EditorPrefs.GetBool("DeveloperMode")
-                && GUILayout.Button("Reload All"))
-            {
-                var resources = target as HDRenderPipelineEditorResources;
-                resources.defaultScene = null;
-                resources.defaultSkyAndFogProfile = null;
-                resources.defaultPostProcessingProfile = null;
-                resources.defaultDiffusionProfileSettingsList = null;
-                resources.materials = null;
-                resources.textures = null;
-                resources.shaders = null;
-                resources.shaderGraphs = null;
-                ResourceReloader.ReloadAllNullIn(target, HDUtils.GetHDRenderPipelinePath());
-            }
-        }
-    }
 }
-#endif

@@ -14,7 +14,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
     // The HDRenderPipeline assumes linear lighting. Doesn't work with gamma.
     [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "HDRP-Asset" + Documentation.endURL)]
-    public partial class HDRenderPipelineAsset : RenderPipelineAsset
+    public partial class HDRenderPipelineAsset : RenderPipelineAsset, ISerializationCallbackReceiver
     {
 
         HDRenderPipelineAsset()
@@ -68,34 +68,89 @@ namespace UnityEngine.Rendering.HighDefinition
             set { m_RenderPipelineRayTracingResources = value; }
         }
 
-        [SerializeField] private VolumeProfile m_DefaultVolumeProfile;
+#pragma warning disable 0649
+        [SerializeField]
+        BaseRenderResources[] m_CustomRenderResources;
+#pragma warning restore 0649
+
+        static T DoGetRenderResources<S, T>(S[] renderResourcesList)  where S : BaseRenderResources where T : BaseRenderResources
+        {
+            foreach (var rr in renderResourcesList)
+                if (rr is T trr)
+                    return trr;
+
+            return null;
+        }
+
+        static T DoGetRenderResources<S, T>(S[] renderResourcesList, int id) where S : BaseRenderResources where T : BaseRenderResources
+        {
+            foreach (var rr in renderResourcesList)
+                if (rr.Id == id && rr is T trr)
+                    return trr;
+
+            return null;
+        }
+
+        static void DoAddRenderResources<T>(T[] renderResourcesList, T renderResources) where T : BaseRenderResources
+        {
+            if (DoGetRenderResources<T, T>(renderResourcesList, renderResources.Id) == null)
+            {
+                Array.Resize(ref renderResourcesList, renderResourcesList.Length + 1);
+                renderResourcesList[renderResourcesList.Length - 1] = renderResources;
+            }
+        }
+
+        static void DoRemoveRenderResources<T>(T[] renderResourcesList, T renderResources) where T : BaseRenderResources
+        {
+            for (var i = 0; i < renderResourcesList.Length; ++i)
+            {
+                if (renderResourcesList[i] == renderResources)
+                {
+                    renderResourcesList[i] = renderResourcesList[renderResourcesList.Length - 1];
+                    Array.Resize(ref renderResourcesList, renderResourcesList.Length - 1);
+                }
+            }
+        }
+
+        public T GetCustomRenderResources<T>() where T : BaseRenderResources =>
+            DoGetRenderResources<BaseRenderResources, T>(m_CustomRenderResources);
+        public T GetCustomRenderResources<T>(int id) where T : BaseRenderResources =>
+            DoGetRenderResources<BaseRenderResources, T>(m_CustomRenderResources, id);
+        public void AddCustomRenderResources(BaseRenderResources renderResources) =>
+            DoAddRenderResources(m_CustomRenderResources, renderResources);
+        public void RemoveCustomRenderResources(BaseRenderResources renderResources) =>
+            DoRemoveRenderResources(m_CustomRenderResources, renderResources);
+
+#pragma warning disable 0649
+        [SerializeField] HDRenderPipelineEditorResources m_RenderPipelineEditorResources;
+        [SerializeField] BaseEditorRenderResources[] m_CustomEditorRenderResources;
+#pragma warning restore 0649
+
+#if UNITY_EDITOR
+        internal HDRenderPipelineEditorResources renderPipelineEditorResources
+        {
+            get => m_RenderPipelineEditorResources;
+            set => m_RenderPipelineEditorResources = value;
+        }
+
+        public T GetCustomEditorRenderResource<T>() where T : BaseEditorRenderResources =>
+            DoGetRenderResources<BaseEditorRenderResources, T>(m_CustomEditorRenderResources);
+        public T GetCustomEditorRenderResource<T>(int id) where T : BaseEditorRenderResources =>
+            DoGetRenderResources<BaseEditorRenderResources, T>(m_CustomEditorRenderResources, id);
+        public void AddCustomEditorRenderResource(BaseEditorRenderResources renderResources) =>
+            DoAddRenderResources(m_CustomEditorRenderResources, renderResources);
+        public void RemoveCustomEditorRenderResource(BaseEditorRenderResources renderResources) =>
+            DoRemoveRenderResources(m_CustomEditorRenderResources, renderResources);
+#endif
+
+        [SerializeField]
+        VolumeProfile m_DefaultVolumeProfile;
 
         internal VolumeProfile defaultVolumeProfile
         {
             get => m_DefaultVolumeProfile;
             set => m_DefaultVolumeProfile = value;
         }
-
-#if UNITY_EDITOR
-        HDRenderPipelineEditorResources m_RenderPipelineEditorResources;
-
-
-        internal HDRenderPipelineEditorResources renderPipelineEditorResources
-        {
-            get
-            {
-                //there is no clean way to load editor resources without having it serialized
-                // - impossible to load them at deserialization
-                // - constructor only called at asset creation
-                // - cannot rely on OnEnable
-                //thus fallback with lazy init for them
-                if (m_RenderPipelineEditorResources == null || m_RenderPipelineEditorResources.Equals(null))
-                    m_RenderPipelineEditorResources = UnityEditor.AssetDatabase.LoadAssetAtPath<HDRenderPipelineEditorResources>(HDUtils.GetHDRenderPipelinePath() + "Editor/RenderPipelineResources/HDRenderPipelineEditorResources.asset");
-                return m_RenderPipelineEditorResources;
-            }
-            set { m_RenderPipelineEditorResources = value; }
-        }
-#endif
 
         // To be able to turn on/off FrameSettings properties at runtime for debugging purpose without affecting the original one
         // we create a runtime copy (m_ActiveFrameSettings that is used, and any parametrization is done on serialized frameSettings)
@@ -385,5 +440,18 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 #endif
+
+        public void OnBeforeSerialize()
+        {
+#if UNITY_EDITOR
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+            {
+                m_RenderPipelineEditorResources = null;
+                m_CustomEditorRenderResources = null;
+            }
+#endif
+        }
+
+        public void OnAfterDeserialize() {}
     }
 }

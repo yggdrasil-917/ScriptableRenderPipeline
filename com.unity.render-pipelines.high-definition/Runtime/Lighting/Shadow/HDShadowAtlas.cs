@@ -33,7 +33,7 @@ namespace UnityEngine.Rendering.HighDefinition
         int                         m_AtlasSizeShaderID;
         int                         m_AtlasShaderID;
         int                         m_MomentAtlasShaderID;
-        HDRenderPipelineResources     m_RenderPipelineResources;
+        HDRenderPipelineResources   m_RenderPipelineResources;
 
         // Moment shadow data
         BlurAlgorithm m_BlurAlgorithm;

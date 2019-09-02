@@ -174,6 +174,7 @@ namespace UnityEngine.Rendering
             string path;
             switch (attribute.package)
             {
+                case ReloadAttribute.Package.Absolute:
                 case ReloadAttribute.Package.Builtin:
                     path = attribute.paths[index];
                     break;
@@ -211,7 +212,12 @@ namespace UnityEngine.Rendering
             /// <summary>
             /// Used for resources inside the package.
             /// </summary>
-            Root
+            Root,
+
+            /// <summary>
+            /// Used for resources pointed out by an absolute path, be that inside a named package or the project 'Assets' folder.
+            /// </summary>
+            Absolute,
         };
 
 #if UNITY_EDITOR
