@@ -13,8 +13,8 @@ namespace UnityEngine.Rendering.HighDefinition
     public partial class HDRenderPipeline : RenderPipeline
     {
         #region Default Settings
-        internal static HDRenderPipelineAsset defaultAsset
-            => GraphicsSettings.renderPipelineAsset is HDRenderPipelineAsset hdrpAsset ? hdrpAsset : null;
+        public static HDRenderPipelineAsset defaultAsset
+            => GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
 
         private static Volume s_DefaultVolume = null;
         static VolumeProfile defaultVolumeProfile
