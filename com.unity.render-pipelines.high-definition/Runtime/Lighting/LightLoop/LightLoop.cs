@@ -1541,23 +1541,20 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 Vector3 dimensions = new Vector3(lightDimensions.x + 2 * range, 2 * range, 2 * range); // Omni-directional
                 Vector3 extents    = 0.5f * dimensions;
+                Vector3 centerVS   = positionVS;
 
-                bound.center   = positionVS;
+                bound.center   = centerVS;
                 bound.boxAxisX = extents.x * xAxisVS;
                 bound.boxAxisY = extents.y * yAxisVS;
                 bound.boxAxisZ = extents.z * zAxisVS;
                 bound.radius   = extents.magnitude;
                 bound.scaleXY.Set(1.0f, 1.0f);
 
-                lightVolumeData.lightPos   = positionVS;
+                lightVolumeData.lightPos   = centerVS;
                 lightVolumeData.lightAxisX = xAxisVS;
                 lightVolumeData.lightAxisY = yAxisVS;
                 lightVolumeData.lightAxisZ = zAxisVS;
-                // Dimensions of the outer box are used for culling. Yet we can't set them directly.
-                // Set inner as 50% of outer so the math doesn't numerically explode.
-                lightVolumeData.boxInnerDist = 0.5f * extents;
-                lightVolumeData.boxInvRange.Set(1.0f / lightVolumeData.boxInnerDist.x, 1.0f / lightVolumeData.boxInnerDist.y, 1.0f / lightVolumeData.boxInnerDist.z);
-                lightVolumeData.featureFlags = (uint)LightFeatureFlags.Area;
+                lightVolumeData.boxInvRange.Set(1.0f / extents.x, 1.0f / extents.y, 1.0f / extents.z);
             }
             else if (gpuLightType == GPULightType.Rectangle)
             {
@@ -1576,31 +1573,26 @@ namespace UnityEngine.Rendering.HighDefinition
                 lightVolumeData.lightAxisX = xAxisVS;
                 lightVolumeData.lightAxisY = yAxisVS;
                 lightVolumeData.lightAxisZ = zAxisVS;
-                // Dimensions of the outer box are used for culling. Yet we can't set them directly.
-                // Set inner as 50% of outer so the math doesn't numerically explode.
-                lightVolumeData.boxInnerDist = 0.5f * extents;
-                lightVolumeData.boxInvRange.Set(1.0f / lightVolumeData.boxInnerDist.x, 1.0f / lightVolumeData.boxInnerDist.y, 1.0f / lightVolumeData.boxInnerDist.z);
-                lightVolumeData.featureFlags = (uint)LightFeatureFlags.Area;
+                lightVolumeData.boxInvRange.Set(1.0f / extents.x, 1.0f / extents.y, 1.0f / extents.z);
             }
             else if (gpuLightType == GPULightType.ProjectorBox)
             {
                 Vector3 dimensions = new Vector3(lightDimensions.x, lightDimensions.y, range);  // One-sided
-                Vector3 extents = 0.5f * dimensions;
-                Vector3 centerVS = positionVS + extents.z * zAxisVS;
+                Vector3 extents    = 0.5f * dimensions;
+                Vector3 centerVS   = positionVS + extents.z * zAxisVS;
 
-                bound.center = centerVS;
+                bound.center   = centerVS;
                 bound.boxAxisX = extents.x * xAxisVS;
                 bound.boxAxisY = extents.y * yAxisVS;
                 bound.boxAxisZ = extents.z * zAxisVS;
-                bound.radius = extents.magnitude;
+                bound.radius   = extents.magnitude;
                 bound.scaleXY.Set(1.0f, 1.0f);
 
-                lightVolumeData.lightPos = centerVS;
+                lightVolumeData.lightPos   = centerVS;
                 lightVolumeData.lightAxisX = xAxisVS;
                 lightVolumeData.lightAxisY = yAxisVS;
                 lightVolumeData.lightAxisZ = zAxisVS;
-                lightVolumeData.boxInnerDist = extents;
-                lightVolumeData.boxInvRange.Set(Mathf.Infinity, Mathf.Infinity, Mathf.Infinity);
+                lightVolumeData.boxInvRange.Set(1.0f / extents.x, 1.0f / extents.y, 1.0f / extents.z);
                 lightVolumeData.featureFlags = (uint)LightFeatureFlags.Punctual;
             }
             else
