@@ -94,6 +94,7 @@ namespace UnityEngine.Rendering.Universal
         RenderTargetIdentifier m_CameraColorTarget;
         RenderTargetIdentifier m_CameraDepthTarget;
         bool m_FirstCameraRenderPassExecuted = false;
+        bool m_FirstXRRenderPassExecuted = false;
 
         const string k_SetCameraRenderStateTag = "Clear Render State";
         const string k_SetRenderTarget = "Set RenderTarget";
@@ -234,11 +235,6 @@ namespace UnityEngine.Rendering.Universal
             if (stereoEnabled)
             {
                 BeginXRRendering(context, camera);
-                // Enabling XR will modify the camera render targets,
-                // (the actual switch is performed in `context.SetupCameraProperties`)
-                // so we need to reset m_FirstCameraRenderPassExecuted
-                // to ensure the XR render targets are properly cleared.
-                m_FirstCameraRenderPassExecuted = false;
             }
 
             // In this block main rendering executes.
@@ -375,7 +371,10 @@ namespace UnityEngine.Rendering.Universal
                 passDepthAttachment = m_CameraDepthTarget;
             }
 
-            if (passColorAttachment == m_CameraColorTarget && !m_FirstCameraRenderPassExecuted)
+            bool needsClear = !m_FirstCameraRenderPassExecuted;
+            needsClear = needsClear || (cameraData.isStereoEnabled && !m_FirstXRRenderPassExecuted);
+
+            if (passColorAttachment == m_CameraColorTarget && needsClear)
             {
                 m_FirstCameraRenderPassExecuted = true;
 
@@ -389,6 +388,7 @@ namespace UnityEngine.Rendering.Universal
 
                 if (cameraData.isStereoEnabled)
                 {
+                    m_FirstXRRenderPassExecuted = true;
                     context.StartMultiEye(cameraData.camera);
                     XRUtils.DrawOcclusionMesh(cmd, cameraData.camera);
                 }
