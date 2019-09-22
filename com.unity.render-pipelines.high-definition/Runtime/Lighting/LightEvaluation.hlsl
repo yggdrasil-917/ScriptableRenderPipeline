@@ -301,7 +301,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
         float r = light.range;
 
         // Box lights have no range attenuation, so we must clip manually.
-        bool isInBounds = Max3(abs(positionCS.x), abs(positionCS.y), max(1.0 - z, z - r + 1.0)) <= 1.0;
+        bool isInBounds = Max3(abs(positionCS.x), abs(positionCS.y), abs(z - 0.5 * r) - 0.5 * r + 1) <= 1.0;
 
         // Remap the texture coordinates from [-1, 1]^2 to [0, 1]^2.
         float2 positionNDC = positionCS * 0.5 + 0.5;
@@ -334,7 +334,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
         float r = light.range;
 
         // Box lights have no range attenuation, so we must clip manually.
-        bool isInBounds = Max3(abs(positionCS.x), abs(positionCS.y), max(1.0 - z, z - r + 1.0)) <= 1.0;
+        bool isInBounds = Max3(abs(positionCS.x), abs(positionCS.y), abs(z - 0.5 * r) - 0.5 * r + 1) <= 1.0;
 
         // Manually clamp to border (black).
         cookie.a = isInBounds ? 1.0 : 0.0;
