@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed extra jitter for TemporalAA in VR
 - Fixed ShaderGraph time in main preview
 - Fixed issue on some UI elements in HDRP asset not expanding when clicking the arrow (case 1178369)
+- Add range-based clipping to box lights (case 1178780)
+- Improve area light culling (case 1085873)
 
 ## [7.1.1] - 2019-09-05
 
