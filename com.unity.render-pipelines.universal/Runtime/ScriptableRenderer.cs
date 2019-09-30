@@ -372,6 +372,8 @@ namespace UnityEngine.Rendering.Universal
             }
 
             bool needsClear = !m_FirstCameraRenderPassExecuted;
+            // If we're running in XR (cameraData.isStereoEnabled == true), we'll need to
+            // clear the render textures provided by the XR system.
             needsClear = needsClear || (cameraData.isStereoEnabled && !m_FirstXRRenderPassExecuted);
 
             if (passColorAttachment == m_CameraColorTarget && needsClear)
