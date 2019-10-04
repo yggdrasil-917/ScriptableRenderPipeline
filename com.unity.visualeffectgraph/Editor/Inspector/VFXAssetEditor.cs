@@ -14,7 +14,7 @@ using UnityEditor.VFX.UI;
 using UnityObject = UnityEngine.Object;
 
 
-public class VFXExternalShaderProcessor : AssetPostprocessor
+class VFXExternalShaderProcessor : AssetPostprocessor
 {
     public const string k_ShaderDirectory = "Shaders";
     public const string k_ShaderExt = ".vfxshader";
@@ -144,7 +144,7 @@ public class VFXExternalShaderProcessor : AssetPostprocessor
 
 [CustomEditor(typeof(VisualEffectAsset))]
 [CanEditMultipleObjects]
-public class VisualEffectAssetEditor : Editor
+class VisualEffectAssetEditor : Editor
 {
     [OnOpenAsset(1)]
     public static bool OnOpenVFX(int instanceID, int line)
@@ -230,6 +230,7 @@ public class VisualEffectAssetEditor : Editor
             m_PreviewUtility.camera.allowHDR = true;
             m_PreviewUtility.camera.allowMSAA = false;
             m_PreviewUtility.camera.farClipPlane = 10000.0f;
+            m_PreviewUtility.camera.clearFlags = CameraClearFlags.SolidColor;
             m_PreviewUtility.ambientColor = new Color(.1f, .1f, .1f, 1.0f);
             m_PreviewUtility.lights[0].intensity = 1.4f;
             m_PreviewUtility.lights[0].transform.rotation = Quaternion.Euler(40f, 40f, 0);
@@ -450,8 +451,7 @@ public class VisualEffectAssetEditor : Editor
     {
         resourceObject.Update();
 
-        bool enable = GUI.enabled; //Everything in external asset is disabled by default
-        GUI.enabled = true;
+        GUI.enabled = AssetDatabase.IsOpenForEdit(this.target, StatusQueryOptions.UseCachedIfPossible);
 
         EditorGUI.BeginChangeCheck();
         EditorGUI.showMixedValue = resourceUpdateModeProperty.hasMultipleDifferentValues;
@@ -503,7 +503,7 @@ public class VisualEffectAssetEditor : Editor
                     {
                         prewarmStepCount.intValue = currentStepCount = 1;
                     }
-                    
+
                     currentDeltaTime = currentTotalTime == 0.0f ? 0.0f : currentTotalTime / currentStepCount;
                     prewarmDeltaTime.floatValue = currentDeltaTime;
                     prewarmStepCount.intValue = currentStepCount;
@@ -587,7 +587,7 @@ public class VisualEffectAssetEditor : Editor
 
             VisualEffectEditor.ShowHeader(EditorGUIUtility.TrTextContent("Shaders"),  false, false);
 
-            var shaderSources = resource.shaderSources;
+            var shaderSources = VFXExternalShaderProcessor.allowExternalization?resource.shaderSources:null;
 
             string assetPath = AssetDatabase.GetAssetPath(asset);
             UnityObject[] objects = AssetDatabase.LoadAllAssetsAtPath(assetPath);
@@ -600,16 +600,16 @@ public class VisualEffectAssetEditor : Editor
                     GUILayout.BeginHorizontal();
                     Rect r = GUILayoutUtility.GetRect(0, 18, GUILayout.ExpandWidth(true));
 
-                    int buttonsWidth = VFXExternalShaderProcessor.allowExternalization? 250:200;
+                    int buttonsWidth = VFXExternalShaderProcessor.allowExternalization? 250:160;
 
 
                     Rect labelR = r;
                     labelR.width -= buttonsWidth;
                     GUI.Label(labelR, shader.name);
                     int index = resource.GetShaderIndex(shader);
-                    if (index >= 0 && index < shaderSources.Length)
+                    if (index >= 0)
                     {
-                        if (VFXExternalShaderProcessor.allowExternalization)
+                        if (VFXExternalShaderProcessor.allowExternalization && index <shaderSources.Length)
                         {
                             string externalPath = directory + shaderSources[index].name;
                             if (!shaderSources[index].compute)
@@ -652,6 +652,7 @@ public class VisualEffectAssetEditor : Editor
                             resource.ShowGeneratedShaderFile(index);
                         }
                     }
+
                     Rect selectButtonR = r;
                     selectButtonR.xMin = labelR.xMax;
                     selectButtonR.width = 50;
