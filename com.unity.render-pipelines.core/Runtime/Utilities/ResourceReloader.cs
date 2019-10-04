@@ -24,7 +24,7 @@ namespace UnityEngine.Rendering
         /// <param name="container">The object containing reload-able resources</param>
         /// <param name="basePath">The base path for the package</param>
         /// <returns>True if something have been reloaded.</returns>
-        public static void ReloadAllNullIn(System.Object container)
+        public static void ReloadAllNullIn(ScriptableObject container)
         {
             if (!IsNull(container))
             {
