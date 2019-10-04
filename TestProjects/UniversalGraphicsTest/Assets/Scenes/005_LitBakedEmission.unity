@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000004, guid: 6a963d0bc4caa4faa93b9ab261a08f9f,
+  m_LightingDataAsset: {fileID: 112000002, guid: 5ec8b6f4f8a24c94f871778f7fdd81c0,
     type: 2}
   m_UseShadowmask: 0
 --- !u!196 &4
@@ -220,6 +220,7 @@ MonoBehaviour:
     TargetHeight: 320
     PerPixelCorrectnessThreshold: 0.005
     AverageCorrectnessThreshold: 0.001
+    UseHDR: 0
   WaitFrames: 0
 --- !u!81 &971756571
 AudioListener:

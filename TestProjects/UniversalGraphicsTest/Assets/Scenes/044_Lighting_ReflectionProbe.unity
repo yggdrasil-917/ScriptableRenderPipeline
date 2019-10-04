@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000002, guid: 18096e6043a09494fa39dee95347f5f7,
+  m_LightingDataAsset: {fileID: 112000002, guid: 274812e195fa56f4aa7ba5919a8c844e,
     type: 2}
   m_UseShadowmask: 0
 --- !u!196 &4
@@ -537,10 +537,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 100000, guid: b56f0b54c8a1042f3ae9a8904a576f5d, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 4294967295
-      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b56f0b54c8a1042f3ae9a8904a576f5d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0
@@ -588,6 +584,10 @@ PrefabInstance:
     - target: {fileID: 2300000, guid: b56f0b54c8a1042f3ae9a8904a576f5d, type: 3}
       propertyPath: m_CastShadows
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b56f0b54c8a1042f3ae9a8904a576f5d, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 4294967295
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b56f0b54c8a1042f3ae9a8904a576f5d, type: 3}
@@ -707,6 +707,7 @@ MonoBehaviour:
     TargetHeight: 360
     PerPixelCorrectnessThreshold: 0.005
     AverageCorrectnessThreshold: 0.001
+    UseHDR: 0
   WaitFrames: 0
 --- !u!81 &971756571
 AudioListener:

@@ -173,7 +173,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/059_2D_PixelPerfect_PostProcessing.unity
     guid: 9f750aafa54d07a43b7601615bb2c7ea
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/071_ChromaticAberration.unity
     guid: 50a8dc518aa0c5e4fa5ae2ab2052bef4
   - enabled: 1
@@ -203,10 +203,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/083_GradingLiftGammaGainLDR.unity
     guid: 61718ed79ced0044fbfabd6ef7861a15
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/085_GradingShadowsMidtonesHighlightsLDR.unity
     guid: b8fbc679adfaed54ea1d4121a8564c81
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/087_GradingSplitToningLDR.unity
     guid: 9e7523551cb924341a7dd2c98d773076
   - enabled: 1
