@@ -30,6 +30,7 @@ public class UniversalGraphicsTests
 
         Scene scene = SceneManager.GetActiveScene();
 
+#if ENABLE_XR
         if (scene.name.Substring(3, 4).Equals("_xr_"))
         {
             Assume.That((Application.platform != RuntimePlatform.OSXEditor && Application.platform != RuntimePlatform.OSXPlayer), "Stereo Universal tests do not run on MacOSX.");
@@ -51,6 +52,7 @@ public class UniversalGraphicsTests
             XRSettings.enabled = false;
             yield return null;
         }
+#endif
 
         for (int i = 0; i < settings.WaitFrames; i++)
             yield return null;
