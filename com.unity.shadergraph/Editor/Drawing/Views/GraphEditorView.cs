@@ -61,6 +61,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public Action saveAsRequested { get; set; }
 
+        public Action selectUnused { get; set; }
+
         public Func<bool> isCheckedOut { get; set; }
 
         public Action checkOut { get; set; }
@@ -193,6 +195,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                             GUILayout.Button("Check Out", EditorStyles.toolbarButton);
                             EditorGUI.EndDisabledGroup();
                         }
+                    }
+                    GUILayout.Space(6);
+                    if (GUILayout.Button("Select Unused", EditorStyles.toolbarButton))
+                    {
+                        selectUnused();
                     }
 
                     GUILayout.FlexibleSpace();

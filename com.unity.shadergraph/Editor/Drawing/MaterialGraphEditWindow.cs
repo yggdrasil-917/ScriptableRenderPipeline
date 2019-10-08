@@ -63,6 +63,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     m_GraphEditorView.saveRequested += UpdateAsset;
                     m_GraphEditorView.saveAsRequested += SaveAs;
+                    m_GraphEditorView.selectUnused += SelectUnused;
                     m_GraphEditorView.convertToSubgraphRequested += ToSubGraph;
                     m_GraphEditorView.showInProjectRequested += PingAsset;
                     m_GraphEditorView.isCheckedOut += IsGraphAssetCheckedOut;
@@ -347,11 +348,37 @@ namespace UnityEditor.ShaderGraph.Drawing
                     if (shader != null)
                     {
                         GraphData.onSaveGraph(shader);
-                    }                    
+                    }
                 }
             }
 
             UpdateTitle();
+        }
+
+        void SelectUnused()
+        {
+            graphObject.RegisterCompleteObjectUndo("Select Unused Nodes");
+            var nodeView = graphEditorView.graphView.graph.GetNodes<IMasterNode>();
+            var nodesConnectedToAMasterNode = new List<AbstractMaterialNode>();
+
+            // Get the list of nodes from Master nodes
+            foreach (var masterNode in nodeView)
+            {
+                var abs = masterNode as AbstractMaterialNode;
+                NodeUtils.DepthFirstCollectNodesFromNode(nodesConnectedToAMasterNode, abs);
+            }
+
+            graphEditorView.graphView.selection.Clear();
+            // Get all nodes and then compare with the master nodes list
+            var allNodes = graphEditorView.graphView.nodes.ToList().OfType<IShaderNodeView>();
+            foreach (IShaderNodeView materialNodeView in allNodes)
+            {
+                if (!nodesConnectedToAMasterNode.Contains(materialNodeView.node))
+                {
+                    var nd = materialNodeView as GraphElement;
+                    graphEditorView.graphView.AddToSelection(nd);
+                }
+            }
         }
 
         public void SaveAs()
