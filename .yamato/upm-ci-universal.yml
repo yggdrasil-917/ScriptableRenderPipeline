@@ -187,12 +187,12 @@ linux_apis:
   artifacts:
     logs:
       paths:
-        - "**/test-results/**/*"  
-{% endfor %}   
+        - "**/test-results/**/*"
+{% endfor %}
 {% endfor %}
 
-All_{{ project.name }}:
-  name: All {{ project.name }} CI
+All_{{ project.name }}_{{versionid}}:
+  name: All {{ project.name }} CI on {{version_name}}
   agent:
     name: whatever
     type: Unity::VM
