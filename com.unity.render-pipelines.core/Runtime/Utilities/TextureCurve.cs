@@ -37,6 +37,9 @@ namespace UnityEngine.Rendering
         bool m_IsCurveDirty;
         bool m_IsTextureDirty;
 
+        // Track whether Dispose has been called.
+        bool disposed = false;
+
         public Keyframe this[int index] => m_Curve[index];
 
         public TextureCurve(AnimationCurve baseCurve, float zeroValue, bool loop, in Vector2 bounds)
@@ -44,6 +47,7 @@ namespace UnityEngine.Rendering
 
         public TextureCurve(Keyframe[] keys, float zeroValue, bool loop, in Vector2 bounds)
         {
+            Debug.Log("Allocated resources !");
             m_Curve = new AnimationCurve(keys);
             m_ZeroValue = zeroValue;
             m_Loop = loop;
@@ -52,19 +56,29 @@ namespace UnityEngine.Rendering
             SetDirty();
         }
 
-        ~TextureCurve()
-        {
-            ReleaseUnityResources();
-        }
+        ~TextureCurve() => ReleaseUnityResources();
+
 
         public void Dispose()
         {
-            ReleaseUnityResources();
+            Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+                ReleaseUnityResources();
+
+            disposed = true;
         }
 
         void ReleaseUnityResources()
         {
+            Debug.Log("Destroy resources !");
             CoreUtils.Destroy(m_Texture);
             m_Texture = null;
         }
@@ -180,6 +194,17 @@ namespace UnityEngine.Rendering
     {
         public TextureCurveParameter(TextureCurve value, bool overrideState = false)
             : base(value, overrideState) { }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+                value.Dispose();
+
+            base.Dispose(disposing);
+        }
 
         // TODO: TextureCurve interpolation
     }
