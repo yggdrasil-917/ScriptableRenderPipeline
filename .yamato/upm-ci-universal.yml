@@ -79,7 +79,7 @@ linux_apis:
     {% endif %} 
     image: {{ platform.image }}      
     flavor: {{ platform.flavor }}
-{% if with_custom_revision %}
+{% if editor.version == 'CUSTOM REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
 {% endif %}
@@ -115,7 +115,7 @@ linux_apis:
     type: {{ platform.type }}
     image: {{ platform.image }}      
     flavor: {{ platform.flavor }}
-{% if with_custom_revision %}
+{% if editor.version == 'CUSTOM REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
 {% endif %}
@@ -153,7 +153,7 @@ linux_apis:
     type: {{ platform.type }}
     image: {{ platform.image }}      
     flavor: {{ platform.flavor }}
-{% if with_custom_revision %}
+{% if editor.version == 'CUSTOM REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
 {% endif %}
@@ -203,7 +203,7 @@ linux_apis:
     {% endif %} 
     image: {{ platform.image }}      
     flavor: {{ platform.flavor }}
-{% if with_custom_revision %}
+{% if editor.version == 'CUSTOM REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
 {% endif %}
@@ -241,14 +241,9 @@ linux_apis:
 All_{{ project.name }}:
   name: All {{ project.name }} CI
   agent:
-    name: whatever
     type: Unity::VM
     image: cds-ops/ubuntu-18.04-agent:latest
     flavor: b1.small
-{% if with_custom_revision %}
-  variables:
-    CUSTOM_REVISION: custom_revision_not_set
-{% endif %}
   commands:
     - dir
   dependencies:
