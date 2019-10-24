@@ -4,7 +4,8 @@ editors:
   - version: fast-trunk
     cmd: -u trunk --fast
   - version: CUSTOM REVISION
-
+    cmdwin: -r %CUSTOM_REVISION%
+    cmdposix: -r $CUSTOM_REVISION
 platforms:
   - name: Windows64
     type: Unity::VM::GPU
@@ -52,19 +53,19 @@ linux_apis:
 
 {% if platform.name == "Windows64" %}
 
-{% if editor.version == 'CUSTOM REVISION' %}
-{% assign with_custom_revision = true %}
-{% assign versionid = 'customrev' %}
-{% assign version_name = 'custom revision' %}
-{% assign downloader_arg_posix = '-r $CUSTOM_REVISION' %}
-{% assign downloader_arg_win = '-r %CUSTOM_REVISION%' %}
-{% else %}
-{% assign with_custom_revision = false %}
-{% assign versionid = editor.version %}
-{% assign version_name = 'version ' | append:editor.version %}
-{% assign downloader_arg_posix = '-b ' | append:editor.version %}
-{% assign downloader_arg_win = downloader_arg_posix %}
-{% endif %}
+# {% if editor.version == 'CUSTOM REVISION' %}
+# {% assign with_custom_revision = true %}
+# {% assign versionid = 'customrev' %}
+# {% assign version_name = 'custom revision' %}
+# {% assign downloader_arg_posix = '-r $CUSTOM_REVISION' %}
+# {% assign downloader_arg_win = '-r %CUSTOM_REVISION%' %}
+# {% else %}
+# {% assign with_custom_revision = false %}
+# {% assign versionid = editor.version %}
+# {% assign version_name = 'version ' | append:editor.version %}
+# {% assign downloader_arg_posix = '-b ' | append:editor.version %}
+# {% assign downloader_arg_win = downloader_arg_posix %}
+# {% endif %}
 
 {% for testplatform in testplatforms %}
 {% for win_api in win_apis %}
@@ -86,8 +87,12 @@ linux_apis:
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
     - npm install upm-ci-utils -g --registry https://api.bintray.com/npm/unity/unity-npm
     - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
-    #- cd TestProjects/{{ project.folder }} && unity-downloader-cli {{downloader_arg_posix}} -c editor --wait --published
-    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmd }} -c editor --wait --published    
+    
+    {% if editor.version == 'CUSTOM REVISION' %}
+    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmdwin }} -c editor --wait --published
+    {% else %}
+    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmd }} -c editor --wait --published
+    {% endif %}    
 
     {% if testplatform.name == "Standalone" %}
     - cd TestProjects/{{ project.folder }} && utr\utr {{ testplatform.args }}Windows64 --extra-editor-arg="-executemethod" --extra-editor-arg="CustomBuild.BuildWindows{{ win_api.name }}Linear" --testproject=. --editor-location=.Editor --artifacts_path=upm-ci~/test-results --timeout=1200
@@ -118,8 +123,12 @@ linux_apis:
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
     - npm install upm-ci-utils -g --registry https://api.bintray.com/npm/unity/unity-npm
     - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
-    #- cd TestProjects/{{ project.folder }} && unity-downloader-cli {{downloader_arg_win}} -c editor --wait --published
+    
+    {% if editor.version == 'CUSTOM REVISION' %}
+    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmdposix }} -c editor --wait --published
+    {% else %}
     - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmd }} -c editor --wait --published
+    {% endif %} 
 
     {% if testplatform.name == "Standalone" %}
     - cd TestProjects/{{ project.folder }} && utr/utr {{ testplatform.args }}OSX --testproject=. --editor-location=.Editor --artifacts_path=upm-ci~/test-results --timeout=1200
@@ -154,8 +163,11 @@ linux_apis:
     - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP "bash -lc 'pip3 install --user unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple'"
     - scp -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" -r ../ScriptableRenderPipeline/ bokken@$BOKKEN_DEVICE_IP:~/ScriptableRenderPipeline
     - scp -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" ~/.ssh/id_rsa_macmini bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_macmini
-    #- ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '/Users/bokken/Library/Python/3.7/bin/unity-downloader-cli {{ downloader_arg_posix }} -c editor --wait --published'
+    {% if editor.version == 'CUSTOM REVISION' %}
+    - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '/Users/bokken/Library/Python/3.7/bin/unity-downloader-cli {{ editor.cmdposix }} -c editor --wait --published'
+    {% else %}
     - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '/Users/bokken/Library/Python/3.7/bin/unity-downloader-cli {{ editor.cmd }} -c editor --wait --published'
+    {% endif %}
 
     {% if testplatform.name == "Standalone" %}
     - |
@@ -200,8 +212,13 @@ linux_apis:
     - sudo -H pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
     - sudo npm install upm-ci-utils -g --registry https://api.bintray.com/npm/unity/unity-npm
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
-    #- cd TestProjects/{{ project.folder }} && sudo unity-downloader-cli {{downloader_arg_posix}} -c editor --wait --published
-    - cd TestProjects/{{ project.folder }} && sudo unity-downloader-cli {{ editor.cmd }} -c editor --wait --published
+    
+    {% if editor.version == 'CUSTOM REVISION' %}
+    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmdposix }} -c editor --wait --published
+    {% else %}
+    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmd }} -c editor --wait --published
+    {% endif %}
+    
     {% if testplatform.name == "Standalone" %}
     - cd TestProjects/{{ project.folder }} && DISPLAY=:0.0 utr/utr {{ testplatform.args }}Linux64 --extra-editor-arg="-executemethod" --extra-editor-arg="CustomBuild.BuildLinux{{ linux_api.name }}Linear" --testproject=. --editor-location=.Editor --artifacts_path=upm-ci~/test-results
     {% else %}
