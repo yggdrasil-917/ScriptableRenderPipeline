@@ -1,20 +1,30 @@
+import sys
 import requests
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
+srp_revision = sys.argv[1]
+unity_revision = sys.argv[2]
+job_definition = sys.argv[3]
+api_key = sys.argv[4]
+branch_name = sys.argv[5]
 data = '''{
   "source": {
-    "branchname": "ci/custom-unity-revision",
-    "revision": "f1151e7173e2edfbefb32bbfb753b2a252cd8d26"
+    "branchname": "''' + branch_name + '''",
+    "revision": "''' + srp_revision + '''"
   },
   "links": {
     "project": "/projects/78",
-    "jobDefinition": "/projects/78/revisions/f1151e7173e2edfbefb32bbfb753b2a252cd8d26/job-definitions/.yamato%2fupm-ci-universal.yml#Universal_Windows64_DX11_editmode_CUSTOM-REVISION"
+    "jobDefinition": "/projects/78/revisions/''' + srp_revision + '''/job-definitions/''' + job_definition + '''"
   },
   "environmentVariables": [
-    { "key": "CUSTOM_REVISION", "value": "ccf51fff0e6a13a6152b2e18f7bb3366046dcaed" }
+    { "key": "CUSTOM_REVISION", "value": "''' + unity_revision + '''" }
 ]
 }'''
 
-response = requests.post(url, data=data, headers={'Authorization': 'ApiKey <apikey>'})
+print '\n' + data + '\n'
+
+key = 'ApiKey ' + api_key
+
+response = requests.post(url, data=data, headers={'Authorization': key})
 
 if(response.ok):
     print "ok"
