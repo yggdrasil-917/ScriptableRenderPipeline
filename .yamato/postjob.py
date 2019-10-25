@@ -7,7 +7,7 @@ data = '''{
   },
   "links": {
     "project": "/projects/78",
-    "jobDefinition": "/projects/78/revisions/f1151e7173e2edfbefb32bbfb753b2a252cd8d26/job-definitions/.yamato%2fupm-ci-universal.yml#Universal_Windows64_DX11_editmode_CUSTOM%20REVISION"
+    "jobDefinition": "/projects/78/revisions/f1151e7173e2edfbefb32bbfb753b2a252cd8d26/job-definitions/.yamato%2fupm-ci-universal.yml#Universal_Windows64_DX11_editmode_CUSTOM-REVISION"
   },
   "environmentVariables": [
     { "key": "CUSTOM_REVISION", "value": "ccf51fff0e6a13a6152b2e18f7bb3366046dcaed" }
