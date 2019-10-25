@@ -214,9 +214,9 @@ linux_apis:
     - git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
     
     {% if editor.version == 'CUSTOM REVISION' %}
-    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmdposix }} -c editor --wait --published
+    - cd TestProjects/{{ project.folder }} && sudo unity-downloader-cli {{ editor.cmdposix }} -c editor --wait --published
     {% else %}
-    - cd TestProjects/{{ project.folder }} && unity-downloader-cli {{ editor.cmd }} -c editor --wait --published
+    - cd TestProjects/{{ project.folder }} && sudo unity-downloader-cli {{ editor.cmd }} -c editor --wait --published
     {% endif %}
     
     {% if testplatform.name == "Standalone" %}
