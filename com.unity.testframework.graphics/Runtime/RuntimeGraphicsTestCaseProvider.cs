@@ -10,11 +10,28 @@ namespace UnityEngine.TestTools.Graphics
         {
             AssetBundle referenceImagesBundle = null;
 
-            var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}", Application.streamingAssetsPath, UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice);
+            string[] scenePaths;
+            var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}",
+                Application.streamingAssetsPath,
+                UseGraphicsTestCasesAttribute.ColorSpace,
+                UseGraphicsTestCasesAttribute.Platform,
+                UseGraphicsTestCasesAttribute.GraphicsDevice);
+
+#if UNITY_ANDROID
+            // Unlike standalone where you can use File.Read methods and pass the path to the file,
+            // Android requires UnityWebRequest to read files from local storage
+            referenceImagesBundle = GetRefImagesBundleViaWebRequest(referenceImagesBundlePath);
+
+            // Same applies to the scene list
+            scenePaths = GetScenePathsViaWebRequest(Application.streamingAssetsPath + "/SceneList.txt");
+#else
             if (File.Exists(referenceImagesBundlePath))
                 referenceImagesBundle = AssetBundle.LoadFromFile(referenceImagesBundlePath);
 
-            foreach (var scenePath in File.ReadAllLines(Application.streamingAssetsPath + "/SceneList.txt"))
+            scenePaths = File.ReadAllLines(Application.streamingAssetsPath + "/SceneList.txt");
+#endif
+
+            foreach (var scenePath in scenePaths)
             {
                 var imagePath = Path.GetFileNameWithoutExtension(scenePath);
 
@@ -52,6 +69,59 @@ namespace UnityEngine.TestTools.Graphics
             output = new GraphicsTestCase( scenePath, referenceImage );
 
             return output;
+        }
+
+        private AssetBundle GetRefImagesBundleViaWebRequest(string referenceImagesBundlePath)
+        {
+            AssetBundle referenceImagesBundle = null;
+            using (var webRequest = new UnityWebRequest(referenceImagesBundlePath))
+            {
+                var handler = new DownloadHandlerAssetBundle(referenceImagesBundlePath, 0);
+                webRequest.downloadHandler = handler;
+
+                webRequest.SendWebRequest();
+
+                while (!webRequest.isDone)
+                {
+                    // wait for response
+                }
+
+                if (string.IsNullOrEmpty(webRequest.error))
+                {
+                    referenceImagesBundle = handler.assetBundle;
+                }
+                else
+                {
+                    Debug.Log("Error loading reference image bundle, " + webRequest.error);
+                }
+            }
+            return referenceImagesBundle;
+        }
+
+        private string[] GetScenePathsViaWebRequest(string sceneListTextFilePath)
+        {
+            string[] scenePaths;
+            using (var webRequest = UnityWebRequest.Get(sceneListTextFilePath))
+            {
+                webRequest.SendWebRequest();
+
+                while (!webRequest.isDone)
+                {
+                    // wait for download
+                }
+
+                if (string.IsNullOrEmpty(webRequest.error) || webRequest.downloadHandler.text != null)
+                {
+                    scenePaths = webRequest.downloadHandler.text.Split(
+                        new[] { "\r\n", "\r", "\n" }, System.StringSplitOptions.RemoveEmptyEntries);
+                }
+                else
+                {
+                    scenePaths = new string[] { string.Empty };
+                    Debug.Log("Scene list was not found.");
+                }
+            }
+            return scenePaths;
         }
     }
 }
