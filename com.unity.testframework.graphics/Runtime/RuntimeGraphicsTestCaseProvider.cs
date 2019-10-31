@@ -13,57 +13,9 @@ namespace UnityEngine.TestTools.Graphics
             AssetBundle referenceImagesBundle = null;
             string[] scenePaths;
 
-            // need the ToLower here for Unix path case sensitivity (android, linux, OSX, iOS)
-            // apparently unity automatically saves the asset bundle as all lower case
-            var referenceImagesBundlePath = string.Format("referenceimages-{0}-{1}-{2}",
-                UseGraphicsTestCasesAttribute.ColorSpace,
-                UseGraphicsTestCasesAttribute.Platform,
-                UseGraphicsTestCasesAttribute.GraphicsDevice).ToLower();
-
-            referenceImagesBundlePath = Path.Combine(Application.streamingAssetsPath, referenceImagesBundlePath);
-
-            using (var webRequest = new UnityWebRequest(referenceImagesBundlePath))
-            {
-                var handler = new DownloadHandlerAssetBundle(referenceImagesBundlePath, 0);
-                webRequest.downloadHandler = handler;
-
-                webRequest.SendWebRequest();
-
-                while (!webRequest.isDone)
-                {
-                    // wait for response
-                }
-
-                if (string.IsNullOrEmpty(webRequest.error))
-                {
-                    referenceImagesBundle = handler.assetBundle;
-                }
-                else
-                {
-                    Debug.Log("Error loading reference image bundle, " + webRequest.error);
-                }
-            }
-
-            using (var webRequest = UnityWebRequest.Get(Application.streamingAssetsPath + "/SceneList.txt"))
-            {
-                webRequest.SendWebRequest();
-
-                while (!webRequest.isDone)
-                {
-                    // wait for download
-                }
-
-                if (string.IsNullOrEmpty(webRequest.error) || webRequest.downloadHandler.text != null)
-                {
-                    scenePaths = webRequest.downloadHandler.text.Split(
-                        new[] { "\r\n", "\r", "\n" }, System.StringSplitOptions.RemoveEmptyEntries);
-                }
-                else
-                {
-                    scenePaths = new string[] { string.Empty };
-                    Debug.Log("Scene list was not found.");
-                }
-            }
+            var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}", Application.streamingAssetsPath, UseGraphicsTestCasesAttribute.ColorSpace.ToString().ToLower(), UseGraphicsTestCasesAttribute.Platform.ToString().ToLower(), UseGraphicsTestCasesAttribute.GraphicsDevice.ToString().ToLower());
+            if (File.Exists(referenceImagesBundlePath))
+                referenceImagesBundle = AssetBundle.LoadFromFile(referenceImagesBundlePath);
 
             foreach (var scenePath in scenePaths)
             {
@@ -88,7 +40,7 @@ namespace UnityEngine.TestTools.Graphics
 
             AssetBundle referenceImagesBundle = null;
 
-            var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}", Application.streamingAssetsPath, UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice);
+            var referenceImagesBundlePath = string.Format("{0}/referenceimages-{1}-{2}-{3}", Application.streamingAssetsPath, UseGraphicsTestCasesAttribute.ColorSpace.ToString().ToLower(), UseGraphicsTestCasesAttribute.Platform.ToString().ToLower(), UseGraphicsTestCasesAttribute.GraphicsDevice.ToString().ToLower());
             if (File.Exists(referenceImagesBundlePath))
                 referenceImagesBundle = AssetBundle.LoadFromFile(referenceImagesBundlePath);
 
