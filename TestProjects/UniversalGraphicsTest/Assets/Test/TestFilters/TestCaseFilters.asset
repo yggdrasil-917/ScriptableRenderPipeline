@@ -12,14 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f6aa9f32113aec4a8bded44c1febe5c, type: 3}
   m_Name: TestCaseFilters
   m_EditorClassIdentifier: 
-  filters:
-  - FilteredScene: {fileID: 102900000, guid: 0feef353efdf045989e9c2b501774338, type: 3}
-    ColorSpace: -1
-    BuildPlatform: 13
-    GraphicsDevice: 4
-    Reason: Fix later - diff value is higher than expected
-  - FilteredScene: {fileID: 102900000, guid: 245a2b08a4f72437193b06846a5c8e33, type: 3}
-    ColorSpace: -1
-    BuildPlatform: 13
-    GraphicsDevice: 4
-    Reason: Fix later - diff value is higher than expected
+  filters: []
