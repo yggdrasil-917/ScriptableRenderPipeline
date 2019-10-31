@@ -71,7 +71,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
             const float WIDTH = 2048;
             const float HEIGHT = 192;
 
-            GraphicsFormat textureFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            GraphicsFormat textureFormat = GraphicsFormat.R8G8B8A8_SRGB;
             s_FalloffLookupTexture = new Texture2D((int)WIDTH, (int)HEIGHT-64, textureFormat, TextureCreationFlags.None);
             s_FalloffLookupTexture.filterMode = FilterMode.Bilinear;
             s_FalloffLookupTexture.wrapMode = TextureWrapMode.Clamp;
