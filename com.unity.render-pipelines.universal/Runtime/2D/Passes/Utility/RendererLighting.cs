@@ -47,7 +47,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
         static Material[] s_ShadowMaterials;
         static Material[] s_RemoveSelfShadowMaterials;
 
-        static RenderTextureFormat s_RenderTextureFormatToUse = RenderTextureFormat.ARGB32;
+        static GraphicsFormat s_RenderTextureFormatToUse;
         static bool s_HasSetupRenderTextureFormatToUse;
 
         static public void Setup(Renderer2DData rendererData)
@@ -90,16 +90,16 @@ namespace UnityEngine.Experimental.Rendering.Universal
         {
             if (!s_HasSetupRenderTextureFormatToUse)
             {
-                if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float))
-                    s_RenderTextureFormatToUse = RenderTextureFormat.RGB111110Float;
-                else if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBHalf))
-                    s_RenderTextureFormatToUse = RenderTextureFormat.ARGBHalf;
+                if (SystemInfo.IsFormatSupported(GraphicsFormat.B10G11R11_UFloatPack32, FormatUsage.Linear | FormatUsage.Render))
+                    s_RenderTextureFormatToUse = GraphicsFormat.B10G11R11_UFloatPack32;
+                else if (SystemInfo.IsFormatSupported(GraphicsFormat.R16G16B16A16_SFloat, FormatUsage.Linear | FormatUsage.Render))
+                    s_RenderTextureFormatToUse = GraphicsFormat.R16G16B16A16_SFloat;
 
                 s_HasSetupRenderTextureFormatToUse = true;
             }
 
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height);
-            descriptor.colorFormat = s_RenderTextureFormatToUse;
+            descriptor.graphicsFormat = s_RenderTextureFormatToUse;
             descriptor.sRGB = false;
             descriptor.useMipMap = false;
             descriptor.autoGenerateMips = false;
@@ -122,7 +122,6 @@ namespace UnityEngine.Experimental.Rendering.Universal
                 s_LightRenderTargetsDirty[i] = true;
             }
 
-            descriptor.colorFormat = RenderTextureFormat.ARGB32;
             descriptor.sRGB = false;
             descriptor.useMipMap = false;
             descriptor.autoGenerateMips = false;

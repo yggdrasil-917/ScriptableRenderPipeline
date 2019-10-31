@@ -4,6 +4,7 @@ using Unity.Collections;
 using UnityEngine.Scripting.APIUpdating;
 
 using UnityEngine.Experimental.GlobalIllumination;
+using UnityEngine.Experimental.Rendering;
 using Lightmapping = UnityEngine.Experimental.GlobalIllumination.Lightmapping;
 
 namespace UnityEngine.Rendering.Universal
@@ -153,13 +154,14 @@ namespace UnityEngine.Rendering.Universal
         static RenderTextureDescriptor CreateRenderTextureDescriptor(Camera camera, float renderScale,
             bool isStereoEnabled, bool isHdrEnabled, int msaaSamples, bool needsAlpha)
         {
+            bool linearColorSpace = QualitySettings.activeColorSpace == ColorSpace.Linear;
             RenderTextureDescriptor desc;
-            RenderTextureFormat renderTextureFormatDefault = RenderTextureFormat.Default;
+            GraphicsFormat renderTextureFormatDefault = (linearColorSpace) ? GraphicsFormat.B8G8R8A8_SRGB : GraphicsFormat.B8G8R8A8_UNorm;
 
             if (isStereoEnabled)
             {
                 desc = XRGraphics.eyeTextureDesc;
-                renderTextureFormatDefault = desc.colorFormat;
+                renderTextureFormatDefault = desc.graphicsFormat;
             }
             else
             {
@@ -168,8 +170,8 @@ namespace UnityEngine.Rendering.Universal
                 desc.height = (int)((float)desc.height * renderScale);
             }
 
-            bool use32BitHDR = !needsAlpha && RenderingUtils.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float);
-            RenderTextureFormat hdrFormat = (use32BitHDR) ? RenderTextureFormat.RGB111110Float : RenderTextureFormat.DefaultHDR;
+            bool use32BitHDR = !needsAlpha && RenderingUtils.SupportsGraphicsFormat(GraphicsFormat.B10G11R11_UFloatPack32, FormatUsage.Linear | FormatUsage.Render);
+            GraphicsFormat hdrFormat = (use32BitHDR) ? GraphicsFormat.B10G11R11_UFloatPack32 : GraphicsFormat.R16G16B16A16_SFloat;
             if (camera.targetTexture != null)
             {
                 desc.colorFormat = camera.targetTexture.descriptor.colorFormat;
@@ -179,7 +181,7 @@ namespace UnityEngine.Rendering.Universal
             }
             else
             {
-                desc.colorFormat = isHdrEnabled ? hdrFormat : renderTextureFormatDefault;
+                desc.graphicsFormat = isHdrEnabled ? hdrFormat : renderTextureFormatDefault;
                 desc.depthBufferBits = 32;
                 desc.msaaSamples = msaaSamples;
                 desc.sRGB = (QualitySettings.activeColorSpace == ColorSpace.Linear);
