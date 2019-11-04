@@ -43,6 +43,7 @@ all_project_ci_{{ editor.version }}:
     branches:
       only:
         - trying
+        - staging
   {% endif %}
 {% endfor %}
 
