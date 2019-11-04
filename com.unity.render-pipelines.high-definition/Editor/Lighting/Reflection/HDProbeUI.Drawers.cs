@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditorInternal;
 using System.Reflection;
 using UnityEngine;
@@ -29,8 +30,10 @@ namespace UnityEditor.Rendering.HighDefinition
             ProbeSettingsOverride displayedAdvancedCaptureSettings { get; }
             ProbeSettingsOverride overrideableCaptureSettings { get; }
             ProbeSettingsOverride overrideableAdvancedCaptureSettings { get; }
-            ProbeSettingsOverride displayedAdvancedSettings { get; }
-            ProbeSettingsOverride overrideableAdvancedSettings { get; }
+            ProbeSettingsOverride displayedCustomSettings { get; }
+            ProbeSettingsOverride displayedAdvancedCustomSettings { get; }
+            ProbeSettingsOverride overrideableCustomSettings { get; }
+            ProbeSettingsOverride overrideableAdvancedCustomSettings { get; }
             Type customTextureType { get; }
             ToolBar[] toolbars { get; }
             Dictionary<KeyCode, ToolBar> shortcuts { get; }
@@ -224,7 +227,17 @@ namespace UnityEditor.Rendering.HighDefinition
                 ProbeSettingsUI.Draw(
                     serialized.probeSettings, owner,
                     serialized.probeSettingsOverride,
-                    provider.displayedAdvancedSettings, provider.overrideableAdvancedSettings
+                    provider.displayedCustomSettings, provider.overrideableCustomSettings
+                );
+            }
+
+            public static void DrawAdvancedCustomSettings(SerializedHDProbe serialized, Editor owner)
+            {
+                var provider = new TProvider();
+                ProbeSettingsUI.Draw(
+                    serialized.probeSettings, owner,
+                    serialized.probeSettingsOverride,
+                    provider.displayedAdvancedCustomSettings, provider.overrideableAdvancedCustomSettings
                 );
             }
 
@@ -249,7 +262,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 if (serialized.proxyVolume.objectReferenceValue != null)
                 {
                     var proxy = (ReflectionProxyVolumeComponent)serialized.proxyVolume.objectReferenceValue;
-                    if ((int)proxy.proxyVolume.shape != serialized.probeSettings.influence.shape.enumValueIndex
+                    if (proxy.proxyVolume.shape != serialized.probeSettings.influence.shape.GetEnumValue<ProxyShape>()
                         && proxy.proxyVolume.shape != ProxyShape.Infinite)
                         EditorGUILayout.HelpBox(
                             k_ProxyInfluenceShapeMismatchHelpBoxText,
@@ -352,7 +365,7 @@ namespace UnityEditor.Rendering.HighDefinition
                                     },
                                     GUILayout.ExpandWidth(true)))
                             {
-                                HDBakedReflectionSystem.BakeProbes(new HDProbe[] { serialized.target });
+                                HDBakedReflectionSystem.BakeProbes(serialized.serializedObject.targetObjects.OfType<HDProbe>().ToArray());
                                 GUIUtility.ExitGUI();
                             }
 
@@ -414,7 +427,7 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             var proxy = serialized.proxyVolume.objectReferenceValue as ReflectionProxyVolumeComponent;
             if (proxy != null
-                && (int)proxy.proxyVolume.shape != serialized.probeSettings.influence.shape.enumValueIndex
+                && proxy.proxyVolume.shape != serialized.probeSettings.influence.shape.GetEnumValue<ProxyShape>()
                 && proxy.proxyVolume.shape != ProxyShape.Infinite)
             {
                 EditorGUILayout.HelpBox(

@@ -33,15 +33,15 @@ To create a new Layered Lit Material, navigate to your Project's Asset window, r
 
 | **Property**                           | **Description**                                              |
 | -------------------------------------- | ------------------------------------------------------------ |
-| **Motion Vector For Vertex Animation** | Enable the checkbox to make HDRP write motion vectors for objects that use vertex animation. This removes the ghosting that vertex animation can cause. |
+| **Motion Vector For Vertex Animation** | Enable the checkbox to make HDRP write motion vectors for GameObjects that use vertex animation. This removes the ghosting that vertex animation can cause. |
 
 ### Surface Inputs
 
 | **Property**                                 | **Description**                                              |
 | -------------------------------------------- | ------------------------------------------------------------ |
 | **Layer Count**                              | Use the slider to set the number of layers this Material uses. You can set up to four layers. |
-| **Layer Mask**                               | Assign a Texture to the field to manage the visibility of each layer. If you do not assign a Texture, the Material uses the maximum value for every channel.Alpha channel for the **Main Layer**.Red channel for **Layer 1.<br />&#8226; **Green channel for **Layer 2.<br />&#8226; **Blue channel for **Layer 3.<br />&#8226; ** |
-| **BlendMask UV Mapping**                     | Use the drop-down to select the type of UV mapping that HDRP uses to map the **Layer Mask**.&#8226; Unity manages four UV channels for a vertex: **UV0**, **UV1**, **UV2**, and **UV3**.&#8226; **Planar:** A planar projection from top to bottom.&#8226; **Triplanar**: A planar projection in three directions:X-axis: Left to rightY-axis: Top to bottomZ-axis: Front to back Unity blends these three projections together to produce the final result. |
+| **Layer Mask**                               | Assign a Texture to the field to manage the visibility of each layer. If you do not assign a Texture, the Material uses the maximum value for every channel.<br />&#8226; Alpha channel for the **Main Layer**.<br />&#8226; Red channel for **Layer 1**.<br />&#8226; Green channel for **Layer 2**.<br />&#8226; Blue channel for **Layer** |
+| **BlendMask UV Mapping**                     | Use the drop-down to select the type of UV mapping that HDRP uses to map the **Layer Mask**.<br />&#8226; Unity manages four UV channels for a vertex: **UV0**, **UV1**, **UV2**, and **UV3**.<br />&#8226; **Planar:** A planar projection from top to bottom.<br />&#8226; **Triplanar**: A planar projection in three directions:X-axis: Left to rightY-axis: Top to bottomZ-axis: Front to back Unity blends these three projections together to produce the final result. |
 | **World Scale**                              | Set the world-space size of the Texture in meters. If you set this to **1**, then HDRP maps the Texture to 1 meter in world space.If you set this to **2**, then HDRP maps the Texture to 0.5 meters in world space.This property only appears when you select **Planar** or **Triplanar** from the **BlendMask UV Mapping** drop-down. |
 | **Tiling**                                   | Set an **X** and **Y** tile rate for the **Layer Mask** UV. HDRP uses the **X** and **Y** values to tile the Texture assigned to the **Layer Mask** across the Material’s surface, in object space. |
 | **Offset**                                   | Set an **X** and **Y** offset for the **Layer Mask** UV. HDRP uses the **X** and **Y** values to offset the Texture assigned to the **Layer Mask** from the Material’s surface, in object space. |
@@ -138,5 +138,5 @@ Unity exposes up to four Material layers for you to use in your Layered Material
 
 | **Property**                            | **Description**                                              |
 | --------------------------------------- | ------------------------------------------------------------ |
-| **Enable GPU instancing**               | Enable the checkbox to tell HDRP to render meshes with the same geometry and Material/Shader in one batch when possible. This makes rendering faster. HDRP can not render Meshes in one batch if they have different Materials, or if the hardware does not support GPU instancing. For example, you can not static-batch GameObjects that have an animation based on the object pivot, but the GPU can instance them. |
+| **Enable GPU instancing**               | Enable the checkbox to tell HDRP to render Meshes with the same geometry and Material/Shader in one batch when possible. This makes rendering faster. HDRP can not render Meshes in one batch if they have different Materials, or if the hardware does not support GPU instancing. For example, you can not static-batch GameObjects that have an animation based on the object pivot, but the GPU can instance them. |
 | **Specular Occlusion from Bent normal** | Enable the checkbox to make HDRP use the Bent Normal Map to process specular occlusion for Reflection Probes. |
