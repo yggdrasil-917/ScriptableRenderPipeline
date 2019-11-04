@@ -16,8 +16,10 @@
         $FragInputs.texCoord2:          output.texCoord2 = input.texCoord2;
         $FragInputs.texCoord3:          output.texCoord3 = input.texCoord3;
         $FragInputs.color:              output.color = input.color;
-        #if SHADER_STAGE_FRAGMENT
-        $FragInputs.isFrontFace:        output.isFrontFace = IS_FRONT_VFACE(input.cullFace, true, false);       // TODO: SHADER_STAGE_FRAGMENT only
+        #if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
+        output.isFrontFace = IS_FRONT_VFACE(input.cullFace, true, false);
+        #elif SHADER_STAGE_FRAGMENT
+        $FragInputs.isFrontFace:        output.isFrontFace = IS_FRONT_VFACE(input.cullFace, true, false);
         #endif // SHADER_STAGE_FRAGMENT
 
         return output;
@@ -45,10 +47,11 @@
         $SurfaceDescriptionInputs.ViewSpaceViewDirection:    output.ViewSpaceViewDirection =      TransformWorldToViewDir(output.WorldSpaceViewDirection);
         $SurfaceDescriptionInputs.TangentSpaceViewDirection: float3x3 tangentSpaceTransform =     float3x3(output.WorldSpaceTangent,output.WorldSpaceBiTangent,output.WorldSpaceNormal);
         $SurfaceDescriptionInputs.TangentSpaceViewDirection: output.TangentSpaceViewDirection =   mul(tangentSpaceTransform, output.WorldSpaceViewDirection);
-        $SurfaceDescriptionInputs.WorldSpacePosition:        output.WorldSpacePosition =          GetAbsolutePositionWS(input.positionRWS);
+        $SurfaceDescriptionInputs.WorldSpacePosition:        output.WorldSpacePosition =          input.positionRWS;
         $SurfaceDescriptionInputs.ObjectSpacePosition:       output.ObjectSpacePosition =         TransformWorldToObject(input.positionRWS);
         $SurfaceDescriptionInputs.ViewSpacePosition:         output.ViewSpacePosition =           TransformWorldToView(input.positionRWS);
         $SurfaceDescriptionInputs.TangentSpacePosition:      output.TangentSpacePosition =        float3(0.0f, 0.0f, 0.0f);
+        $SurfaceDescriptionInputs.AbsoluteWorldSpacePosition:output.AbsoluteWorldSpacePosition =  GetAbsolutePositionWS(input.positionRWS);
         $SurfaceDescriptionInputs.ScreenPosition:            output.ScreenPosition =              ComputeScreenPos(TransformWorldToHClip(input.positionRWS), _ProjectionParams.x);
         $SurfaceDescriptionInputs.uv0:                       output.uv0 =                         input.texCoord0;
         $SurfaceDescriptionInputs.uv1:                       output.uv1 =                         input.texCoord1;
@@ -56,6 +59,7 @@
         $SurfaceDescriptionInputs.uv3:                       output.uv3 =                         input.texCoord3;
         $SurfaceDescriptionInputs.VertexColor:               output.VertexColor =                 input.color;
         $SurfaceDescriptionInputs.FaceSign:                  output.FaceSign =                    input.isFrontFace;
+        $SurfaceDescriptionInputs.TimeParameters:            output.TimeParameters =              _TimeParameters.xyz; // This is mainly for LW as HD overwrite this value
 
         return output;
     }

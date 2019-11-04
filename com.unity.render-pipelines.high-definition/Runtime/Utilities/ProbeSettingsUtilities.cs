@@ -1,7 +1,6 @@
 using System;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     /// <summary>Utilities for <see cref="ProbeSettings"/></summary>
     public static class ProbeSettingsUtilities
@@ -28,7 +27,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             float referenceFieldOfView = 90
         )
         {
-            cameraSettings = settings.camera;
+            cameraSettings = settings.cameraSettings;
             // Compute the modes for each probe type
             PositionMode positionMode;
             bool useReferenceTransformAsNearClipPlane;
@@ -91,6 +90,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 );
             }
 
+            // Propagate the desired custom exposure
+            cameraSettings.probeRangeCompressionFactor = settings.lighting.rangeCompressionFactor;
+
             // Frame Settings Overrides
             switch (settings.mode)
             {
@@ -108,9 +110,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 case ProbeSettings.ProbeType.ReflectionProbe:
                     cameraSettings.customRenderingSettings = true;
-                    // Disable specular lighting for reflection probes, they must not have view dependent information when baking
-                    cameraSettings.renderingPathCustomFrameSettings.SetEnabled(FrameSettingsField.SpecularLighting, false);
-                    cameraSettings.renderingPathCustomFrameSettingsOverrideMask.mask[(int)FrameSettingsField.SpecularLighting] = true;
                     break;
             }
         }
@@ -209,7 +208,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
 
             var sourceProjection = Matrix4x4.Perspective(
-                cameraSettings.frustum.fieldOfView,
+                HDUtils.ClampFOV(cameraSettings.frustum.fieldOfView),
                 cameraSettings.frustum.aspect,
                 cameraSettings.frustum.nearClipPlane,
                 cameraSettings.frustum.farClipPlane

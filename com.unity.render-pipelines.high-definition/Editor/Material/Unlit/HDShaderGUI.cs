@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Rendering;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+// Include material common properties names
+using static UnityEngine.Rendering.HighDefinition.HDMaterialProperties;
+
+namespace UnityEditor.Rendering.HighDefinition
 {
     // A Material can be authored from the shader graph or by hand. When written by hand we need to provide an inspector.
     // Such a Material will share some properties between it various variant (shader graph variant or hand authored variant).
@@ -22,13 +25,44 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
         {
-            // When switching shader, the custom RenderQueue is reset due to shader assignment
-            // To keep the correct render queue we need to save it here, do the change and re-assign it
-            int currentRenderQueue = material.renderQueue;
             base.AssignNewShaderToMaterial(material, oldShader, newShader);
-            material.renderQueue = currentRenderQueue;
+
+            ResetMaterialCustomRenderQueue(material);
 
             SetupMaterialKeywordsAndPassInternal(material);
+        }
+
+        protected static void ResetMaterialCustomRenderQueue(Material material)
+        {
+            HDRenderQueue.RenderQueueType targetQueueType;
+            switch (material.GetSurfaceType())
+            {
+                case SurfaceType.Opaque:
+                    targetQueueType = HDRenderQueue.GetOpaqueEquivalent(HDRenderQueue.GetTypeByRenderQueueValue(material.renderQueue));
+                    break;
+                case SurfaceType.Transparent:
+                    targetQueueType = HDRenderQueue.GetTransparentEquivalent(HDRenderQueue.GetTypeByRenderQueueValue(material.renderQueue));
+                    break;
+                default:
+                    throw new ArgumentException("Unknown SurfaceType");
+            }
+
+            float sortingPriority = material.GetFloat(kTransparentSortPriority);
+            bool alphaTest = material.GetFloat(kAlphaCutoffEnabled) > 0.5f;
+            material.renderQueue = HDRenderQueue.ChangeType(targetQueueType, (int)sortingPriority, alphaTest);
+        }
+        
+        readonly static string[] floatPropertiesToSynchronize = {
+            kAlphaCutoffEnabled, "_UseShadowThreshold", kReceivesSSR, kUseSplitLighting
+        };
+
+        protected static void SynchronizeShaderGraphProperties(Material material)
+        {
+            var defaultProperties = new Material(material.shader);
+            foreach (var floatToSync in floatPropertiesToSynchronize)
+                if (material.HasProperty(floatToSync))
+                    material.SetFloat(floatToSync, defaultProperties.GetFloat(floatToSync));
+            defaultProperties = null;
         }
     }
 }

@@ -55,6 +55,15 @@
 // Helper functions/variable specific to this material
 //-----------------------------------------------------------------------------
 
+float4 GetDiffuseOrDefaultColor(BSDFData bsdfData, float replace)
+{
+    // Use frensel0 as mettalic weight. all value below 0.2 (ior of diamond) are dielectric
+    // all value above 0.45 are metal, in between we lerp.
+    float weight = saturate((Max3(bsdfData.fresnelF0.r, bsdfData.fresnelF0.g, bsdfData.fresnelF0.b) - 0.2) / (0.45 - 0.2));
+
+    return float4(lerp(bsdfData.diffuseColor, bsdfData.fresnelF0, weight * replace), weight);
+}
+
 float3 GetNormalForShadowBias(BSDFData bsdfData)
 {
     return bsdfData.geomNormalWS;
@@ -62,12 +71,7 @@ float3 GetNormalForShadowBias(BSDFData bsdfData)
 
 float GetAmbientOcclusionForMicroShadowing(BSDFData bsdfData)
 {
-    return 1; // TODO
-}
-
-void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
-{
-    // TODO
+    return 1.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -308,8 +312,8 @@ float CT_D(float N_H, float m)
 {
     float cosb_sqr = N_H * N_H;
     float m_sqr = m * m;
-    float e = (cosb_sqr - 1.0) / (cosb_sqr*m_sqr);  // -tan(a)² / m²
-    return exp(e) / (m_sqr*cosb_sqr*cosb_sqr);  // exp(-tan(a)² / m²) / (m² * cos(a)^4)
+    float e = (cosb_sqr - 1.0) / (cosb_sqr*m_sqr);  // -tan(a)^2 / m^2
+    return exp(e) / (m_sqr*cosb_sqr*cosb_sqr);  // exp(-tan(a)^2 / m^2) / (m^2 * cos(a)^4)
 }
 
 // Classical Schlick approximation for Fresnel
@@ -324,7 +328,7 @@ float CT_F(float H_V, float F0)
 float3  MultiLobesCookTorrance(float NdotL, float NdotV, float NdotH, float VdotH)
 {
     // Ensure numerical stability
-    if (NdotV < 0.00174532836589830883577820272085 || NdotL < 0.00174532836589830883577820272085) //sin(0.1°)
+    if (NdotV < 0.00174532836589830883577820272085 || NdotL < 0.00174532836589830883577820272085) //sin(0.1 deg )
         return 0.0;
 
     float   specularIntensity = 0.0;
@@ -480,6 +484,13 @@ struct PreLightData
     float3x3    ltcTransformFlakes;
 #endif
 };
+
+//
+// ClampRoughness helper specific to this material
+//
+void ClampRoughness(inout PreLightData preLightData, inout BSDFData bsdfData, float minRoughness)
+{
+}
 
 PreLightData    GetPreLightData(float3 viewWS_Clearcoat, PositionInputs posInput, inout BSDFData bsdfData)
 {
@@ -687,7 +698,6 @@ PreLightData    GetPreLightData(float3 viewWS_Clearcoat, PositionInputs posInput
     return preLightData;
 }
 
-
 //----------------------------------------------------------------------
 // Computes Fresnel reflection/refraction of view and light vectors due to clearcoating
 // Returns the ratios of the incoming reflected and refracted energy
@@ -762,13 +772,9 @@ void ModifyBakedDiffuseLighting(float3 V, PositionInputs posInput, SurfaceData s
 
     // Note: When baking reflection probes, we approximate the diffuse with the fresnel0
 #ifdef _AXF_BRDF_TYPE_SVBRDF
-    builtinData.bakeDiffuseLighting *= ReplaceDiffuseForReflectionPass(bsdfData.fresnelF0)
-        ? bsdfData.fresnelF0
-        : preLightData.diffuseFGD * bsdfData.diffuseColor;
+    builtinData.bakeDiffuseLighting *= preLightData.diffuseFGD * GetDiffuseOrDefaultColor(bsdfData, _ReplaceDiffuseForIndirect).rgb;
 #else
-    builtinData.bakeDiffuseLighting *= ReplaceDiffuseForReflectionPass(bsdfData.fresnelF0)
-        ? bsdfData.fresnelF0
-        : bsdfData.diffuseColor;
+    builtinData.bakeDiffuseLighting *= GetDiffuseOrDefaultColor(bsdfData, _ReplaceDiffuseForIndirect).rgb;
 #endif
     //TODO attenuate diffuse lighting for coat ie with (1.0 - preLightData.coatFGD)
 }
@@ -1749,10 +1755,10 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
 
     // TODO: some of this could be precomputed.
     float4x3    lightVerts;
-    lightVerts[0] = lightPositionRWS + lightData.right *  halfWidth + lightData.up *  halfHeight;
-    lightVerts[1] = lightPositionRWS + lightData.right *  halfWidth + lightData.up * -halfHeight;
-    lightVerts[2] = lightPositionRWS + lightData.right * -halfWidth + lightData.up * -halfHeight;
-    lightVerts[3] = lightPositionRWS + lightData.right * -halfWidth + lightData.up *  halfHeight;
+    lightVerts[0] = lightData.positionRWS + lightData.right * -halfWidth + lightData.up * -halfHeight; // LL
+    lightVerts[1] = lightData.positionRWS + lightData.right * -halfWidth + lightData.up *  halfHeight; // UL
+    lightVerts[2] = lightData.positionRWS + lightData.right *  halfWidth + lightData.up *  halfHeight; // UR
+    lightVerts[3] = lightData.positionRWS + lightData.right *  halfWidth + lightData.up * -halfHeight; // LR
 
     // Rotate the endpoints into tangent space
     lightVerts = mul(lightVerts, transpose(preLightData.orthoBasisViewNormal));
@@ -1927,6 +1933,7 @@ IndirectLighting EvaluateBSDF_ScreenSpaceReflection(PositionInputs posInput,
 
     // TODO: this texture is sparse (mostly black). Can we avoid reading every texel? How about using Hi-S?
     float4 ssrLighting = LOAD_TEXTURE2D_X(_SsrLightingTexture, posInput.positionSS);
+
     float3 reflectanceFactor = 0.0;
     bool HasClearcoat = (_Flags & 0x2U);
 
@@ -2061,7 +2068,7 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
     IBLMipLevel = GetEnvMipLevel(lightData, preLightData.iblPerceptualRoughness);
 
     // Sample the pre-integrated environment lighting
-    float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, environmentSamplingDirectionWS_UnderCoat, IBLMipLevel);
+    float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, environmentSamplingDirectionWS_UnderCoat, IBLMipLevel, lightData.rangeCompressionFactorCompensation);
     weight *= preLD.w; // Used by planar reflection to discard pixel
 
     float3  envLighting = bsdfData.specularColor * preLightData.specularFGD * preLD.xyz;
@@ -2094,7 +2101,7 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
         float   coeff = _CarPaint2_CTCoeffs[lobeIndex];
 
         float   lobeMipLevel = PerceptualRoughnessToMipmapLevel(preLightData.iblPerceptualRoughness[lobeIndex]);
-        float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, lightWS_UnderCoat, lobeMipLevel);
+        float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, lightWS_UnderCoat, lobeMipLevel, lightData.rangeCompressionFactorCompensation);
 
         envLighting += coeff * preLightData.specularCTFGD[lobeIndex] * preLD.xyz;
         sumWeights += preLD.w;
@@ -2113,7 +2120,7 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
     // Sample flakes
     //TODO_FLAKES
     float   flakesMipLevel = 0;   // Flakes are supposed to be perfect mirrors
-    envLighting += preLightData.flakesFGD * CarPaint_BTF(thetaH, thetaD, bsdfData) * SampleEnv(lightLoopContext, lightData.envIndex, lightWS_UnderCoat, flakesMipLevel).xyz;
+    envLighting += preLightData.flakesFGD * CarPaint_BTF(thetaH, thetaD, bsdfData) * SampleEnv(lightLoopContext, lightData.envIndex, lightWS_UnderCoat, flakesMipLevel, lightData.rangeCompressionFactorCompensation).xyz;
 
     weight *= sumWeights / CARPAINT2_LOBE_COUNT;
 
@@ -2124,7 +2131,7 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
     IBLMipLevel = GetEnvMipLevel(lightData, preLightData.iblPerceptualRoughness);
 
     // Sample the actual environment lighting
-    float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, lightWS_UnderCoat, IBLMipLevel);
+    float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, lightWS_UnderCoat, IBLMipLevel, lightData.rangeCompressionFactorCompensation);
     float3  envLighting;
     
     envLighting = preLightData.specularCTFGD * 4.0 * ENVIRONMENT_LD_FUDGE_FACTOR * GetBRDFColor(thetaH, thetaD);
@@ -2155,7 +2162,7 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
         envLighting *= 1.0 - preLightData.coatFGD;
 
         // Then add the environment lighting reflected by the clearcoat (with mip level 0, like mirror)
-        float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, lightWS_Clearcoat, 0.0);
+        float4  preLD = SampleEnv(lightLoopContext, lightData.envIndex, lightWS_Clearcoat, 0.0, lightData.rangeCompressionFactorCompensation);
         envLighting += preLightData.coatFGD * preLD.xyz * bsdfData.clearcoatColor;
     }
 

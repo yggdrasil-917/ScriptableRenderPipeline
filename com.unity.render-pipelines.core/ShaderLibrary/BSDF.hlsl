@@ -180,11 +180,11 @@ real D_GGX(real NdotH, real roughness)
 // p. 84 (37/60)
 real G_MaskingSmithGGX(real NdotV, real roughness)
 {
-    // G1(V, H)    = HeavisideStep(VdotH) / (1 + Λ(V)).
-    // Λ(V)        = -0.5 + 0.5 * sqrt(1 + 1 / a²).
+    // G1(V, H)    = HeavisideStep(VdotH) / (1 + Lambda(V)).
+    // Lambda(V)        = -0.5 + 0.5 * sqrt(1 + 1 / a^2).
     // a           = 1 / (roughness * tan(theta)).
-    // 1 + Λ(V)    = 0.5 + 0.5 * sqrt(1 + roughness² * tan²(theta)).
-    // tan²(theta) = (1 - cos²(theta)) / cos²(theta) = 1 / cos²(theta) - 1.
+    // 1 + Lambda(V)    = 0.5 + 0.5 * sqrt(1 + roughness^2 * tan^2(theta)).
+    // tan^2(theta) = (1 - cos^2(theta)) / cos^2(theta) = 1 / cos^2(theta) - 1.
     // Assume that (VdotH > 0), e.i. (acos(LdotV) < Pi).
 
     return 1.0 / (0.5 + 0.5 * sqrt(1.0 + Sq(roughness) * (1.0 / Sq(NdotV) - 1.0)));
@@ -464,17 +464,23 @@ real3 EvalIridescence(real eta_1, real cosTheta1, real iridescenceThickness, rea
     // Force eta_2 -> eta_1 when Dinc -> 0.0
     // real eta_2 = lerp(eta_1, eta_2, smoothstep(0.0, 0.03, Dinc));
     // Evaluate the cosTheta on the base layer (Snell law)
-    real sinTheta2 = Sq(eta_1 / eta_2) * (1.0 - Sq(cosTheta1));
+    real sinTheta2Sq = Sq(eta_1 / eta_2) * (1.0 - Sq(cosTheta1));
 
-    // Handle TIR
-    if (sinTheta2 > 1.0)
+    // Handle TIR:
+    // (Also note that with just testing sinTheta2Sq > 1.0, (1.0 - sinTheta2Sq) can be negative, as emitted instructions
+    // can eg be a mad giving a small negative for (1.0 - sinTheta2Sq), while sinTheta2Sq still testing equal to 1.0), so we actually
+    // test the operand [cosTheta2Sq := (1.0 - sinTheta2Sq)] < 0 directly:)
+    real cosTheta2Sq = (1.0 - sinTheta2Sq);
+    // Or use this "artistic hack" to get more continuity even though wrong (no TIR, continue the effect by mirroring it):
+    //   if( cosTheta2Sq < 0.0 ) => { sinTheta2Sq = 2 - sinTheta2Sq; => so cosTheta2Sq = sinTheta2Sq - 1 }
+    // ie don't test and simply do
+    //   real cosTheta2Sq = abs(1.0 - sinTheta2Sq);
+    if (cosTheta2Sq < 0.0)
         I = real3(1.0, 1.0, 1.0);
     else
     {
-        //Or use this "artistic hack" to get more continuity even though wrong (test with dual normal maps to understand the difference)
-        //if( sinTheta2 > 1.0 ) { sinTheta2 = 2 - sinTheta2; }
 
-        real cosTheta2 = sqrt(1.0 - sinTheta2);
+        real cosTheta2 = sqrt(cosTheta2Sq);
 
         // First interface
         real R0 = IorToFresnel0(eta_2, eta_1);
@@ -503,7 +509,7 @@ real3 EvalIridescence(real eta_1, real cosTheta1, real iridescenceThickness, rea
         real phi = phi21 + phi23;
 
         // Compound terms
-        real3 R123 = R12 * R23;
+        real3 R123 = clamp(R12 * R23, 1e-5, 0.9999);
         real3 r123 = sqrt(R123);
         real3 Rs = Sq(T121) * R23 / (real3(1.0, 1.0, 1.0) - R123);
 

@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEditor.Experimental.VFX;
-using UnityEngine.Experimental.VFX;
+using UnityEditor.VFX;
+using UnityEngine.VFX;
 
 using UnityObject = UnityEngine.Object;
 
@@ -213,7 +213,7 @@ namespace UnityEditor.VFX.UI
                     new Descriptor
                     {
                         modelDescriptor = t,
-                        category = string.IsNullOrEmpty(t.model.category) ? "Parameter" : string.Format("Parameter/{0}", t.model.category),
+                        category = string.IsNullOrEmpty(t.model.category) ? "Property" : string.Format("Property/{0}", t.model.category),
                         name = t.exposedName
                     }
                     ).OrderBy(t => t.category);

@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEditor.VFX;
@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace UnityEditor.Experimental.VFX.Utility
 {
     [CustomEditor(typeof(VisualEffectActivationClip))]
-    public class VisualEffectActivationClipEditor : Editor
+    class VisualEffectActivationClipEditor : Editor
     {
         private SerializedProperty onClipEnterProperty;
         private SerializedProperty onClipExitProperty;

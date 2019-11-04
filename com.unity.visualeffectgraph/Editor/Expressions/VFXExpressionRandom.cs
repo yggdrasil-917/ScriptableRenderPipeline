@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using System.Runtime.CompilerServices;
 
 namespace UnityEditor.VFX
@@ -31,7 +31,7 @@ namespace UnityEditor.VFX
 
         public override string GetCodeString(string[] parents)
         {
-            return string.Format("RAND");
+            return string.Format("Rand(attributes.seed)");
         }
 
         public override IEnumerable<VFXAttributeInfo> GetNeededAttributes()

@@ -95,8 +95,13 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
     #endif
     surfaceData.baseColor = SAMPLE_TEXTURE2D_LOD(_BaseColorMap, sampler_BaseColorMap, uvBase, lod).rgb * _BaseColor.rgb;
 
-    // Transparency Data
-    float alpha = SAMPLE_TEXTURE2D_LOD(_BaseColorMap, sampler_BaseColorMap, uvBase, lod).a * _BaseColor.a;
+    // If we are using this value to do an alpha test, we should read from the base LOD and not from the rough LOD
+    #ifdef _ALPHATEST_ON
+    float alphaLOD = baseLOD;
+    #else
+    float alphaLOD = lod;
+    #endif
+    float alpha = SAMPLE_TEXTURE2D_LOD(_BaseColorMap, sampler_BaseColorMap, uvBase, alphaLOD).a * _BaseColor.a;
 
 #ifdef _ALPHATEST_ON
     if(alpha < _AlphaCutoff)
@@ -232,6 +237,12 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
     surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
     surfaceData.atDistance = 1.0;
     surfaceData.transmittanceMask = 0.0;
+#endif
+
+#if defined(DEBUG_DISPLAY)
+    // We need to call ApplyDebugToSurfaceData after filling the surfarcedata and before filling builtinData
+    // as it can modify attribute use for static lighting
+    ApplyDebugToSurfaceData(input.tangentToWorld, surfaceData);
 #endif
 
     InitBuiltinData(posInput, alpha, surfaceData.normalWS, -input.tangentToWorld[2], input.texCoord1, input.texCoord2, builtinData);

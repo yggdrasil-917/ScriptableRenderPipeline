@@ -1,18 +1,18 @@
 using System;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEditor.Rendering;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
-    public abstract class MaterialUIBlock
+    abstract class MaterialUIBlock
     {
         protected MaterialEditor        materialEditor;
         protected Material[]            materials;
         protected MaterialProperty[]    properties;
 
-        MaterialUIBlockList             parent;
+        protected MaterialUIBlockList   parent;
 
         [Flags]
         public enum Expandable : uint
@@ -99,11 +99,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return properties;
         }
 
-        protected T FetchUIBlockInCurrentList< T >() where T : MaterialUIBlock
-        {
-            return parent.FetchUIBlock< T >();
-        }
-        
         public abstract void LoadMaterialProperties();
         public abstract void OnGUI();
     }

@@ -54,10 +54,9 @@ namespace UnityEditor.VFX
                 foreach (var setting in base.filteredOutSettings)
                     yield return setting;
 
-                yield return "colorMappingMode";
+                yield return "colorMapping";
                 yield return "blendMode";
                 yield return "castShadows";
-                yield return "preRefraction";
                 yield return "sort";
             }
         }

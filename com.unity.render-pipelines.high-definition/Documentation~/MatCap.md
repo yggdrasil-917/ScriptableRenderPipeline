@@ -16,7 +16,7 @@ MatCap mode preserves the normal maps and you can use the original Material albe
 
 | **Property**                  | **Description**                                              |
 | ----------------------------- | ------------------------------------------------------------ |
-| **Mix Albedo in MatCap Mode** | Enable this checkbox to make HDRP mix the albedo of the Material with its material capture. |
+| **Mix Albedo in MatCap Mode** | Enable the checkbox to make HDRP mix the albedo of the Material with its material capture. |
 | **MatCap Intensity Scale**    | Set the intensity of the material capture. This increases the brightness of the Scene. This is especially useful if the albedo darkens the Scene considerably. |
 
 ## Default material captures
@@ -27,7 +27,7 @@ HDRP provides neutral and metallic default MatCaps. You can change the MatCap in
 2. Go to the **General** section and double-click on the Asset assigned to the **Render Pipeline Resources** property to view that in the Inspector.
 3. Go to the **Textures** section and assign your custom MatCap Texture to the **MatCap Tex** property.
 
-You can also activate MatCap view as a **Lighting Debug Mode** in the [Render Pipeline Debugger](Render-Pipeline-Debug-Overview.html).
+You can also activate MatCap view as a **Lighting Debug Mode** in the [Render Pipeline Debugger](Render-Pipeline-Debug-Window.html).
 
 ## MatCap examples
 

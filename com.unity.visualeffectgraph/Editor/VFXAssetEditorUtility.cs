@@ -3,10 +3,9 @@ using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor.Experimental.VFX;
-using UnityEngine.Experimental.VFX;
-using UnityEditor;
 using UnityEditor.VFX;
+using UnityEngine.VFX;
+using UnityEditor;
 using UnityEditor.VFX.UI;
 using UnityEditor.ProjectWindowCallback;
 
@@ -15,7 +14,7 @@ using UnityObject = UnityEngine.Object;
 namespace UnityEditor
 {
     [InitializeOnLoad]
-    public static class VisualEffectAssetEditorUtility
+    static class VisualEffectAssetEditorUtility
     {
         private static string m_TemplatePath = null;
 
@@ -50,6 +49,8 @@ namespace UnityEditor
             }
 
             Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
+
+            Selection.activeObject = go;
         }
 
 

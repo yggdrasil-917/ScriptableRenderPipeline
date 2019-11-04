@@ -29,6 +29,24 @@ float4x4 GetViewToHClipMatrix()
     return UNITY_MATRIX_P;
 }
 
+// This function always return the absolute position in WS
+float3 GetAbsolutePositionWS(float3 positionRWS)
+{
+#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+    positionRWS += _WorldSpaceCameraPos;
+#endif
+    return positionRWS;
+}
+
+// This function return the camera relative position in WS
+float3 GetCameraRelativePositionWS(float3 positionWS)
+{
+#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+    positionWS -= _WorldSpaceCameraPos;
+#endif
+    return positionWS;
+}
+
 real GetOddNegativeScale()
 {
     return unity_WorldTransformParams.w;
@@ -71,7 +89,7 @@ float4 TransformWViewToHClip(float3 positionVS)
 real3 TransformObjectToWorldDir(real3 dirOS)
 {
     // Normalize to support uniform scaling
-    return normalize(mul((real3x3)GetObjectToWorldMatrix(), dirOS));
+    return SafeNormalize(mul((real3x3)GetObjectToWorldMatrix(), dirOS));
 }
 
 real3 TransformWorldToObjectDir(real3 dirWS)
@@ -98,7 +116,7 @@ float3 TransformObjectToWorldNormal(float3 normalOS)
     return TransformObjectToWorldDir(normalOS);
 #else
     // Normal need to be multiply by inverse transpose
-    return normalize(mul(normalOS, (float3x3)GetWorldToObjectMatrix()));
+    return SafeNormalize(mul(normalOS, (float3x3)GetWorldToObjectMatrix()));
 #endif
 }
 

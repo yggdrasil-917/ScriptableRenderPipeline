@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
@@ -189,16 +189,11 @@ namespace UnityEditor.VFX
 
         static public VFXExpression Cross(VFXExpression lhs, VFXExpression rhs)
         {
-            Func<VFXExpression, VFXExpression, VFXExpression, VFXExpression, VFXExpression> ab_Minus_cd = delegate(VFXExpression a, VFXExpression b, VFXExpression c, VFXExpression d)
-            {
-                return (a * b - c * d);
-            };
-
             return new VFXExpressionCombine(new[]
             {
-                ab_Minus_cd(lhs.y, rhs.z, lhs.z, rhs.y),
-                ab_Minus_cd(lhs.z, rhs.x, lhs.x, rhs.z),
-                ab_Minus_cd(lhs.x, rhs.y, lhs.y, rhs.x),
+                lhs.y * rhs.z - lhs.z * rhs.y,
+                lhs.z * rhs.x - lhs.x * rhs.z,
+                lhs.x * rhs.y - lhs.y * rhs.x,
             });
         }
 
@@ -312,13 +307,12 @@ namespace UnityEditor.VFX
         {
             //theta = atan2(coord.y, coord.x)
             //distance = length(coord)
-            var components = ExtractComponents(coord).ToArray();
-            var theta = new VFXExpressionATan2(components[1], components[0]);
+            var theta = Atan2(coord);
             var distance = Length(coord);
             return new VFXExpression[] { theta, distance };
         }
 
-        static public VFXExpression SphericalToRectangular(VFXExpression theta, VFXExpression phi, VFXExpression distance)
+        static public VFXExpression SphericalToRectangular(VFXExpression distance, VFXExpression theta, VFXExpression phi)
         {
             //x = cos(theta) * cos(phi) * distance
             //y = sin(theta) * cos(phi) * distance
@@ -345,7 +339,7 @@ namespace UnityEditor.VFX
             var distance = Length(coord);
             var theta = new VFXExpressionATan2(components[2], components[0]);
             var phi = new VFXExpressionASin(components[1] / distance);
-            return new VFXExpression[] { theta, phi, distance };
+            return new VFXExpression[] { distance, theta, phi };
         }
 
         static public VFXExpression CircleArea(VFXExpression radius)
@@ -505,16 +499,16 @@ namespace UnityEditor.VFX
             return combine;
         }
 
-        static public VFXExpression FixedRandom(uint hash, bool perElement)
+        static public VFXExpression FixedRandom(uint hash, VFXSeedMode mode)
         {
-            return FixedRandom(VFXValue.Constant<uint>(hash), perElement);
+            return FixedRandom(VFXValue.Constant<uint>(hash), mode);
         }
 
-        static public VFXExpression FixedRandom(VFXExpression hash, bool perElement)
+        static public VFXExpression FixedRandom(VFXExpression hash, VFXSeedMode mode)
         {
             VFXExpression seed = new VFXExpressionBitwiseXor(hash, VFXBuiltInExpression.SystemSeed);
-            if (perElement)
-                seed = new VFXExpressionBitwiseXor(new VFXAttributeExpression(VFXAttribute.ParticleId), seed);
+            if (mode != VFXSeedMode.PerComponent)
+                seed = new VFXExpressionBitwiseXor(new VFXAttributeExpression(mode == VFXSeedMode.PerParticle ? VFXAttribute.ParticleId : VFXAttribute.StripIndex), seed);
             return new VFXExpressionFixedRandom(seed);
         }
 
@@ -608,6 +602,13 @@ namespace UnityEditor.VFX
             var m3 = new VFXExpressionCombine(zero,                 zero,       TwoExpression[VFXValueType.Float] * zNear * zFar / deltaZ,     zero);
 
             return new VFXExpressionVector4sToMatrix(m0, m1, m2, m3);
+        }
+
+        static public VFXExpression Atan2(VFXExpression coord)
+        {
+            var components = ExtractComponents(coord).ToArray();
+            var theta = new VFXExpressionATan2(components[1], components[0]);
+            return theta;
         }
     }
 }
