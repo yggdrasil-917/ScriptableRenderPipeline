@@ -6,10 +6,10 @@ using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph;
 using UnityEditor.ShaderGraph.Drawing;
 using UnityEditor.ShaderGraph.Drawing.Controls;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Rendering;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
+namespace UnityEditor.Rendering.HighDefinition.Drawing
 {
     class FabricSettingsView : VisualElement
     {
@@ -205,6 +205,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
                 });
             });
 
+            ps.Add(new PropertyRow(CreateLabel("Add Precomputed Velocity", indentLevel)), (row) =>
+            {
+                row.Add(new Toggle(), (toggle) =>
+                {
+                    toggle.value = m_Node.addPrecomputedVelocity.isOn;
+                    toggle.OnToggleChanged(ChangeAddPrecomputedVelocity);
+                });
+            });
+
             ps.Add(new PropertyRow(CreateLabel("Specular Occlusion Mode", indentLevel)), (row) =>
             {
                 row.Add(new EnumField(SpecularOcclusionMode.Off), (field) =>
@@ -229,6 +238,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
                 {
                     toggle.value = m_Node.depthOffset.isOn;
                     toggle.OnToggleChanged(ChangeDepthOffset);
+                });
+            });
+
+            ps.Add(new PropertyRow(CreateLabel("Support LOD CrossFade", indentLevel)), (row) =>
+            {
+                row.Add(new Toggle(), (toggle) =>
+                {
+                    toggle.value = m_Node.supportLodCrossFade.isOn;
+                    toggle.OnToggleChanged(ChangeSupportLODCrossFade);
                 });
             });
 
@@ -365,6 +383,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
             m_Node.receiveSSR = td;
         }
 
+        void ChangeAddPrecomputedVelocity(ChangeEvent<bool> evt)
+        {
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Add Precomputed Velocity");
+            ToggleData td = m_Node.addPrecomputedVelocity;
+            td.isOn = evt.newValue;
+            m_Node.addPrecomputedVelocity = td;
+        }
+
         void ChangeEnergyConservingSpecular(ChangeEvent<bool> evt)
         {
             m_Node.owner.owner.RegisterCompleteObjectUndo("Energy Conserving Specular Change");
@@ -414,6 +440,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
 
             m_Node.owner.owner.RegisterCompleteObjectUndo("ZTest Change");
             m_Node.zTest = (CompareFunction)evt.newValue;
+        }
+
+        void ChangeSupportLODCrossFade(ChangeEvent<bool> evt)
+        {
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Support LOD CrossFade Change");
+            ToggleData td = m_Node.supportLodCrossFade;
+            td.isOn = evt.newValue;
+            m_Node.supportLodCrossFade = td;
         }
 
         public AlphaMode GetAlphaMode(FabricMasterNode.AlphaModeFabric alphaModeLit)

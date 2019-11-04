@@ -1,9 +1,9 @@
 using System.IO;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Rendering;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     using UnityObject = UnityEngine.Object;
 
@@ -22,6 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 newAsset.name = Path.GetFileName(pathName);
                 // Load default renderPipelineResources / Material / Shader
                 newAsset.renderPipelineResources = AssetDatabase.LoadAssetAtPath<RenderPipelineResources>(s_RenderPipelineResourcesPath);
+                EditorDefaultSettings.GetOrAssignDefaultVolumeProfile(newAsset);
 
                 //as we must init the editor resources with lazy init, it is not required here
 

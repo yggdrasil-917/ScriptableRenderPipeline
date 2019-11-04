@@ -1,11 +1,7 @@
 using System;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
-using UnityEditor.Rendering;
-using UnityEditor;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     /// <summary>
     /// Create a toggleable header for material UI, must be used within a scope.
@@ -44,12 +40,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 : CoreEditorUtils.DrawHeaderFoldout(title, beforeExpended);
             if (colorDot != default(Color))
             {
-                Color previousColor = GUI.contentColor;
-                GUI.contentColor = colorDot;
-                Rect headerRect = GUILayoutUtility.GetLastRect();
-                headerRect.xMin += 16f;
-                EditorGUI.LabelField(headerRect, "■");
-                GUI.contentColor = previousColor;
+                Rect dotRect = GUILayoutUtility.GetLastRect();
+                dotRect.width = 5;
+                dotRect.height = 5;
+                dotRect.y += 7;
+                dotRect.x += 17;
+                EditorGUI.DrawRect(dotRect, colorDot);
             }
             if (expanded ^ beforeExpended)
             {

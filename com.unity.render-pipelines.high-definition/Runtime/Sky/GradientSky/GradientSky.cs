@@ -1,6 +1,6 @@
-using UnityEngine.Rendering;
+using System;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     [VolumeComponentMenu("Sky/Gradient Sky")]
     [SkyUniqueID((int)SkyType.Gradient)]
@@ -14,11 +14,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ColorParameter bottom = new ColorParameter(Color.white, true, false, true);
         [Tooltip("Sets the size of the horizon (Middle color).")]
         public FloatParameter gradientDiffusion = new FloatParameter(1);
-
-        public override SkyRenderer CreateRenderer()
-        {
-            return new GradientSkyRenderer(this);
-        }
 
         public override int GetHashCode()
         {
@@ -34,5 +29,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             return hash;
         }
+
+        public override Type GetSkyRendererType() { return typeof(GradientSkyRenderer); }
     }
 }

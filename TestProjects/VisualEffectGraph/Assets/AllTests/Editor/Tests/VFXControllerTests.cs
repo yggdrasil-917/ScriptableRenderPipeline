@@ -2,8 +2,8 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
+using UnityEngine.VFX;
+using UnityEditor.VFX;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -867,7 +867,7 @@ namespace UnityEditor.VFX.Test
 
             var nodeController = m_ViewController.GetNodeController(op, 0) as VFXOperatorController;
 
-            nodeController.ConvertToParameter();
+            nodeController.ConvertToProperty();
 
             VFXParameter param = m_ViewController.graph.children.OfType<VFXParameter>().First();
 

@@ -1,8 +1,8 @@
 using UnityEditor.Rendering;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     class SerializedFrameSettings
     {
@@ -10,11 +10,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         SerializedProperty rootOverride;
         public SerializedProperty lodBias;
         public SerializedProperty lodBiasMode;
+        public SerializedProperty lodBiasQualityLevel;
         public SerializedProperty maximumLODLevel;
         public SerializedProperty maximumLODLevelMode;
+        public SerializedProperty maximumLODLevelQualityLevel;
+        public SerializedProperty materialQuality;
 
         public SerializedObject serializedObject => rootData.serializedObject;
-        
+
         public LitShaderMode? litShaderMode
         {
             get
@@ -102,8 +105,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             this.rootOverride = rootOverride?.FindPropertyRelative("mask");  //rootOverride can be null in case of hdrpAsset defaults
             lodBias = rootData.FindPropertyRelative("lodBias");
             lodBiasMode = rootData.FindPropertyRelative("lodBiasMode");
+            lodBiasQualityLevel = rootData.FindPropertyRelative("lodBiasQualityLevel");
             maximumLODLevel = rootData.FindPropertyRelative("maximumLODLevel");
             maximumLODLevelMode = rootData.FindPropertyRelative("maximumLODLevelMode");
+            maximumLODLevelQualityLevel = rootData.FindPropertyRelative("maximumLODLevelQualityLevel");
+            materialQuality = rootData.Find((FrameSettings s) => s.materialQuality);
         }
     }
 }

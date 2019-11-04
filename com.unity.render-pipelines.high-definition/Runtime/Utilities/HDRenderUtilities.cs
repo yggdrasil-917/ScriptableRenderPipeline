@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
-using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     /// <summary>
     /// Various utilities to perform rendering with HDRP
@@ -192,13 +192,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void GenerateRenderingSettingsFor(
             ProbeSettings settings, ProbeCapturePositionSettings position,
             List<CameraSettings> cameras, List<CameraPositionSettings> cameraPositions,
+            ulong overrideSceneCullingMask,
             bool forceFlipY = false, float referenceFieldOfView = 90
         )
         {
             // Copy settings
             ComputeCameraSettingsFromProbeSettings(
                 settings, position,
-                out var cameraSettings, out var cameraPositionSettings,
+                out var cameraSettings, out var cameraPositionSettings, overrideSceneCullingMask,
                 referenceFieldOfView
             );
 
@@ -234,11 +235,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ProbeCapturePositionSettings position,
             out CameraSettings cameraSettings,
             out CameraPositionSettings cameraPositionSettings,
+            ulong overrideSceneCullingMask,
             float referenceFieldOfView = 90
         )
         {
             // Copy settings
-            cameraSettings = settings.camera;
+            cameraSettings = settings.cameraSettings;
             cameraPositionSettings = CameraPositionSettings.@default;
 
             // Update settings
@@ -247,6 +249,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ref cameraSettings, ref cameraPositionSettings,
                 referenceFieldOfView
             );
+
+            cameraSettings.culling.sceneCullingMaskOverride = overrideSceneCullingMask;
         }
 
         public static void Render(
@@ -264,7 +268,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Copy settings
             ComputeCameraSettingsFromProbeSettings(
                 settings, position,
-                out cameraSettings, out cameraPositionSettings
+                out cameraSettings, out cameraPositionSettings, 0
             );
 
             if (forceFlipY)

@@ -12,6 +12,8 @@ using UnityEngine.TestTools.Constraints;
 using Is = UnityEngine.TestTools.Constraints.Is;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEngine;
+using UnityEngine.Profiling;
+using UnityEngine.Experimental.Rendering;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -60,7 +62,15 @@ namespace UnityEngine.TestTools.Graphics
             // This PR adds a dummy rendered frame before doing the real rendering and compare images ( test already has frame delay, but there is no rendering )
             int dummyRenderedFrameCount = 1;
 
-            var rt = RenderTexture.GetTemporary(width, height, 24);
+            bool linearColorSpace = QualitySettings.activeColorSpace == ColorSpace.Linear;
+
+            // TODO: Expose API to get URP Default HDR Format
+            // TODO: URP uses GraphicsFormat.B10G11R11_UFloatPack32 but for some reason if we use it here Test 079_TonemappingNeutralLDR fails.
+            GraphicsFormat defaultHDRFormat = GraphicsFormat.R16G16B16A16_SFloat;
+            GraphicsFormat defaultLDRFormat = (linearColorSpace) ? GraphicsFormat.B8G8R8A8_SRGB : GraphicsFormat.B8G8R8A8_UNorm;
+            RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, settings.UseHDR ? defaultHDRFormat : defaultLDRFormat, 24);
+
+            var rt = RenderTexture.GetTemporary(desc);
             Texture2D actual = null;
             try
             {
@@ -76,10 +86,23 @@ namespace UnityEngine.TestTools.Graphics
 					// only proceed the test on the last rendered frame
 					if (dummyRenderedFrameCount == i)
 					{
-						actual = new Texture2D(width, height, format, false);
-						RenderTexture.active = rt;
+                        actual = new Texture2D(width, height, format, false);
+                        RenderTexture dummy = null;
+
+                        if (settings.UseHDR)
+                        {
+                            desc.graphicsFormat = defaultLDRFormat;
+                            dummy = RenderTexture.GetTemporary(desc);
+                            UnityEngine.Graphics.Blit(rt, dummy);
+                        }
+                        else
+                            RenderTexture.active = rt;
+
 						actual.ReadPixels(new Rect(0, 0, width, height), 0, 0);
 						RenderTexture.active = null;
+
+                        if (dummy != null)
+                            RenderTexture.ReleaseTemporary(dummy);
 
 						actual.Apply();
 
@@ -196,7 +219,26 @@ namespace UnityEngine.TestTools.Graphics
             try
             {
                 camera.targetTexture = rt;
-                Assert.That(() => { camera.Render(); }, Is.Not.AllocatingGCMemory());
+                var gcAllocRecorder = Recorder.Get("GC.Alloc");
+
+                // Render the first frame at this resolution (Alloc are allowed here)
+                camera.Render();
+
+                Profiler.BeginSample("GraphicTests_GC_Alloc_Check");
+                {
+                    gcAllocRecorder.enabled = true;
+                    camera.Render();
+                    gcAllocRecorder.enabled = false;
+                }
+                Profiler.EndSample();
+
+                // Note: Currently there are some allocs between the Camera.Render and the begining of the render pipeline rendering.
+                // Because of that, we can't enable this test.
+                int allocationCountOfRenderPipeline = gcAllocRecorder.sampleBlockCount;
+                
+                if (allocationCountOfRenderPipeline > 0)
+                    throw new Exception($"Memory allocation test failed, {allocationCountOfRenderPipeline} allocations detected. Look for GraphicTests_GC_Alloc_Check in the profiler for more details");
+
                 camera.targetTexture = null;
             }
             finally

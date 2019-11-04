@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Rendering;
 
 // Include material common properties names
-using static UnityEngine.Experimental.Rendering.HDPipeline.HDMaterialProperties;
+using static UnityEngine.Rendering.HighDefinition.HDMaterialProperties;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
-    public class SurfaceOptionUIBlock : MaterialUIBlock
+    class SurfaceOptionUIBlock : MaterialUIBlock
     {
         [Flags]
         public enum Features
@@ -57,8 +57,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent transparentBackfaceEnableText = new GUIContent("Back Then Front Rendering", "When enabled, HDRP renders the back face and then the front face, in two separate draw calls, to better sort transparent meshes.");
             public static GUIContent transparentWritingMotionVecText = new GUIContent("Transparent Writes Motion Vectors", "When enabled, transparent objects write motion vectors, these replace what was previously rendered in the buffer.");
 
-            public static GUIContent zWriteEnableText = new GUIContent("Z Write", "When enabled, transparent objects write to the depth buffer.");
-            public static GUIContent transparentZTestText = new GUIContent("Z Test", "Set the comparison function to use during the Z Testing.");
+            public static GUIContent zWriteEnableText = new GUIContent("Depth Write", "When enabled, transparent objects write to the depth buffer.");
+            public static GUIContent transparentZTestText = new GUIContent("Depth Test", "Set the comparison function to use during the Z Testing.");
 
             public static GUIContent transparentSortPriorityText = new GUIContent("Sorting Priority", "Sets the sort priority (from -100 to 100) of transparent meshes using this Material. HDRP uses this value to calculate the sorting order of all transparent meshes on screen.");
             public static GUIContent enableTransparentFogText = new GUIContent("Receive fog", "When enabled, this Material can receive fog.");
@@ -79,6 +79,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Material ID
             public static GUIContent materialIDText = new GUIContent("Material Type", "Specifies additional feature for this Material. Customize you Material with different settings depending on which Material Type you select.");
             public static GUIContent transmissionEnableText = new GUIContent("Transmission", "When enabled HDRP processes the transmission effect for subsurface scattering. Simulates the translucency of the object.");
+            public static string transparentSSSErrorMessage = "Transparent Materials With SubSurface Scattering is not supported.";
 
             // Per pixel displacement
             public static GUIContent ppdMinSamplesText = new GUIContent("Minimum Steps", "Controls the minimum number of steps HDRP uses for per pixel displacement mapping.");
@@ -92,16 +93,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent enableGeometricSpecularAAText = new GUIContent("Geometric Specular AA", "When enabled, HDRP reduces specular aliasing on high density meshes (particularly useful when the not using a normal map).");
             public static GUIContent specularAAScreenSpaceVarianceText = new GUIContent("Screen space variance", "Controls the strength of the Specular AA reduction. Higher values give a more blurry result and less aliasing.");
             public static GUIContent specularAAThresholdText = new GUIContent("Threshold", "Controls the effect of Specular AA reduction. A values of 0 does not apply reduction, higher values allow higher reduction.");
-            
+
             // SSR
             public static GUIContent receivesSSRText = new GUIContent("Receive SSR", "When enabled, this Material can receive screen space reflections.");
 
             public static string afterPostProcessZTestInfoBox = "After post-process material wont be ZTested. Enable the \"ZTest For After PostProcess\" checkbox in the Frame Settings to force the depth-test if the TAA is disabled.";
         }
-   
+
         // Properties common to Unlit and Lit
         MaterialProperty surfaceType = null;
-        
+
         MaterialProperty alphaCutoffEnable = null;
         const string kAlphaCutoffEnabled = "_AlphaCutoffEnable";
         MaterialProperty useShadowThreshold = null;
@@ -121,7 +122,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         MaterialProperty transparentBackfaceEnable = null;
         const string kTransparentBackfaceEnable = "_TransparentBackfaceEnable";
         MaterialProperty transparentSortPriority = null;
-        const string kTransparentSortPriority = "_TransparentSortPriority";
+        const string kTransparentSortPriority = HDMaterialProperties.kTransparentSortPriority;
         MaterialProperty transparentWritingMotionVec = null;
         const string kTransparentWritingMotionVec = "_TransparentWritingMotionVec";
         MaterialProperty doubleSidedEnable = null;
@@ -204,6 +205,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kRefractionModel = "_RefractionModel";
 
         MaterialProperty zWrite = null;
+        MaterialProperty stencilRef = null;
         MaterialProperty zTest = null;
         MaterialProperty transparentCullMode = null;
 
@@ -278,13 +280,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             transparentSortPriority = FindProperty(kTransparentSortPriority);
 
             transparentWritingMotionVec = FindProperty(kTransparentWritingMotionVec);
-            
+
             enableBlendModePreserveSpecularLighting = FindProperty(kEnableBlendModePreserveSpecularLighting);
             enableFogOnTransparent = FindProperty(kEnableFogOnTransparent);
 
             if ((m_Features & Features.DoubleSided) != 0)
                 doubleSidedEnable = FindProperty(kDoubleSidedEnable);
-            
+
             // Height
             heightMap = FindPropertyLayered(kHeightMap, m_LayerCount);
             heightAmplitude = FindPropertyLayered(kHeightAmplitude, m_LayerCount);
@@ -337,6 +339,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 receivesSSR = FindProperty(kReceivesSSR);
 
             zWrite = FindProperty(kZWrite);
+            stencilRef = FindProperty(kStencilRef);
             zTest = FindProperty(kZTestTransparent);
             transparentCullMode = FindProperty(kTransparentCullMode);
 
@@ -368,6 +371,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         void DrawAlphaCutoffGUI()
         {
+            EditorGUI.BeginChangeCheck();
             if (alphaCutoffEnable != null)
                 materialEditor.ShaderProperty(alphaCutoffEnable, Styles.alphaCutoffEnableText);
 
@@ -402,6 +406,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     }
                 }
                 EditorGUI.indentLevel--;
+            }
+            
+            // Update the renderqueue when we change the alphaTest
+            if (EditorGUI.EndChangeCheck())
+            {
+                var renderQueueType = HDRenderQueue.GetTypeByRenderQueueValue(renderQueue);
+
+                renderQueue = HDRenderQueue.ChangeType(renderQueueType, (int)transparentSortPriority.floatValue, alphaCutoffEnable.floatValue == 1);
             }
         }
 
@@ -475,10 +487,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 if (transparentWritingMotionVec != null)
                     materialEditor.ShaderProperty(transparentWritingMotionVec, Styles.transparentWritingMotionVecText);
-                
+
                 if (zWrite != null)
                     materialEditor.ShaderProperty(zWrite, Styles.zWriteEnableText);
-                
+
                 if (zTest != null)
                     materialEditor.ShaderProperty(zTest, Styles.transparentZTestText);
 
@@ -498,7 +510,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
         }
-        
+
         void ShowAfterPostProcessZTestInfoBox()
         {
             EditorGUILayout.HelpBox(Styles.afterPostProcessZTestInfoBox, MessageType.Info);
@@ -508,14 +520,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             if (surfaceType == null)
                 return;
-                
+
             // TODO: does not work with multi-selection
             Material material = materialEditor.target as Material;
 
             var mode = (SurfaceType)surfaceType.floatValue;
             var renderQueueType = HDRenderQueue.GetTypeByRenderQueueValue(material.renderQueue);
             bool alphaTest = material.HasProperty(kAlphaCutoffEnabled) && material.GetFloat(kAlphaCutoffEnabled) > 0.0f;
-            
+
             // Shader graph only property, used to transfer the render queue from the shader graph to the material,
             // because we can't use the renderqueue from the shader as we have to keep the renderqueue on the material side.
             if (material.HasProperty("_RenderQueueType"))
@@ -555,6 +567,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             EditorGUI.showMixedValue = isMixedRenderQueue;
             ++EditorGUI.indentLevel;
+
+            if (newMode == SurfaceType.Transparent)
+            {
+                if (stencilRef != null && ((int)stencilRef.floatValue & (int)StencilLightingUsage.SplitLighting) != 0)
+                    EditorGUILayout.HelpBox(Styles.transparentSSSErrorMessage, MessageType.Error);
+            }
+
             switch (mode)
             {
                 case SurfaceType.Opaque:
@@ -584,7 +603,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
             --EditorGUI.indentLevel;
             EditorGUI.showMixedValue = false;
-        
+
             if (material.HasProperty("_RenderQueueType"))
                 material.SetFloat("_RenderQueueType", (float)renderQueueType);
         }
@@ -620,10 +639,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_RenderingPassValues.Add((int)HDRenderQueue.OpaqueRenderQueue.AfterPostProcessing);
             }
 
-#if ENABLE_RAYTRACING
-            m_RenderingPassNames.Add("Raytracing");
-            m_RenderingPassValues.Add((int)HDRenderQueue.OpaqueRenderQueue.Raytracing);
-#endif
+            if ((RenderPipelineManager.currentPipeline as HDRenderPipeline).rayTracingSupported)
+            {
+                m_RenderingPassNames.Add("Raytracing");
+                m_RenderingPassValues.Add((int)HDRenderQueue.OpaqueRenderQueue.Raytracing);
+            }
 
             return EditorGUILayout.IntPopup(text, inputValue, m_RenderingPassNames.ToArray(), m_RenderingPassValues.ToArray());
         }
@@ -655,10 +675,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_RenderingPassValues.Add((int)HDRenderQueue.TransparentRenderQueue.AfterPostProcessing);
             }
 
-#if ENABLE_RAYTRACING
-            m_RenderingPassNames.Add("Raytracing");
-            m_RenderingPassValues.Add((int)HDRenderQueue.TransparentRenderQueue.Raytracing);
-#endif
+            if ((RenderPipelineManager.currentPipeline as HDRenderPipeline).rayTracingSupported)
+            {
+                m_RenderingPassNames.Add("Raytracing");
+                m_RenderingPassValues.Add((int)HDRenderQueue.TransparentRenderQueue.Raytracing);
+            }
 
             return EditorGUILayout.IntPopup(text, inputValue, m_RenderingPassNames.ToArray(), m_RenderingPassValues.ToArray());
         }

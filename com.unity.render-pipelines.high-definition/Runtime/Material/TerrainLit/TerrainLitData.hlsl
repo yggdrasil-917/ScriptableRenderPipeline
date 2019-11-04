@@ -29,6 +29,10 @@ CBUFFER_START(UnityTerrain)
 #ifdef DEBUG_DISPLAY
     UNITY_TERRAIN_CB_DEBUG_VARS
 #endif
+#ifdef SCENESELECTIONPASS
+    int _ObjectId;
+    int _PassValue;
+#endif
 CBUFFER_END
 
 #ifdef UNITY_INSTANCING_ENABLED
@@ -51,6 +55,17 @@ float _DistortionBlurScale;
 float _DistortionBlurRemapMin;
 float _DistortionBlurRemapMax;
 
+#ifdef _ALPHATEST_ON
+TEXTURE2D(_TerrainHolesTexture);
+SAMPLER(sampler_TerrainHolesTexture);
+
+void ClipHoles(float2 uv)
+{
+	float hole = SAMPLE_TEXTURE2D(_TerrainHolesTexture, sampler_TerrainHolesTexture, uv).r;
+	DoAlphaTest(hole, 0.5);
+}
+#endif
+
 // Vertex height displacement
 #ifdef HAVE_MESH_MODIFICATION
 
@@ -70,7 +85,7 @@ float4 ConstructTerrainTangent(float3 normal, float3 positiveZ)
     return float4(tangent, -1);
 }
 
-AttributesMesh ApplyMeshModification(AttributesMesh input)
+AttributesMesh ApplyMeshModification(AttributesMesh input, float3 timeParameters)
 {
 #ifdef UNITY_INSTANCING_ENABLED
     float2 patchVertex = input.positionOS.xy;
@@ -143,6 +158,10 @@ void GetSurfaceAndBuiltinData(inout FragInputs input, float3 V, inout PositionIn
     input.texCoord0.xy *= _TerrainHeightmapRecipSize.zw;
 #endif
 
+#ifdef _ALPHATEST_ON
+	ClipHoles(input.texCoord0);
+#endif	
+
     // terrain lightmap uvs are always taken from uv0
     input.texCoord1 = input.texCoord2 = input.texCoord0;
 
@@ -167,6 +186,7 @@ void GetSurfaceAndBuiltinData(inout FragInputs input, float3 V, inout PositionIn
     float3 normalTS = ConvertToNormalTS(terrainLitSurfaceData.normalData, input.tangentToWorld[0], input.tangentToWorld[1]);
     GetNormalWS(input, normalTS, surfaceData.normalWS, float3(1.0, 1.0, 1.0));
 #endif
+
     surfaceData.geomNormalWS = input.tangentToWorld[2];
 
     surfaceData.baseColor = terrainLitSurfaceData.albedo;
@@ -194,22 +214,23 @@ void GetSurfaceAndBuiltinData(inout FragInputs input, float3 V, inout PositionIn
     surfaceData.atDistance = 1000000.0;
     surfaceData.transmittanceMask = 0.0;
 
-    float3 bentNormalWS = surfaceData.normalWS;
-
-    // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
-#ifdef _MASKMAP
-    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
-#else
-    surfaceData.specularOcclusion = 1.0;
-#endif
+    surfaceData.specularOcclusion = 1.0; // This need to be init here to quiet the compiler in case of decal, but can be override later.
 
 #if HAVE_DECALS
     if (_EnableDecals)
     {
         float alpha = 1.0; // unused
+                           // Both uses and modifies 'surfaceData.normalWS'.
         DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, alpha);
         ApplyDecalToSurfaceData(decalSurfaceData, surfaceData);
     }
+#endif
+
+    float3 bentNormalWS = surfaceData.normalWS;
+
+    // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
+#ifdef _MASKMAP
+    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
 #endif
 
 #ifdef DEBUG_DISPLAY

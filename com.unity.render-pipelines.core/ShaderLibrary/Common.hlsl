@@ -59,7 +59,7 @@
 // uniform float4 packedArray[3];
 // static float unpackedArray[12] = (float[12])packedArray;
 
-// The function of the shader library are stateless, no uniform decalare in it.
+// The function of the shader library are stateless, no uniform declare in it.
 // Any function that require an explicit precision, use float or half qualifier, when the function can support both, it use real (see below)
 // If a function require to have both a half and a float version, then both need to be explicitly define
 #ifndef real
@@ -67,7 +67,7 @@
 // The including shader should define whether half
 // precision is suitable for its needs.  The shader
 // API (for now) can indicate whether half is possible.
-#ifdef SHADER_API_MOBILE
+#if defined(SHADER_API_MOBILE) || defined(SHADER_API_SWITCH)
 #define HAS_HALF 1
 #else
 #define HAS_HALF 0
@@ -198,7 +198,7 @@
 #endif
 
 // On everything but GCN consoles we error on cross-lane operations
-#ifndef SUPPORTS_WAVE_INTRINSICS
+#ifndef PLATFORM_SUPPORTS_WAVE_INTRINSICS
 #define WaveActiveAllTrue ERROR_ON_UNSUPPORTED_FUNCTION(WaveActiveAllTrue)
 #define WaveActiveAnyTrue ERROR_ON_UNSUPPORTED_FUNCTION(WaveActiveAnyTrue)
 #define WaveGetLaneIndex ERROR_ON_UNSUPPORTED_FUNCTION(WaveGetLaneIndex)
@@ -289,6 +289,29 @@ void ToggleBit(inout uint data, uint offset)
     TEMPLATE_3_REAL(Max3, a, b, c, return max(max(a, b), c))
     TEMPLATE_3_INT(Max3, a, b, c, return max(max(a, b), c))
 #endif // INTRINSIC_MINMAX3
+
+
+#ifndef INTRINSIC_QUAD_SHUFFLE
+    // Important! Only valid in pixel shaders!
+    float QuadReadAcrossX(float value, int2 screenPos)
+    {
+        return value - (ddx_fine(value) * (float(screenPos.x & 1) * 2.0 - 1.0));
+    }
+
+    float QuadReadAcrossY(float value, int2 screenPos)
+    {
+        return value - (ddy_fine(value) * (float(screenPos.y & 1) * 2.0 - 1.0));
+    }
+
+    float QuadReadAcrossDiagonal(float value, int2 screenPos)
+    {
+        float dX = ddx_fine(value);
+        float dY = ddy_fine(value);
+        float2 quadDir = float2(float(screenPos.x & 1) * 2.0 - 1.0, float(screenPos.y & 1) * 2.0 - 1.0);
+        float X = value - (dX * quadDir.x);
+        return X - (ddy_fine(value) * quadDir.y);
+    }
+#endif
 
 TEMPLATE_SWAP(Swap) // Define a Swap(a, b) function for all types
 
@@ -400,8 +423,8 @@ real RadToDeg(real rad)
 }
 
 // Square functions for cleaner code
-TEMPLATE_1_REAL(Sq, x, return x * x)
-TEMPLATE_1_INT(Sq, x, return x * x)
+TEMPLATE_1_REAL(Sq, x, return (x) * (x))
+TEMPLATE_1_INT(Sq, x, return (x) * (x))
 
 bool IsPower2(uint x)
 {
@@ -511,6 +534,7 @@ float FastSign(float s, bool ignoreNegZero = true)
 // Returns the new tangent (the normal is unaffected).
 real3 Orthonormalize(real3 tangent, real3 normal)
 {
+    // TODO: use SafeNormalize()?
     return normalize(tangent - dot(tangent, normal) * normal);
 }
 
@@ -559,6 +583,11 @@ real Smootherstep(real a, real b, real t)
 float3 NLerp(float3 A, float3 B, float t)
 {
     return normalize(lerp(A, B, t));
+}
+
+float Length2(float3 v)
+{
+    return dot(v, v);
 }
 
 real Pow4(real x)
@@ -758,6 +787,19 @@ float DecodeLogarithmicDepth(float d, float4 encodingParams)
     return encodingParams.x * exp2(d * encodingParams.y);
 }
 
+real4 CompositeOver(real4 front, real4 back)
+{
+    return front + (1 - front.a) * back;
+}
+
+void CompositeOver(real3 colorFront, real3 alphaFront,
+                   real3 colorBack,  real3 alphaBack,
+                   out real3 color,  out real3 alpha)
+{
+    color = colorFront + (1 - alphaFront) * colorBack;
+    alpha = alphaFront + (1 - alphaFront) * alphaBack;
+}
+
 // ----------------------------------------------------------------------------
 // Space transformations
 // ----------------------------------------------------------------------------
@@ -847,6 +889,7 @@ float3 ComputeWorldSpacePosition(float2 positionNDC, float deviceDepth, float4x4
 // PositionInputs
 // ----------------------------------------------------------------------------
 
+// Note: if you modify this struct, be sure to update the CustomPassFullscreenShader.template
 struct PositionInputs
 {
     float3 positionWS;  // World space position (could be camera-relative)
@@ -976,9 +1019,9 @@ bool HasFlag(uint bitfield, uint flag)
 }
 
 // Normalize that account for vectors with zero length
-real3 SafeNormalize(real3 inVec)
+real3 SafeNormalize(float3 inVec)
 {
-    real dp3 = max(REAL_MIN, dot(inVec, inVec));
+    float dp3 = max(FLT_MIN, dot(inVec, inVec));
     return inVec * rsqrt(dp3);
 }
 
@@ -987,6 +1030,18 @@ real3 SafeNormalize(real3 inVec)
 real SafeDiv(real numer, real denom)
 {
     return (numer != denom) ? numer / denom : 1;
+}
+
+// Assumes that (0 <= x <= Pi).
+real SinFromCos(real cosX)
+{
+    return sqrt(saturate(1 - cosX * cosX));
+}
+
+// Dot product in spherical coordinates.
+real SphericalDot(real cosTheta1, real phi1, real cosTheta2, real phi2)
+{
+    return SinFromCos(cosTheta1) * SinFromCos(cosTheta2) * cos(phi1 - phi2) + cosTheta1 * cosTheta2;
 }
 
 // Generates a triangle in homogeneous clip space, s.t.

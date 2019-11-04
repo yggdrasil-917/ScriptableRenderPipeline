@@ -2,8 +2,8 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
+using UnityEngine.VFX;
+using UnityEditor.VFX;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.VFX.UI;
@@ -74,7 +74,7 @@ namespace UnityEditor.VFX.Test
             var updateContextDesc = VFXLibrary.GetContexts().Where(t => t.model.contextType == VFXContextType.Update).First();
             var updateContext = m_ViewController.AddVFXContext(new Vector2(300, 1000), updateContextDesc);
 
-            var outputContextDesc = VFXLibrary.GetContexts().Where(t => t.model.contextType == VFXContextType.Output).First();
+            var outputContextDesc = VFXLibrary.GetContexts().Where(t => t.model.contextType == VFXContextType.Output && t.model.name.Contains("Particle")).First();
             var outputContext = m_ViewController.AddVFXContext(new Vector2(300, 2000), outputContextDesc);
 
             m_ViewController.ApplyChanges();
@@ -250,7 +250,7 @@ namespace UnityEditor.VFX.Test
         {
             EditTestAsset(7);
 
-            var initContextDesc = VFXLibrary.GetContexts().Where(t => t.name == "Initialize").First();
+            var initContextDesc = VFXLibrary.GetContexts().Where(t => typeof(VFXBasicInitialize).IsAssignableFrom(t.modelType)).First();
 
             var newContext = m_ViewController.AddVFXContext(new Vector2(300, 100), initContextDesc);
             m_ViewController.ApplyChanges();

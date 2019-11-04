@@ -70,7 +70,7 @@ namespace UnityEditor.VFX.UI
 
         static string UXMLResourceToPackage(string resourcePath)
         {
-            return VisualEffectGraphPackageInfo.assetPackagePath + "/Editor/Resources/" + resourcePath + ".uxml";
+            return VisualEffectGraphPackageInfo.assetPackagePath + "/Editor Default Resources/" + resourcePath + ".uxml";
         }
 
         public VFXNodeUI(string template) : base(UXMLResourceToPackage(template))
@@ -142,14 +142,16 @@ namespace UnityEditor.VFX.UI
                         m_SelectionBorder.style.borderRight = (m_Selected ? 1 : (m_Hovered ? 1 : 0));*/
 
 
-            m_SelectionBorder.style.borderColor = m_Selected ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 1.0f) : (m_Hovered ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 0.5f) : Color.clear);
+            m_SelectionBorder.style.borderBottomColor =
+                m_SelectionBorder.style.borderTopColor =
+                    m_SelectionBorder.style.borderLeftColor =
+                        m_SelectionBorder.style.borderRightColor = m_Selected ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 1.0f) : (m_Hovered ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 0.5f) : Color.clear);
         }
 
         void Initialize()
         {
             this.AddStyleSheetPath("VFXNode");
             AddToClassList("VFXNodeUI");
-            cacheAsBitmap = true;
 
             RegisterCallback<MouseEnterEvent>(OnMouseEnter);
             RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
@@ -456,9 +458,11 @@ namespace UnityEditor.VFX.UI
             }
         }
 
+        public const int DefaultLabelWidth = 116;
+
         protected void AddSetting(VFXSettingController setting)
         {
-            var rm = PropertyRM.Create(setting, 100);
+            var rm = PropertyRM.Create(setting, DefaultLabelWidth);
             if (rm != null)
             {
                 m_Settings.Add(rm);

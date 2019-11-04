@@ -94,7 +94,6 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
             float shadow = EvaluateShadow_Directional(lightLoopContext, posInput, light, builtinData, GetNormalForShadowBias(bsdfData));
             float NdotL  = dot(bsdfData.normalWS, L); // No microshadowing when facing away from light (use for thin transmission as well)
             shadow *= NdotL >= 0.0 ? ComputeMicroShadowing(GetAmbientOcclusionForMicroShadowing(bsdfData), NdotL, _MicroShadowOpacity) : 1.0;
-      
             lightColor.rgb *= ComputeShadowColor(shadow, light.shadowTint);
         }
 
@@ -102,7 +101,7 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
         // Note that it is not correct with our precomputation of PartLambdaV
         // (means if we disable the optimization it will not have the
         // same result) but we don't care as it is a hack anyway.
-        ClampRoughness(bsdfData, light.minRoughness);
+        ClampRoughness(preLightData, bsdfData, light.minRoughness);
 
         lighting = ShadeSurface_Infinitesimal(preLightData, bsdfData, V, L, lightColor.rgb,
                                               light.diffuseDimmer, light.specularDimmer);
@@ -197,7 +196,7 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
         // Note that it is not correct with our precomputation of PartLambdaV
         // (means if we disable the optimization it will not have the
         // same result) but we don't care as it is a hack anyway.
-        ClampRoughness(bsdfData, light.minRoughness);
+        ClampRoughness(preLightData, bsdfData, light.minRoughness);
 
         lighting = ShadeSurface_Infinitesimal(preLightData, bsdfData, V, L, lightColor.rgb,
                                               light.diffuseDimmer, light.specularDimmer);

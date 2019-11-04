@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using System.Linq;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     // A Material can be authored from the shader graph or by hand. When written by hand we need to provide an inspector.
     // Such a Material will share some properties between it various variant (shader graph variant or hand authored variant).
@@ -14,14 +14,34 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     /// <summary>
     /// Wrapper to handle Material UI Blocks, it will handle initialization of the blocks when drawing the GUI.
     /// </summary>
-    public class MaterialUIBlockList : List<MaterialUIBlock>
+    class MaterialUIBlockList : List<MaterialUIBlock>
     {
         [System.NonSerialized]
-        bool        m_Initialized = false;
+        bool                        m_Initialized = false;
 
-        Material[]  m_Materials;
+        Material[]                  m_Materials;
 
+        /// <summary>
+        /// Parent of the ui block list, in case of nesting (Layered Lit material)
+        /// </summary>
+        public MaterialUIBlockList  parent;
+
+        /// <summary>
+        /// List of materials currently selected in the inspector
+        /// </summary>
         public Material[] materials => m_Materials;
+
+        /// <summary>
+        /// Construct a sub ui block list by passing the parent ui block list (useful for layered UI where ui blocks are nested)
+        /// </summary>
+        /// <param name="parent"></param>
+        public MaterialUIBlockList(MaterialUIBlockList parent) => this.parent = parent;
+
+        /// <summary>
+        /// Construct a ui block list
+        /// </summary>
+        /// <returns></returns>
+        public MaterialUIBlockList() : this(null) {}
 
         /// <summary>
         /// Render the list of ui blocks added contained in the materials property

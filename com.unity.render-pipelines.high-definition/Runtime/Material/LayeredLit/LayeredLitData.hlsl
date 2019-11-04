@@ -494,16 +494,8 @@ float4 GetBlendMask(LayerTexCoord layerTexCoord, float4 vertexColor, bool useLod
     // It also means that when using wind, users can't use vertex color to modulate the effect of influence from the main layer.
     float4 maskVertexColor = vertexColor;
 #if defined(_LAYER_MASK_VERTEX_COLOR_MUL)
-    #if defined(_VERTEX_WIND)
-    // For multiplicative vertex color blend mask. 1.0f is the neutral value
-    maskVertexColor.a = 1.0f;
-    #endif
     blendMasks *= maskVertexColor;
 #elif defined(_LAYER_MASK_VERTEX_COLOR_ADD)
-    #if defined(_VERTEX_WIND)
-    // For additive vertex color blend mask. 0.5f is the neutral value (0.5 * 2.0 - 1.0 = 0.0)
-    maskVertexColor.a = 0.5f;
-    #endif
     blendMasks = saturate(blendMasks + maskVertexColor * 2.0 - 1.0);
 #endif
 
@@ -758,6 +750,20 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.transmittanceMask = 0.0;
 
     GetNormalWS(input, normalTS, surfaceData.normalWS, doubleSidedConstants);
+
+    surfaceData.geomNormalWS = input.tangentToWorld[2];
+
+    surfaceData.specularOcclusion = 1.0; // This need to be init here to quiet the compiler in case of decal, but can be override later.
+
+#if HAVE_DECALS
+    if (_EnableDecals)
+    {
+        // Both uses and modifies 'surfaceData.normalWS'.
+        DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, alpha);
+        ApplyDecalToSurfaceData(decalSurfaceData, surfaceData);
+    }
+#endif
+
     // Use bent normal to sample GI if available
     // If any layer use a bent normal map, then bentNormalTS contain the interpolated result of bentnormal and normalmap (in case no bent normal are available)
     // Note: the code in LitDataInternal ensure that we fallback on normal map for layer that have no bentnormal
@@ -766,8 +772,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #else // if no bent normal are available at all just keep the calculation fully
     bentNormalWS = surfaceData.normalWS;
 #endif
-
-    surfaceData.geomNormalWS = input.tangentToWorld[2];
 
     // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
     // If user provide bent normal then we process a better term
@@ -780,16 +784,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     #endif
 #elif defined(_MASKMAP0) || defined(_MASKMAP1) || defined(_MASKMAP2) || defined(_MASKMAP3)
     surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(dot(surfaceData.normalWS, V), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
-#else
-    surfaceData.specularOcclusion = 1.0;
-#endif
-
-#if HAVE_DECALS
-    if (_EnableDecals)
-    {
-        DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, alpha);
-        ApplyDecalToSurfaceData(decalSurfaceData, surfaceData);
-    }
 #endif
 
 #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA

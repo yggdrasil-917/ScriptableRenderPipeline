@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using System.Linq;
 
 // Include material common properties names
-using static UnityEngine.Experimental.Rendering.HDPipeline.HDMaterialProperties;
+using static UnityEngine.Rendering.HighDefinition.HDMaterialProperties;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
-    public class LayeringOptionsUIBlock : MaterialUIBlock
+    class LayeringOptionsUIBlock : MaterialUIBlock
     {
         public static class Styles
         {
@@ -73,7 +73,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override void OnGUI()
         {
             // We're using a subheader here because we know that layering options are only used within layers
-            using (var header = new MaterialHeaderScope(Styles.header, (uint)m_ExpandableBit, materialEditor, colorDot: kLayerColors[m_LayerIndex], subHeader: true))
+            using (var header = new MaterialHeaderScope(Styles.header, (uint)m_ExpandableBit, materialEditor, subHeader: true))
             {
                 if (header.expanded)
                 {
