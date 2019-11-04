@@ -38,6 +38,12 @@ all_project_ci_{{ editor.version }}:
     logs:
       paths:
         - "**/test-results/**"
+  {% if editor.version == "trunk" %}
+  triggers:
+    branches:
+      only:
+        - trying
+  {% endif %}
 {% endfor %}
 
 
