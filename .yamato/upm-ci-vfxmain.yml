@@ -177,7 +177,6 @@ linux_apis:
 {% endif %}
 {% endfor %}
 
-
 All_{{ project.name }}_{{ editor.version }}:
   name: All {{ project.name }} CI - {{ editor.version }}
   agent:
@@ -219,4 +218,4 @@ All_{{ project.name }}_{{ editor.version }}:
   {% endfor %}
 
 {% endfor %}
-{% endfor %}   
+{% endfor %}

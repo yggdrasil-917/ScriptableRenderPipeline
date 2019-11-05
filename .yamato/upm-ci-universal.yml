@@ -221,7 +221,6 @@ linux_apis:
 {% endif %}
 {% endfor %}
 
-
 All_{{ project.name }}_{{ editor.version }}:
   name: All {{ project.name }} CI - {{ editor.version }}
   agent:

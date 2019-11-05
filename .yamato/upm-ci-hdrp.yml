@@ -171,6 +171,5 @@ All_{{ project.name }}_{{ editor.version }}:
   {% endfor %}
   {% endfor %}
 
-    
-{% endfor %}
+{% endfor %} 
 {% endfor %}
