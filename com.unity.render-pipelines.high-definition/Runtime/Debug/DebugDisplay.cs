@@ -14,6 +14,7 @@ namespace UnityEngine.Rendering.HighDefinition
         MinLightingFullScreenDebug,
         SSAO,
         ScreenSpaceReflections,
+        TransparentScreenSpaceReflections,
         ContactShadows,
         ContactShadowsFade,
         ScreenSpaceShadows,

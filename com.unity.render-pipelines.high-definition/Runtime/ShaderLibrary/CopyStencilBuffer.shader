@@ -217,6 +217,35 @@ Shader "Hidden/HDRP/CopyStencilBuffer"
 
                 ENDHLSL
         }
+
+        Pass
+        {
+            Name "Pass 5 - Set Stencil Value"
+
+            Stencil
+            {
+                WriteMask [_StencilMask]
+                Ref  [_StencilRef]
+                Comp Always
+                Pass Replace
+            }
+
+            Cull   Off
+            ZTest  Always
+            ZWrite Off
+            Blend  Off
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                return float4(0.0, 0.0, 0.0, 0.0);
+            }
+
+            ENDHLSL
+        }
     }
     Fallback Off
 }

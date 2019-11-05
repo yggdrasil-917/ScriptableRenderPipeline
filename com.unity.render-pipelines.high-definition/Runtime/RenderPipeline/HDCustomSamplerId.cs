@@ -56,6 +56,7 @@ namespace UnityEngine.Rendering.HighDefinition
         CullResultsCull,
         CopyDepth,
         UpdateStencilCopyForSSRExclusion,
+        PrepareForTransparentSSR,
         GizmosPrePostprocess,
         Gizmos,
 

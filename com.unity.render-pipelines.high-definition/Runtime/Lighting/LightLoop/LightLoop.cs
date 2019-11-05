@@ -3456,6 +3456,19 @@ namespace UnityEngine.Rendering.HighDefinition
             cmd.ClearRandomWriteTargets();
         }
 
+        static void SetStencilBits(CommandBuffer cmd, RTHandle depthStencilBuffer, int stencilMask, int stencilRef, Material copyStencilMaterial)
+        {
+            // Bind the depth/stencil buffer we need to clear
+            CoreUtils.SetRenderTarget(cmd, depthStencilBuffer);
+
+            // Bind the mask and ref values
+            copyStencilMaterial.SetInt(HDShaderIDs._StencilRef, stencilRef);
+            copyStencilMaterial.SetInt(HDShaderIDs._StencilMask, stencilMask);
+
+            // Pass 5 performs ovrrides the mask bits by the reference value
+            CoreUtils.DrawFullScreen(cmd, copyStencilMaterial, null, 5);
+        }
+
         static void CopyStencilBufferIfNeeded(CommandBuffer cmd, HDCamera hdCamera, RTHandle depthStencilBuffer, RTHandle stencilBufferCopy, Material copyStencil, Material copyStencilForSSR)
         {
             // Clear and copy the stencil texture needs to be moved to before we invoke the async light list build,

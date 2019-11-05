@@ -97,6 +97,7 @@ namespace UnityEngine.Rendering.HighDefinition
         // Lighting
         public bool supportShadowMask;
         public bool supportSSR;
+        public bool supportSSRTransparent;
         public bool supportSSAO;
         public bool supportSubsurfaceScattering;
         public bool increaseSssSampleCount;
