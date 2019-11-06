@@ -67,7 +67,12 @@ namespace UnityEngine.TestTools.Graphics
             // TODO: Expose API to get URP Default HDR Format
             // TODO: URP uses GraphicsFormat.B10G11R11_UFloatPack32 but for some reason if we use it here Test 079_TonemappingNeutralLDR fails.
             GraphicsFormat defaultHDRFormat = GraphicsFormat.R16G16B16A16_SFloat;
+#if UNITY_ANDROID
+            // Android does not support B8G8R8A8 format which is used in #else statement (notice different order of color channels)
+            GraphicsFormat defaultLDRFormat = (linearColorSpace) ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
+#else
             GraphicsFormat defaultLDRFormat = (linearColorSpace) ? GraphicsFormat.B8G8R8A8_SRGB : GraphicsFormat.B8G8R8A8_UNorm;
+#endif
             RenderTextureDescriptor desc = new RenderTextureDescriptor(width, height, settings.UseHDR ? defaultHDRFormat : defaultLDRFormat, 24);
 
             var rt = RenderTexture.GetTemporary(desc);
