@@ -1,13 +1,23 @@
 # SRP Instance
-The [SRP Asset](SRP-Asset.md) controls configuration, but the SRP Instance is the rendering entry point. When developing an SRP, you need to also create this class as this is where all the rendering logic should be.
 
-In it's simplest form, the SRP Instance just contains a single function, **Render**, the best way to think of this is that it's a blank canvas where you are free to perform rendering in any way that you see fit. The **Render** function takes takes two arguments
+An SRP Instance is the class that performs the rendering within an Scriptable Render Pipeline (SRP). At run time, the active SRP Asset creates and configures an SRP Instance. 
+
+If your Project uses an SRP, then you must have an SRP Instance class in your Project and that SRP Instance must have a **Render** method. The code that you write within this method determines which actions Unity performs when rendering using your custom SRP. These actions might include:
+
+* Clearing the framebuffer
+* Performing Scene culling
+* Rendering sets of GameObjects
+* Doing blits from one frame buffer to another
+* Rendering shadows
+* Applying post-processing effects
+
+The **Render** method takes takes two arguments:
 
 * A `ScriptableRenderContext` which is a type of Command Buffer where you can enqueue rendering operations to be performed.
 * A set of `Camera`s that to use for rendering.
 
 ## A basic pipeline
-The SRP Asset example from [here](SRP-Asset.html) returns an SRP Instance, this pipeline might look like what is below. 
+The SRP Asset example from [here](srp-asset.html) returns an SRP Instance, this pipeline might look like what is below. 
 
 ```C#
 public class BasicPipeInstance : RenderPipeline

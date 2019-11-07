@@ -1,7 +1,7 @@
 * [Scriptable Render Pipeline Core](index)
 * Getting started
-  * [overview](SRP-Overview)
-  * [The Problems that SRP Solves](Problems-That-SRP-Solves)
+  * [Creating a custom Scriptable Render Pipeline](creating-a-custom-srp)
+* SRP Core concepts
   * [SRP Asset](SRP-Asset)
   * [SRP Instance](SRP-Instance)
   * [SRP Context](SRP-Context)

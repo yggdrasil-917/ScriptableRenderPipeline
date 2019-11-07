@@ -1,24 +1,26 @@
 # SRP Asset
+An SRP Asset is a [ScriptableObject](https://docs.unity3d.com/Manual/class-ScriptableObject.html) that represents a specific configuration for a Scriptable Render Pipeline (SRP). It stores information such as:
 
-The SRP Asset contains the interface that you can use to configure a render pipeline. When Unity performs rendering for the first time, it calls `InternalCreatePipeline` on the Asset and the Asset must return a usable rendering instance. 
+* Whether GameObjects should cast shadows
+* What Shader quality level to use
+* The shadow distance
+* The default Material configuration
 
-The SRP Asset itself is a [ScriptableObject](https://docs.unity3d.com/Manual/class-ScriptableObject.html), which means that it can be a Project Asset and you can save it in your Project and version control works with it correctly. If you want to save a configuration for others to use, you need to create an SRP Asset in your Project. You can create an SRP just like any other ScriptableObject via Script and then save it via the Asset Database API. 
+When you set a reference to an SRP Asset in GraphicsSettings, Unity uses SRP rendering in your Project with the configuration that the SRP Asset provides.
 
-To make Unity use an SRP Asset in your Project, you need to set the Asset via GraphicsSettings. When you set the Asset reference here, Unity uses SRP rendering in your Project and diverts rendering from standard Unity rendering to the configuration the SRP Asset provides.
+At run time, Unity calls `InternalCreatePipeline` on the SRP Asset. The SRP Asset returns an [SRP Instance](srp-instance) that is configured according to the SRP Asset's settings.
 
-In addition to returning an instance and holding configuration data, you can also use the SRP Asset to provide a number of helper functions for things like:
+You can also use the SRP Asset to provide a number of helper functions for things like:
 
-- Default Material to use when creating 3d GameObjects.
-- Default Material to use when creating 2d GameObjects.
-- Default Material to use when creating Particle Systems.
-- Default Material to use when creating Terrain.
-
-This is essentially providing hook points to ensure that the end to end editor experience is correct. If you construct a pipeline and would like it to mimic the editor behaviour of the existing Unity pipelines, these steps are necessary.
+- Default Material to use when creating 3d GameObjects
+- Default Material to use when creating 2d GameObjects
+- Default Material to use when creating Particle Systems
+- Default Material to use when creating Terrain
 
 ## An SRP Asset example
 The Asset contains rendering properties and returns an instance of a pipeline that Unity can use to render your Scene. If a setting on the Asset changes, Unity destroys all current instances and creates a new instance with the new settings to use for the next frame.
 
-The example below shows an SRP Asset class. It contains a color that the [SRP Instance](SRP-Instance.md) uses to clear the screen. There is also some editor only code that assists the user in creating an SRP Asset in the Project. This is important as you need to set this Asset in the graphics settings window.
+The example below shows an SRP Asset class. It contains a color that the [SRP Instance](srp-instance.md) uses to clear the screen. There is also some editor only code that assists the user in creating an SRP Asset in the Project. This is important as you need to set this Asset in the graphics settings window.
 
 ```C#
 [ExecuteInEditMode]
