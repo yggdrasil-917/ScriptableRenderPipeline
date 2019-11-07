@@ -1,14 +1,13 @@
 * [Scriptable Render Pipeline Core](index)
 * Getting started
   * [Creating a custom Scriptable Render Pipeline](creating-a-custom-srp)
-* SRP Core concepts
-  * [SRP Asset](SRP-Asset)
-  * [SRP Instance](SRP-Instance)
-  * [SRP Context](SRP-Context)
-* Rendering with SRP
+* Scriptable Render Pipeline fundamentals
+  * [Render Pipeline Asset](SRP-Asset)
+  * [Render Pipeline Instance](SRP-Instance)
+  * [Render Pipeline Context](SRP-Context)
   * [Culling](Culling-in-SRP)
   * [Drawing](Drawing-in-SRP)
-* [XR in SRP](XR-in-SRP)
+* [XR and Scriptable Render Pipelines](XR-in-SRP)
 * Camera components
   * [Free Camera](Free-Camera)
   * [Camera Switcher](Camera-Switcher)
