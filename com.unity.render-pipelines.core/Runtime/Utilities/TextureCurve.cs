@@ -10,7 +10,7 @@ namespace UnityEngine.Rendering
     //   - Zero-value curve
     //   - Cheaper length property
     [Serializable]
-    public class TextureCurve : IDisposable
+    public class TextureCurve
     {
         const int k_Precision = 128; // Edit LutBuilder3D if you change this value
         const float k_Step = 1f / k_Precision;
@@ -37,9 +37,6 @@ namespace UnityEngine.Rendering
         bool m_IsCurveDirty;
         bool m_IsTextureDirty;
 
-        // Track whether Dispose has been called.
-        bool disposed = false;
-
         public Keyframe this[int index] => m_Curve[index];
 
         public TextureCurve(AnimationCurve baseCurve, float zeroValue, bool loop, in Vector2 bounds)
@@ -47,7 +44,7 @@ namespace UnityEngine.Rendering
 
         public TextureCurve(Keyframe[] keys, float zeroValue, bool loop, in Vector2 bounds)
         {
-            Debug.Log("Allocated resources !");
+            Debug.Log("Created texture curve !");
             m_Curve = new AnimationCurve(keys);
             m_ZeroValue = zeroValue;
             m_Loop = loop;
@@ -56,29 +53,9 @@ namespace UnityEngine.Rendering
             SetDirty();
         }
 
-        ~TextureCurve() => ReleaseUnityResources();
-
-
-        public void Dispose()
+        public void Release()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed)
-                return;
-
-            if (disposing)
-                ReleaseUnityResources();
-
-            disposed = true;
-        }
-
-        void ReleaseUnityResources()
-        {
-            Debug.Log("Destroy resources !");
+            Debug.Log("Destroy colr curve !");
             CoreUtils.Destroy(m_Texture);
             m_Texture = null;
         }
@@ -195,15 +172,9 @@ namespace UnityEngine.Rendering
         public TextureCurveParameter(TextureCurve value, bool overrideState = false)
             : base(value, overrideState) { }
 
-        protected override void Dispose(bool disposing)
+        public override void Release()
         {
-            if (disposed)
-                return;
-
-            if (disposing)
-                value.Dispose();
-
-            base.Dispose(disposing);
+            m_Value.Release();
         }
 
         // TODO: TextureCurve interpolation
