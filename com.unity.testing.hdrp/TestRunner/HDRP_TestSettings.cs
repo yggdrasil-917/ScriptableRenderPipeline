@@ -20,15 +20,23 @@ public class HDRP_TestSettings : GraphicsTestSettings
 	public int captureFramerate = 0;
 	public int waitFrames = 0;
 
+    [SerializeField]
     internal XRLayoutOverride xrLayout = XRLayoutOverride.TestSinglePassOneEye;
 
     public RenderPipelineAsset renderPipelineAsset;
 
     void Awake()
     {
-        // Built-in font shaders are incompatible with XR, replace them with a ShaderGraph version
         if (XRSystem.testModeEnabled)
+        {
+            XRSystem.layoutOverride = xrLayout;
+
+            if (xrLayout == XRLayoutOverride.None)
+                return;
+
+            // Built-in font shaders are incompatible with XR, replace them with a ShaderGraph version
             doBeforeTest.AddListener(ReplaceBuiltinFontShaders);
+        }
 
         if (renderPipelineAsset == null)
         {
@@ -59,6 +67,7 @@ public class HDRP_TestSettings : GraphicsTestSettings
 
     void ReplaceBuiltinFontShaders()
     {
+#if UNITY_EDITOR
         var fontMaterialSG = AssetDatabase.LoadAssetAtPath<Material>("Packages/com.unity.testing.hdrp/Fonts/Font Material SG.mat");
         if (fontMaterialSG != null)
         {
@@ -78,5 +87,6 @@ public class HDRP_TestSettings : GraphicsTestSettings
                 }
             }
         }
+#endif
     }
 }
