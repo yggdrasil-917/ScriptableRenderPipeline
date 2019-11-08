@@ -44,7 +44,6 @@ namespace UnityEngine.Rendering
 
         public TextureCurve(Keyframe[] keys, float zeroValue, bool loop, in Vector2 bounds)
         {
-            Debug.Log("Created texture curve !");
             m_Curve = new AnimationCurve(keys);
             m_ZeroValue = zeroValue;
             m_Loop = loop;
@@ -55,7 +54,6 @@ namespace UnityEngine.Rendering
 
         public void Release()
         {
-            Debug.Log("Destroy colr curve !");
             CoreUtils.Destroy(m_Texture);
             m_Texture = null;
         }
