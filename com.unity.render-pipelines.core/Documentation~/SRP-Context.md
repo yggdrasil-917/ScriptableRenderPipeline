@@ -1,9 +1,9 @@
 # Scriptable Render Context
-A Scriptable Render Pipeline (SRP) uses the concept of delayed execution: you build up a list of rendering commands, and then you execute them. The object that Unity uses to store and execute these commands is called a Scriptable Render Context.
+Unity's Scriptable Render Pipeline (SRP) renders using delayed execution. You build up a list of rendering commands, and then you tell Unity to execute them. The object that you use to build up this list of commands is called a Scriptable Render Context.
 
-SRP uses a mix of existing Unity `CommandBuffers` (such as `ClearRenderTarget`) and SRP-specific commands. Once you have enqueued your commands, you must call `Submit` execute them.
+In SRP, you can use commands from Unity's existing `CommandBuffers` (such as `ClearRenderTarget`), and some SRP-specific commands that are listed Scriptable Render Context API documentation. You add these commands to your Scriptable Render Context, and then call `Submit` on the Scriptable Render Context to execute the commands.
 
-In this example, a `CommandBuffer` clears a render target.
+This example shows you how to use a Scriptable Render Context to clear a render target.
 
 ```C#
 public class BasicPipeInstance : RenderPipeline
@@ -12,6 +12,7 @@ public class BasicPipeInstance : RenderPipeline
 
     public BasicPipeInstance(Color clearColor)
     {
+        // the configured color is passed in via the constructor, when the Render Pipeline Asset creates this instance
         m_ClearColor = clearColor;
     }
 
@@ -19,7 +20,7 @@ public class BasicPipeInstance : RenderPipeline
     {
         base.Render(context, cameras);
 
-        // clear buffers to the configured color
+        // uses a CommandBuffer to clear buffers to the configured color
         var cmd = new CommandBuffer();
         cmd.ClearRenderTarget(true, true, m_ClearColor);
         context.ExecuteCommandBuffer(cmd);

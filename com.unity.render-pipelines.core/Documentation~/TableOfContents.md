@@ -4,7 +4,7 @@
 * Scriptable Render Pipeline fundamentals
   * [Render Pipeline Asset](SRP-Asset)
   * [Render Pipeline Instance](SRP-Instance)
-  * [Render Pipeline Context](SRP-Context)
+  * [Scriptable Render Context](SRP-Context)
   * [Culling](Culling-in-SRP)
   * [Drawing](Drawing-in-SRP)
 * [XR and Scriptable Render Pipelines](XR-in-SRP)
