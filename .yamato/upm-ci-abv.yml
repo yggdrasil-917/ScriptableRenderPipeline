@@ -1,6 +1,4 @@
 editors:
-  - version: 
-  - version: 
   - version: 2019.3
     cmd: -u 2019.3/staging
   - version: fast-2019.3
@@ -63,7 +61,7 @@ all_project_ci_nightly:
       rerun: always
   {% endfor %}
   {% for testplatform in testplatforms %} 
-    - .yamato/upm-ci-abv.yml#smoke_test_{{ testplatform.name }}_trunk
+    - .yamato/upm-ci-abv.yml#smoke_test_{{ testplatform.name }}_2019.3
   {% endfor %}
   triggers:
     recurring:
