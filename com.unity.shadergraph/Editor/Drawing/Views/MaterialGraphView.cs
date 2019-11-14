@@ -103,6 +103,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                     }
                 }
 
+                evt.menu.AppendAction("Select/Unused Nodes", SelectUnusedNodes);
+
                 InitializeViewSubMenu(evt);
                 InitializePrecisionSubMenu(evt);
 
@@ -206,6 +208,33 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (evt.target is BlackboardField)
             {
                 evt.menu.AppendAction("Delete", (e) => DeleteSelectionImplementation("Delete", AskUser.DontAskUser), (e) => canDeleteSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            }
+        }
+
+        void SelectUnusedNodes(DropdownMenuAction action)
+        {
+            Undo.RecordObject(graph.owner, "Select Unused Nodes");
+            ClearSelection();
+            var nodeView = graph.GetNodes<IMasterNode>();
+            var nodesConnectedToAMasterNode = new List<AbstractMaterialNode>();
+
+            // Get the list of nodes from Master nodes
+            foreach (var masterNode in nodeView)
+            {
+                var abs = masterNode as AbstractMaterialNode;
+                NodeUtils.DepthFirstCollectNodesFromNode(nodesConnectedToAMasterNode, abs);
+            }
+
+            selection.Clear();
+            // Get all nodes and then compare with the master nodes list
+            var allNodes = nodes.ToList().OfType<IShaderNodeView>();
+            foreach (IShaderNodeView materialNodeView in allNodes)
+            {
+                if (!nodesConnectedToAMasterNode.Contains(materialNodeView.node))
+                {
+                    var nd = materialNodeView as GraphElement;
+                    AddToSelection(nd);
+                }
             }
         }
 
