@@ -5,10 +5,11 @@ import tarfile
 
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
 srp_revision = ""
-#unity_revision = sys.argv[2]
-#api_key = sys.argv[3]
-#branch_name = sys.argv[4]
 
+#api_key = sys.argv[3]
+
+#could unity revision be the branch name?
+unity_revision = ""
 
 package_path = 'External/PackageManager/Editor/'
 
@@ -22,7 +23,7 @@ core_package = packages['com.unity.render-pipelines.core']
 
 version = core_package['minimumVersion']
 
-package_name = 'com.unity.render-pipelines.core' + '-' + version + '.tgz'
+package_name = 'com.unity.render-pipelines.core-' + version + '.tgz'
 
 
 package = ""
@@ -33,13 +34,13 @@ for filename in tar.getnames():
       tar_data = package_tar.read()
       package = tar_data
   except:
-      print('ERROR: Did not find %s in tar archive' % filename)
+      print('ERROR: Did not find %s in packed package' % filename)
 
 
 package_json = json.loads(package)
 repository = package_json['repository']
 srp_revision = repository['revision']
-print(srp_revision)
+#print(srp_revision)
 
 data = '''{
   "source": {
