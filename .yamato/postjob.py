@@ -8,9 +8,7 @@ srp_revision = ""
 
 #api_key = sys.argv[3]
 
-#could unity revision be the branch name?
-#hg branch .
-#hg log -r . --template "{node} {branch}\n"
+#hg log -r . --template "{node}"
 unity_revision = ""
 
 package_path = 'External/PackageManager/Editor/'
