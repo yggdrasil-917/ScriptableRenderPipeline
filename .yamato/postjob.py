@@ -1,16 +1,18 @@
 import sys
-#import requests
+import requests
 import json
 import tarfile
 
-#url = "https://yamato-api.cds.internal.unity3d.com/jobs"
+url = "https://yamato-api.cds.internal.unity3d.com/jobs"
 srp_revision = ""
 #unity_revision = sys.argv[2]
 #api_key = sys.argv[3]
 #branch_name = sys.argv[4]
 
-#core_package = "com.unity.render-pipelines.core"
-#External/PackageManager/Editor/
+
+package_path = 'External/PackageManager/Editor/'
+
+
 with open('manifest.json') as f:
   manifest = json.load(f)
 
@@ -21,7 +23,7 @@ core_package = packages['com.unity.render-pipelines.core']
 version = core_package['minimumVersion']
 
 package_name = 'com.unity.render-pipelines.core' + '-' + version + '.tgz'
-package_path = 'External/PackageManager/Editor/'
+
 
 package = ""
 tar = tarfile.open(package_name, "r:*")
@@ -57,7 +59,7 @@ data = '''{
 
 key = 'ApiKey ' + api_key
 
-# response = requests.post(url, data=data, headers={'Authorization': key})
+response = requests.post(url, data=data, headers={'Authorization': key})
 
 if(response.ok):
     print "ok"
