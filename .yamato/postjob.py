@@ -48,7 +48,7 @@ data = '''{
   },
   "links": {
     "project": "/projects/78",
-    "jobDefinition": "/projects/78/revisions/''' + srp_revision + '''/job-definitions/.yamato%2fupm-ci-abv.yml#trunk_verification"
+    "jobDefinition": "/projects/78/revisions/''' + srp_revision + '''/job-definitions/.yamato#upm-ci-abv.yml#trunk_verification"
   },
   "environmentVariables": [
     { "key": "CUSTOM_REVISION", "value": "''' + unity_revision + '''" }
