@@ -9,6 +9,8 @@ srp_revision = ""
 #api_key = sys.argv[3]
 
 #could unity revision be the branch name?
+#hg branch .
+#hg log -r . --template "{node} {branch}\n"
 unity_revision = ""
 
 package_path = 'External/PackageManager/Editor/'
@@ -63,7 +65,7 @@ key = 'ApiKey ' + api_key
 response = requests.post(url, data=data, headers={'Authorization': key})
 
 if(response.ok):
-    print "ok"
+    print("ok")
 else:
     response.raise_for_status()
-    print "oh no"
+    print("oh no")
