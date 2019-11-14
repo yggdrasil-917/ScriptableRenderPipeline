@@ -3,9 +3,8 @@ import requests
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
 srp_revision = sys.argv[1]
 unity_revision = sys.argv[2]
-job_definition = sys.argv[3]
-api_key = sys.argv[4]
-branch_name = sys.argv[5]
+api_key = sys.argv[3]
+branch_name = sys.argv[4]
 data = '''{
   "source": {
     "branchname": "''' + branch_name + '''",
@@ -20,7 +19,7 @@ data = '''{
 ]
 }'''
 
-print '\n' + data + '\n'
+#print '\n' + data + '\n'
 
 key = 'ApiKey ' + api_key
 
