@@ -14,7 +14,7 @@ platforms:
     flavor: m1.mac
   - name: Linux
     type: Unity::VM::GPU
-    image: cds-ops/ubuntu-18.04-base:latest
+    image: cds-ops/ubuntu-18.04-base:stable
     flavor: b1.large
 testplatforms:
   - name: Standalone
@@ -151,7 +151,7 @@ All_{{ project.name }}_{{ editor.version }}:
   agent:
     name: whatever
     type: Unity::VM
-    image: cds-ops/ubuntu-18.04-agent:latest
+    image: cds-ops/ubuntu-18.04-base:stable
     flavor: b1.small
   commands:
     - dir
