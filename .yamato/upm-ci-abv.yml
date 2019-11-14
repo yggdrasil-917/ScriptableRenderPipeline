@@ -65,3 +65,7 @@ all_project_ci_nightly:
     logs:
       paths:
         - "**/test-results/**"
+
+trunk_verification:
+  name: Trunk verification
+  agent:
