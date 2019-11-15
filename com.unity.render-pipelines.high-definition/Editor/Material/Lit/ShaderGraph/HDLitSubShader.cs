@@ -943,6 +943,22 @@ namespace UnityEditor.Rendering.HighDefinition
                 }
             }
 
+            switch(masterNode.spaceDropOffMode)
+            {
+                case SpaceDropOffMode.TangentSpace:
+                    baseActiveFields.AddAll("NormalDropOffTS");
+                    break;
+                case SpaceDropOffMode.ObjectSpace:
+                    baseActiveFields.AddAll("NormalDropOffOS");
+                    break;
+                case SpaceDropOffMode.WorldSpace:
+                    baseActiveFields.AddAll("NormalDropOffWS");
+                    break;
+                default:
+                    UnityEngine.Debug.LogError("Unknown normal drop off space: " + masterNode.spaceDropOffMode);
+                    break;
+            }
+
             switch (masterNode.materialType)
             {
                 case HDLitMasterNode.MaterialType.Anisotropy:
