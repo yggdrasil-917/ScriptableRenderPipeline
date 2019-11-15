@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Utilities;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.RenderGraphModule;
 
@@ -66,6 +67,11 @@ namespace UnityEngine.Rendering.HighDefinition
         public VBufferParameters[] vBufferParams; // Double-buffered
 
         float m_AmbientOcclusionResolutionScale = 0.0f; // Factor used to track if history should be reallocated for Ambient Occlusion
+
+        // We need to keep this here as culling is done before volume update. That means that culling for the light will be left with the state used by the last
+        // updated camera which is not necessarily the camera we are culling for. This should be fixed if we end up having scriptable culling, as the culling for
+        // the lights can be done after the volume update.
+        internal float shadowMaxDistance = 500.0f;
 
         // XR multipass and instanced views are supported (see XRSystem)
         XRPass m_XRPass;
@@ -349,14 +355,25 @@ namespace UnityEngine.Rendering.HighDefinition
             RTHandles.SetReferenceSize(nonScaledViewport.x, nonScaledViewport.y, m_msaaSamples);
         }
 
+        void SetupCurrentMaterialQuality(CommandBuffer cmd)
+        {
+            var asset = HDRenderPipeline.currentAsset;
+            MaterialQuality availableQualityLevels = asset.availableMaterialQualityLevels;
+            MaterialQuality currentMaterialQuality = frameSettings.materialQuality == (MaterialQuality)0 ? asset.defaultMaterialQualityLevel : frameSettings.materialQuality;
+
+            availableQualityLevels.GetClosestQuality(currentMaterialQuality).SetGlobalShaderKeywords(cmd);
+        }
+
         // Updating RTHandle needs to be done at the beginning of rendering (not during update of HDCamera which happens in batches)
         // The reason is that RTHandle will hold data necessary to setup RenderTargets and viewports properly.
-        public void BeginRender()
+        public void BeginRender(CommandBuffer cmd)
         {
             RTHandles.SetReferenceSize(m_ActualWidth, m_ActualHeight, m_msaaSamples);
             m_HistoryRTSystem.SwapAndSetReferenceSize(m_ActualWidth, m_ActualHeight, m_msaaSamples);
 
             m_RecorderCaptureActions = CameraCaptureBridge.GetCaptureActions(camera);
+
+            SetupCurrentMaterialQuality(cmd);
         }
 
         void UpdateAntialiasing()
@@ -621,7 +638,8 @@ namespace UnityEngine.Rendering.HighDefinition
                         if (hdPipeline.asset.currentPlatformRenderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask == -1)
                             volumeLayerMask = -1;
                         else
-                            volumeLayerMask = (-1 & ~hdPipeline.asset.currentPlatformRenderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask);
+                            // Remove lighting override mask and layer 31 which is used by preview/lookdev
+                            volumeLayerMask = (-1 & ~(hdPipeline.asset.currentPlatformRenderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask | (1 << 31)));
                     }
                 }
             }
@@ -1017,6 +1035,59 @@ namespace UnityEngine.Rendering.HighDefinition
                     for (data.recorderCaptureActions.Reset(); data.recorderCaptureActions.MoveNext();)
                         data.recorderCaptureActions.Current(tempRT, ctx.cmd);
                 });
+            }
+        }
+
+        // VisualSky is the sky used for rendering in the main view.
+        // LightingSky is the sky used for lighting the scene (ambient probe and sky reflection)
+        // It's usually the visual sky unless a sky lighting override is setup.
+        //      Ambient Probe: Only used if Ambient Mode is set to dynamic in the Visual Environment component. Updated according to the Update Mode parameter.
+        //      (Otherwise it uses the one from the static lighting sky)
+        //      Sky Reflection Probe : Always used and updated according to the Update Mode parameter.
+        internal SkyUpdateContext   visualSky { get; private set; } = new SkyUpdateContext();
+        internal SkyUpdateContext   lightingSky { get; private set; } = null;
+        // We need to cache this here because it's need in SkyManager.SetupAmbientProbe
+        // The issue is that this is called during culling which happens before Volume updates so we can't query it via volumes in there.
+        internal SkyAmbientMode skyAmbientMode { get; private set; }
+        internal SkyUpdateContext   m_LightingOverrideSky = new SkyUpdateContext();
+
+        internal void UpdateCurrentSky(SkyManager skyManager)
+        {
+#if UNITY_EDITOR
+            if (HDUtils.IsRegularPreviewCamera(camera))
+            {
+                visualSky.skySettings = skyManager.GetDefaultPreviewSkyInstance();
+                lightingSky = visualSky;
+                skyAmbientMode = SkyAmbientMode.Dynamic;
+            }
+            else
+#endif
+            {
+                skyAmbientMode = VolumeManager.instance.stack.GetComponent<VisualEnvironment>().skyAmbientMode.value;
+
+                visualSky.skySettings = SkyManager.GetSkySetting(VolumeManager.instance.stack);
+
+                // Now, see if we have a lighting override
+                // Update needs to happen before testing if the component is active other internal data structure are not properly updated yet.
+                VolumeManager.instance.Update(skyManager.lightingOverrideVolumeStack, volumeAnchor, skyManager.lightingOverrideLayerMask);
+                if (VolumeManager.instance.IsComponentActiveInMask<VisualEnvironment>(skyManager.lightingOverrideLayerMask))
+                {
+                    SkySettings newSkyOverride = SkyManager.GetSkySetting(skyManager.lightingOverrideVolumeStack);
+                    if (m_LightingOverrideSky.skySettings != null && newSkyOverride == null)
+                    {
+                        // When we switch from override to no override, we need to make sure that the visual sky will actually be properly re-rendered.
+                        // Resetting the visual sky hash will ensure that.
+                        visualSky.skyParametersHash = -1;
+                    }
+
+                    m_LightingOverrideSky.skySettings = newSkyOverride;
+                    lightingSky = m_LightingOverrideSky;
+
+                }
+                else
+                {
+                    lightingSky = visualSky;
+                }
             }
         }
     }
