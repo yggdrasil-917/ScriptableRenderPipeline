@@ -24,10 +24,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The Main Preview for Sprite Lit and Sprite Unlit master nodes now displays the correct color. [1184656](https://issuetracker.unity3d.com/issues/shadergraph-preview-for-lit-and-unlit-master-node-wrong-color-when-color-is-set-directly-on-master-node)
 - Shader Graph shaders in `Always Include Shaders` no longer crash builds. [1191757](https://issuetracker.unity3d.com/issues/lwrp-build-crashes-when-built-with-shadergraph-file-added-to-always-include-shaders-list)
 - The `Transform` node now correctly transforms Absolute World to Object.
-
-### Fixed
 - Sticky Notes can now be grouped properly.
 - Fixed an issue where nodes couldn't be copied from a group.
+- Fixed an issue where converting nodes into a Sub Graph could result in the Sub Graph having duplicate names. 
+- Fixed an issue where adding or removing entries into a Enum Keyword didn't update the number of ports on the Keyword Nodes, which could result in a graph crash.
+- Fixed an issue where changing a Blackboard Property's precision didn't update the colors inside the graph when using Precision as Color Mode.
 
 ## [7.1.1] - 2019-09-05
 ### Added
