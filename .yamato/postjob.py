@@ -2,6 +2,7 @@ import sys
 import requests
 import json
 import tarfile
+import subprocess
 
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
 srp_revision = ""
@@ -10,6 +11,18 @@ srp_revision = ""
 
 #hg log -r . --template "{node}"
 unity_revision = ""
+
+try:
+    HG_REV = subprocess.check_output(['hg', 'id', '-i']).strip()
+except OSError:
+    HG_REV = "? (Couldn't find hg)"
+except subprocess.CalledProcessError as e:
+    HG_REV = "? (Error {})".format(e.returncode)
+except Exception:  # don't use bare 'except', mis-catches Ctrl-C and more
+    # should never have to deal with a hangup 
+    HG_REV = "???"
+
+unity_revision = HG_REV
 
 package_path = 'External/PackageManager/Editor/'
 
