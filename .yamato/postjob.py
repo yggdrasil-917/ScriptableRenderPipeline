@@ -18,7 +18,7 @@ except OSError:
     HG_REV = "? (Couldn't find hg)"
 except subprocess.CalledProcessError as e:
     HG_REV = "? (Error {})".format(e.returncode)
-except Exception:  # don't use bare 'except', mis-catches Ctrl-C and more
+except Exception:
     # should never have to deal with a hangup 
     HG_REV = "???"
 
