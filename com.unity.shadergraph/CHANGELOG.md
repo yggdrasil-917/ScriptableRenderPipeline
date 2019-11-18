@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - You can now save your graph as a new Asset.
 - Added support for vertex skinning when you use the DOTS animation package.
 - You can now use the right-click context menu to set the precision on multiple selected nodes.
+- Blackboard Properties now have: a duplication menu option, order is now properly maintained during duplication, and they are now inserted below the current selection.
+- Sub Graphs remember the position the location of the last created Sub Graph to minimize folder navigation.
 
 ### Fixed
 - Edges no longer produce errors when you save a Shader Graph.
@@ -19,6 +21,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed an issue where Unity would crash when you imported a Shader Graph Asset with invalid formatting.
 - Fixed an issue with the animated preview when there is no Camera with animated Materials in the Editor.
 - Triplanar nodes no longer use Camera-relative world space by default in HDRP.
+- Fixed a bug where duplicating multiple Blackboard Properties and/or Keywords at once often crashed the graph.
+- Fixed a bug where blackboard properties could not be reordered.
+- Exposed status for Shader Properties & Keywords is now properly duplicated.
 
 ## [7.1.1] - 2019-09-05
 ### Added
