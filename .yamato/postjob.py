@@ -63,6 +63,9 @@ key = 'ApiKey ' + api_key
 
 response = requests.post(url, data=data, headers={'Authorization': key})
 
+# get id of the job
+# wait for it to finish
+
 if(response.ok):
     print("ok")
 else:
