@@ -7,8 +7,6 @@ import subprocess
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
 srp_revision = ""
 
-#api_key = sys.argv[3]
-
 #hg log -r . --template "{node}"
 unity_revision = ""
 
@@ -34,26 +32,18 @@ packages = manifest['packages']
 
 core_package = packages['com.unity.render-pipelines.core']
 
+#do i want the minimum version here?
 version = core_package['minimumVersion']
 
-package_name = 'com.unity.render-pipelines.core-' + version + '.tgz'
+package_url = 'https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-candidates-master/com.unity.render-pipelines.core/' + version
 
+package = requests.get(package_url)
 
-package = ""
-tar = tarfile.open(package_name, "r:*")
-for filename in tar.getnames():
-  try:
-      package_tar = tar.extractfile('package/package.json')
-      tar_data = package_tar.read()
-      package = tar_data
-  except:
-      print('ERROR: Did not find %s in packed package' % filename)
-
+package = package.text
 
 package_json = json.loads(package)
 repository = package_json['repository']
 srp_revision = repository['revision']
-#print(srp_revision)
 
 data = '''{
   "source": {
@@ -68,8 +58,6 @@ data = '''{
     { "key": "CUSTOM_REVISION", "value": "''' + unity_revision + '''" }
 ]
 }'''
-
-#print '\n' + data + '\n'
 
 key = 'ApiKey ' + api_key
 
