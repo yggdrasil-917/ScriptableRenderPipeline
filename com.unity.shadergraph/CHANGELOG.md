@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - You can now save your graph as a new Asset.
 - Added support for vertex skinning when you use the DOTS animation package.
 - You can now use the right-click context menu to set the precision on multiple selected nodes.
-- Blackboard Properties now have: a duplication menu option, order is now properly maintained during duplication, and they are now inserted below the current selection.
+- Blackboard Properties now have a duplication menu option, order is now properly maintained during duplication, and they are now inserted below the current selection.
 - Sub Graphs remember the position the location of the last created Sub Graph to minimize folder navigation.
 
 ### Fixed
