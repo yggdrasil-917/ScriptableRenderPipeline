@@ -10,19 +10,19 @@ srp_revision = ""
 #api_key = sys.argv[3]
 
 #hg log -r . --template "{node}"
-unity_revision = %REVISION_UNITY%
+unity_revision = ""
 
-# try:
-#     HG_REV = subprocess.check_output(['hg', 'id', '-i']).strip()
-# except OSError:
-#     HG_REV = "? (Couldn't find hg)"
-# except subprocess.CalledProcessError as e:
-#     HG_REV = "? (Error {})".format(e.returncode)
-# except Exception:
-#     # should never have to deal with a hangup 
-#     HG_REV = "???"
+try:
+    HG_REV = subprocess.check_output(['hg', 'id', '-i']).strip()
+except OSError:
+    HG_REV = "? (Couldn't find hg)"
+except subprocess.CalledProcessError as e:
+    HG_REV = "? (Error {})".format(e.returncode)
+except Exception:
+    # should never have to deal with a hangup 
+    HG_REV = "???"
 
-# unity_revision = HG_REV
+unity_revision = HG_REV
 
 package_path = 'External/PackageManager/Editor/'
 
