@@ -1,7 +1,6 @@
 import sys
 import requests
 import json
-import tarfile
 import subprocess
 
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
@@ -65,6 +64,16 @@ response = requests.post(url, data=data, headers={'Authorization': key})
 
 # get id of the job
 # wait for it to finish
+
+response_json = response.json()
+
+job_id = response_json[id]
+
+get_job = requests.get(url + '/' + job_id, headers={'Authorization': key})
+
+job_json = get_job.json()
+
+
 
 if(response.ok):
     print("ok")
