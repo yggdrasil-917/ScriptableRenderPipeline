@@ -2,6 +2,7 @@ import sys
 import requests
 import json
 import subprocess
+import time
 
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
 srp_revision = ""
@@ -69,14 +70,18 @@ response_json = response.json()
 
 job_id = response_json[id]
 
-get_job = requests.get(url + '/' + job_id, headers={'Authorization': key})
+status = ''
 
-job_json = get_job.json()
+results = ['success', 'failed', 'cancelled', 'done']
 
+while results not in status:
+  time.sleep(20)
+  get_job = requests.get(url + '/' + job_id, headers={'Authorization': key})
+  job_json = get_job.json()
+  status = job_json['status']
 
-
-if(response.ok):
-    print("ok")
+#maybe this part needs to log the yamato job link so the person checking the log can find where to look?
+if status == 'success':
+  sys.exit(0)
 else:
-    response.raise_for_status()
-    print("oh no")
+  sys.exit(1)
