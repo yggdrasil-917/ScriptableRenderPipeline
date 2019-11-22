@@ -670,17 +670,19 @@ namespace UnityEditor.ShaderGraph.Drawing
             selection.Clear();
         }
 
-        public static void GetIndexToInsert(Blackboard blackboard, out int propertyIndex, out int keywordIndex)
+        // Gets the index after the currently selected shader input per row. indexPerSection.Length == # of sections (currently 2).
+        public static void GetIndexToInsert(Blackboard blackboard, int[] indexPerSection)
         {
-            if (blackboard == null || !blackboard.selection.Any())
-            {
-                propertyIndex = -1;
-                keywordIndex = -1;
+            if (indexPerSection == null)
                 return;
-            }
 
-            int highestPropertyIndex = -2;
-            int highestKeywordIndex  = -2;
+            int length = indexPerSection.Length;
+
+            for (int x = 0; x < length; x++)
+                indexPerSection[x] = -1;
+
+            if (blackboard == null || !blackboard.selection.Any() || length == 0)
+                return;
 
             foreach (ISelectable selection in blackboard.selection)
             {
@@ -693,30 +695,17 @@ namespace UnityEditor.ShaderGraph.Drawing
                         continue;
                     VisualElement sectionContainer = section.parent;
 
-                    int index;
-                    // Property Section
-                    if (sectionContainer.IndexOf(section) == 0)
+                    int sectionIndex = sectionContainer.IndexOf(section);
+                    if (sectionIndex > length)
+                        continue;
+
+                    int rowAfterIndex = section.IndexOf(row) + 1;
+                    if (rowAfterIndex  > indexPerSection[sectionIndex])
                     {
-                        index = section.IndexOf(row);
-                        if (index > highestPropertyIndex)
-                        {
-                            highestPropertyIndex = index;
-                        }
-                    }
-                    // Keyword Section
-                    else if (sectionContainer.IndexOf(section) == 1)
-                    {
-                        index = section.IndexOf(row);
-                        if (index > highestKeywordIndex)
-                        {
-                            highestKeywordIndex = index;
-                        }
+                        indexPerSection[sectionIndex] = rowAfterIndex;
                     }
                 }
             }
-
-            propertyIndex = highestPropertyIndex + 1;
-            keywordIndex = highestKeywordIndex + 1;
         }
 
         #region Drag and drop
@@ -952,10 +941,9 @@ namespace UnityEditor.ShaderGraph.Drawing
             Blackboard blackboard = graphView.GetFirstAncestorOfType<GraphEditorView>().blackboardProvider.blackboard;
             // Debug.Log((graphView.GetBlackboard() != null).ToString());
 
-            // Get the position to insert the new shader inputs per section
-            int propertyIndex;
-            int keywordIndex;
-            MaterialGraphView.GetIndexToInsert(blackboard, out propertyIndex, out keywordIndex);
+            // Get the position to insert the new shader inputs per section; currently two: 0 = properties, 1 = keywords
+            int[] indicies = new int[2];
+            MaterialGraphView.GetIndexToInsert(blackboard, indicies);
 
             // Make new inputs from the copied graph
             foreach (ShaderInput input in copyGraph.inputs)
@@ -966,8 +954,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     case AbstractShaderProperty property:
                         // Increment for next within the same section
-                        copiedInput = DuplicateShaderInputs(input, graphView.graph, propertyIndex);
-                        if (propertyIndex > 0) propertyIndex++;
+                        copiedInput = DuplicateShaderInputs(input, graphView.graph, indicies[0]);
+                        if (indicies[0] >= 0) indicies[0]++;
 
                         // Update the property nodes that depends on the copied node
                         var dependentPropertyNodes = copyGraph.GetNodes<PropertyNode>().Where(x => x.propertyGuid == input.guid);
@@ -987,8 +975,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                         }
 
                         // Increment for next within the same section
-                        copiedInput = DuplicateShaderInputs(input, graphView.graph, keywordIndex);
-                        if (keywordIndex > 0) keywordIndex++;
+                        copiedInput = DuplicateShaderInputs(input, graphView.graph, indicies[1]);
+                        if (indicies[1] >= 0) indicies[1]++;
 
                         // Update the keyword nodes that depends on the copied node
                         var dependentKeywordNodes = copyGraph.GetNodes<KeywordNode>().Where(x => x.keywordGuid == input.guid);

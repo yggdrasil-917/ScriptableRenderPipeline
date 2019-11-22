@@ -41,8 +41,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         GraphEditorView m_GraphEditorView;
 
-        string m_PrevPath;
-
         MessageManager m_MessageManager;
         MessageManager messageManager
         {
@@ -349,7 +347,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     if (shader != null)
                     {
                         GraphData.onSaveGraph(shader, (graphObject.graph.outputNode as MasterNode).saveContext);
-                    }                    
+                    }
                 }
             }
 
@@ -398,9 +396,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             var graphView = graphEditorView.graphView;
 
-            if (m_PrevPath == null || m_PrevPath.Length == 0) m_PrevPath = Application.dataPath;
-
-            var path = EditorUtility.SaveFilePanelInProject("Save Sub Graph", "New Shader Sub Graph", ShaderSubGraphImporter.Extension, "", m_PrevPath);
+            var path = EditorUtility.SaveFilePanelInProject("Save Sub Graph", "New Shader Sub Graph", ShaderSubGraphImporter.Extension, "");
             path = path.Replace(Application.dataPath, "Assets");
             if (path.Length == 0)
                 return;
@@ -677,9 +673,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             if(FileUtilities.WriteShaderGraphToDisk(path, subGraph))
                 AssetDatabase.ImportAsset(path);
-
-            // Store path for next time
-            m_PrevPath = path;
 
             var loadedSubGraph = AssetDatabase.LoadAssetAtPath(path, typeof(SubGraphAsset)) as SubGraphAsset;
             if (loadedSubGraph == null)
