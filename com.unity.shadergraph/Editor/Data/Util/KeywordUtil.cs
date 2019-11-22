@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +18,7 @@ namespace UnityEditor.ShaderGraph
                 displayName = "Material Quality",
                 referenceName = "MATERIAL_QUALITY",
                 type = KeywordType.Enum,
-                definition = KeywordDefinition.ShaderFeature,
+                definition = KeywordDefinition.MultiCompile,
                 scope = KeywordScope.Global,
                 value = 0,
                 entries = new KeywordEntry[]

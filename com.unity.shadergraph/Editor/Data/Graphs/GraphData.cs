@@ -316,7 +316,7 @@ namespace UnityEditor.ShaderGraph
 
         public bool didActiveOutputNodeChange { get; set; }
 
-        internal delegate void SaveGraphDelegate(Shader shader);
+        internal delegate void SaveGraphDelegate(Shader shader, object context);
         internal static SaveGraphDelegate onSaveGraph;
 
         public GraphData()
@@ -1211,12 +1211,21 @@ namespace UnityEditor.ShaderGraph
                 }
 
                 AbstractMaterialNode abstractMaterialNode = (AbstractMaterialNode)node;
+
+                // If the node has a group guid and no group has been copied, reset the group guid.
                 // Check if the node is inside a group
-                if (groupGuidMap.ContainsKey(abstractMaterialNode.groupGuid))
+                if (abstractMaterialNode.groupGuid != Guid.Empty)
                 {
-                    var absNode = pastedNode as AbstractMaterialNode;
-                    absNode.groupGuid = groupGuidMap[abstractMaterialNode.groupGuid];
-                    pastedNode = absNode;
+                    if (groupGuidMap.ContainsKey(abstractMaterialNode.groupGuid))
+                    {
+                        var absNode = pastedNode as AbstractMaterialNode;
+                        absNode.groupGuid = groupGuidMap[abstractMaterialNode.groupGuid];
+                        pastedNode = absNode;
+                    }
+                    else
+                    {
+                        pastedNode.groupGuid = Guid.Empty;
+                    }
                 }
 
                 var drawState = node.drawState;
