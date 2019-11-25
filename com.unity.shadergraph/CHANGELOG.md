@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed an error where the UV channel drop-down menu on nodes had clipped text. [1188710](https://issuetracker.unity3d.com/issues/shader-graph-all-uv-dropdown-value-is-clipped-under-shader-graph)
 - Sticky Notes can now be grouped properly.
 - Fixed an issue where nodes couldn't be copied from a group.
-- Fixed a bug where duplicating multiple Blackboard Properties and/or Keywords at once often crashed the graph.
+- Fixed a bug where duplicating multiple Blackboard Properties and/or Keywords at once often would often break Shader Graph, causing potential data loss.
 - Fixed a bug where blackboard properties could not be reordered.
 - Exposed status for Shader Properties & Keywords is now properly duplicated.
 
