@@ -52,6 +52,9 @@ linux_apis:
     cmd: -force-glcore
   - name: Vulkan
     cmd: -force-vulkan
+android_apis:
+  - name: OpenGLES3
+  - name: Vulkan
 ---
 {% for project in projects %}
 {% for editor in editors %}
@@ -188,9 +191,9 @@ linux_apis:
 
 {% elsif platform.name == "Android" %}
 
-
-{{ project.name }}_Android_{{ editor.version }}:
-  name: {{ project.name }} on Android on version {{ editor.version }}
+{% for android_api in android_apis %}
+{{ project.name }}_Android_{{ android_api.name }}_{{ editor.version }}:
+  name: {{ project.name }} on Android_{{ android_api.name }} on version {{ editor.version }}
   agent:
     type: {{ platform.type }}
     image: {{ platform.image }}
@@ -205,14 +208,18 @@ linux_apis:
       %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
    - powershell %ANDROID_SDK_ROOT%\platform-tools\adb.exe devices
    - NetSh Advfirewall set allprofiles state off
+   {% if android_api.name == "Vulkan" %}
+   - utr\utr --suite=playmode --platform=Android --testproject=TestProjects\{{ project.folder }} --extra-editor-arg="-executemethod" --extra-editor-arg="SetupProject.ApplySettings" --extra-editor-arg="vulkan" --editor-location=WindowsEditor --artifacts_path=test-results --scripting-backend=il2cpp --timeout=1200
+   {% else %}
    - utr\utr --suite=playmode --platform=Android --testproject=TestProjects\{{ project.folder }} --editor-location=WindowsEditor --artifacts_path=test-results --scripting-backend=il2cpp --timeout=1200
+   {% endif %}
    - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe kill-server
   artifacts:
     logs:
       paths:
         - "**test-results/**/*"
 
-
+{% endfor %}
 {% endif %}
 {% endfor %}
 
