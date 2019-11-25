@@ -207,7 +207,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                             m_UserViewSettings.colorProvider = m_ColorManager.activeProviderName;
                         }
 
-                        ToggleSubWindows();
+                        UpdateSubWindowsVisibility();
 
                         var serializedViewSettings = JsonUtility.ToJson(m_UserViewSettings);
                         EditorUserSettings.SetConfigValue(k_UserViewSettings, serializedViewSettings);
@@ -233,7 +233,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 CreateMasterPreview();
 
-                ToggleSubWindows();
+                UpdateSubWindowsVisibility();
 
                 m_GraphView.graphViewChanged = GraphViewChanged;
 
@@ -273,7 +273,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             Add(content);
         }
 
-        void ToggleSubWindows()
+        void UpdateSubWindowsVisibility()
         {
             if (m_UserViewSettings.isBlackboardVisible)
                 m_GraphView.Insert(m_GraphView.childCount, m_BlackboardProvider.blackboard);
