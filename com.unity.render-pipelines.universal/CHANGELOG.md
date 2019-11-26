@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Deprecated the CinemachineUniversalPixelPerfect extension. Use the one from Cinemachine v2.4 instead.
 - Replaced PlayerSettings.virtualRealitySupported with XRGraphics.tryEnable.
 - `CameraData.volumeLayerMask` and `CameraData.volumeTrigger` have been deprecated.
+- The scene view now mirrors the volume layer mask set on the MainCamera.
 
 ### Fixed
 - Fixed an issue where linear to sRGB conversion occurred twice on certain Android devices.
