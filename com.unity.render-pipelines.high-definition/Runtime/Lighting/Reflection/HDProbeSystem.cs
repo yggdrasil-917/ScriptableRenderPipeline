@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Assertions;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     internal static class HDProbeSystem
     {
@@ -31,7 +30,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static IList<HDProbe> realtimeViewDependentProbes => s_Instance.realtimeViewDependentProbes;
         public static IList<HDProbe> realtimeViewIndependentProbes => s_Instance.realtimeViewIndependentProbes;
         public static IList<HDProbe> bakedProbes => s_Instance.bakedProbes;
-    
+
         public static void RegisterProbe(HDProbe probe) => s_Instance.RegisterProbe(probe);
         public static void UnregisterProbe(HDProbe probe) => s_Instance.UnregisterProbe(probe);
 
@@ -39,7 +38,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDProbe probe, Transform viewerTransform,
             Texture outTarget, out HDProbe.RenderData outRenderData,
             bool forceFlipY = false,
-            float referenceFieldOfView = 90
+            float referenceFieldOfView = 90,
+            float referenceAspect = 1
         )
         {
             var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, viewerTransform);
@@ -49,7 +49,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 outTarget,
                 out var cameraSettings, out var cameraPosition,
                 forceFlipY,
-                referenceFieldOfView: referenceFieldOfView
+                referenceFieldOfView: referenceFieldOfView,
+                referenceAspect: referenceAspect
             );
 
             outRenderData = new HDProbe.RenderData(cameraSettings, cameraPosition);
@@ -110,7 +111,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 );
                                 break;
                             case ProbeSettings.ProbeType.ReflectionProbe:
-                                target = HDRenderUtilities.CreateReflectionProbeTarget(
+                                target = HDRenderUtilities.CreateReflectionProbeRenderTarget(
                                     (int)hd.currentPlatformRenderPipelineSettings.lightLoopSettings.reflectionCubemapSize
                                 );
                                 break;
@@ -255,7 +256,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal HDProbeCullState PrepareCull(Camera camera)
         {
             // Can happens right before a domain reload
-            // The CullingGroup is disposed at that point 
+            // The CullingGroup is disposed at that point
             if (m_PlanarProbeCullingGroup == null)
                 return default;
 

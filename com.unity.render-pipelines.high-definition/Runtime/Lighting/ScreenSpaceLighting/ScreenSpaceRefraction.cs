@@ -1,7 +1,6 @@
 using System;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
 
     [Serializable, VolumeComponentMenu("Lighting/Screen Space Refraction")]
@@ -11,7 +10,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             None = 0,
             Box = 1,
-            Sphere = 2
+            Sphere = 2,
+            Thin = 3
         };
 
         int m_InvScreenFadeDistanceID;
@@ -20,7 +20,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         static ScreenSpaceRefraction s_Default = null;
 
-        public static ScreenSpaceRefraction @default
+        [Obsolete("Since 2019.3, use ScreenSpaceRefraction.DefaultInstance instead.")]
+        public static readonly ScreenSpaceRefraction @default = default;
+        public static ScreenSpaceRefraction defaultInstance
         {
             get
             {

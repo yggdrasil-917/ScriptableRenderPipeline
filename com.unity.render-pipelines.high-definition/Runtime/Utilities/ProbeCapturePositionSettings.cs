@@ -1,13 +1,16 @@
 using System;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     /// <summary>Settings to use when capturing a probe.</summary>
     [Serializable]
     public struct ProbeCapturePositionSettings
     {
         /// <summary>Default value.</summary>
-        public static readonly ProbeCapturePositionSettings @default = new ProbeCapturePositionSettings(
+        [Obsolete("Since 2019.3, use ProbeCapturePositionSettings.NewDefault() instead.")]
+        public static readonly ProbeCapturePositionSettings @default = default;
+        /// <summary>Default value.</summary>
+        public static ProbeCapturePositionSettings NewDefault() => new ProbeCapturePositionSettings(
             Vector3.zero, Quaternion.identity,
             Vector3.zero, Quaternion.identity,
             Matrix4x4.identity

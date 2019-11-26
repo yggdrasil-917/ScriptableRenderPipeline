@@ -1,9 +1,6 @@
-using UnityEngine.Rendering;
-using System.Collections.Generic;
-
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
-    public class IBLFilterGGX : IBLFilterBSDF
+    class IBLFilterGGX : IBLFilterBSDF
     {
         RenderTexture m_GgxIblSampleData;
         int           m_GgxIblMaxSampleCount          = TextureCache.isMobileBuildTarget ? 34 : 89;   // Width
@@ -123,18 +120,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 props.SetFloat("_Level", mip);
 
-                using (new ProfilingSample(cmd, "Filter Cubemap Mip {0}", mip))
+                for (int face = 0; face < 6; ++face)
                 {
-                    for (int face = 0; face < 6; ++face)
-                    {
-                        var faceSize = new Vector4(source.width >> mip, source.height >> mip, 1.0f / (source.width >> mip), 1.0f / (source.height >> mip));
-                        var transform = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(0.5f * Mathf.PI, Vector2.zero, faceSize, worldToViewMatrices[face], true);
+                    var faceSize = new Vector4(source.width >> mip, source.height >> mip, 1.0f / (source.width >> mip), 1.0f / (source.height >> mip));
+                    var transform = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(0.5f * Mathf.PI, Vector2.zero, faceSize, worldToViewMatrices[face], true);
 
-                        props.SetMatrix(HDShaderIDs._PixelCoordToViewDirWS, transform);
+                    props.SetMatrix(HDShaderIDs._PixelCoordToViewDirWS, transform);
 
-                        CoreUtils.SetRenderTarget(cmd, target, ClearFlag.None, mip, (CubemapFace)face);
-                        CoreUtils.DrawFullScreen(cmd, m_convolveMaterial, props);
-                    }
+                    CoreUtils.SetRenderTarget(cmd, target, ClearFlag.None, mip, (CubemapFace)face);
+                    CoreUtils.DrawFullScreen(cmd, m_convolveMaterial, props);
                 }
             }
         }

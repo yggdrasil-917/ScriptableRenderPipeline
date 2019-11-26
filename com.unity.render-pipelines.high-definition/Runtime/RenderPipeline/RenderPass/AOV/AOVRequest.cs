@@ -1,11 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline.Attributes;
-using static UnityEngine.Experimental.Rendering.HDPipeline.MaterialDebugSettings;
+using UnityEngine.Rendering.HighDefinition.Attributes;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     /// <summary>Engine lighting property.</summary>
     [Flags]
@@ -31,7 +27,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public unsafe struct AOVRequest
     {
         /// <summary>Default settings.</summary>
-        public static AOVRequest @default = new AOVRequest
+        [Obsolete("Since 2019.3, use AOVRequest.NewDefault() instead.")]
+        public static readonly AOVRequest @default = default;
+        /// <summary>Default settings.</summary>
+        public static AOVRequest NewDefault() => new AOVRequest
         {
             m_MaterialProperty = MaterialSharedProperty.None,
             m_LightingProperty = LightingProperty.None,

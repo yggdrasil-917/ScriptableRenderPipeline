@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.Profiling;
 
@@ -119,7 +119,7 @@ namespace UnityEditor.VFX.UI
             UpdateInfos();
             Profiler.EndSample();
 
-            sourceNode.DataEdgesMightHaveChanged();
+            sourceNode.DataEdgesMightHaveChanged();            
 
             Profiler.BeginSample("VFXDataAnchorController.NotifyChange");
             NotifyChange(AnyThing);
@@ -680,7 +680,7 @@ namespace UnityEditor.VFX.UI
         }
     }
 
-    public class VFXDataAnchorGizmoContext : VFXGizmoUtility.Context
+    class VFXDataAnchorGizmoContext : VFXGizmoUtility.Context
     {
         // Provider
         internal VFXDataAnchorGizmoContext(VFXDataAnchorController controller)

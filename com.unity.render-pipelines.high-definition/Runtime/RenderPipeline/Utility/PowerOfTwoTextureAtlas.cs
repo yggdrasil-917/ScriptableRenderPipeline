@@ -2,11 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Experimental.Rendering;
 
-namespace UnityEngine.Experimental.Rendering
+namespace UnityEngine.Rendering.HighDefinition
 {
-    public class PowerOfTwoTextureAtlas : Texture2DAtlas
+    class PowerOfTwoTextureAtlas : Texture2DAtlas
     {
         public int mipPadding;
 
@@ -70,7 +70,7 @@ namespace UnityEngine.Experimental.Rendering
             // This atlas only supports square textures
             if (height != width)
             {
-                Debug.LogError("Can't place " + texture + " in the atlas " + m_AtlasTexture.m_Name + ": Only squared texture are allowed in this atlas.");
+                Debug.LogError("Can't place " + texture + " in the atlas " + m_AtlasTexture.name + ": Only squared texture are allowed in this atlas.");
                 return false;
             }
 

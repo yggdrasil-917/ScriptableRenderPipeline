@@ -4,16 +4,18 @@ using UnityEngine;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph;
 using UnityEditor.ShaderGraph.Drawing.Controls;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEditor.ShaderGraph.Internal;
+using UnityEngine.Rendering.HighDefinition;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     public enum EmissiveIntensityUnit
     {
-        Luminance,
+        Nits,
         EV100,
     }
 
+    [FormerName("UnityEditor.Experimental.Rendering.HDPipeline.EmissionNode")]
     [Title("Utility", "High Definition Render Pipeline", "Emission Node")]
     class EmissionNode : AbstractMaterialNode, IGeneratesBodyCode, IGeneratesFunction
     {
@@ -63,7 +65,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         const int kEmissionExposureWeightInputSlotId = 3;
         const string kEmissionOutputSlotName = "Output";
         const string kEmissionColorInputSlotName = "Color";
-        const string kEmissionExpositionWeightInputSlotName = "ExpositionWeight";
+        const string kEmissionExpositionWeightInputSlotName = "Exposure Weight";
         const string kEmissionIntensityInputSlotName = "Intensity";
 
         public override bool hasPreview { get { return false; } }
@@ -89,25 +91,28 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             });
         }
 
-        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GenerationMode generationMode)
         {
             var colorValue = GetSlotValue(kEmissionColorInputSlotId, generationMode);
             var intensityValue = GetSlotValue(kEmissionIntensityInputSlotId, generationMode);
             var exposureWeightValue = GetSlotValue(kEmissionExposureWeightInputSlotId, generationMode);
             var outputValue = GetSlotValue(kEmissionOutputSlotId, generationMode);
-            
+
             if (intensityUnit == EmissiveIntensityUnit.EV100)
                 intensityValue = "ConvertEvToLuminance(" + intensityValue + ")";
-            
-            string inverseExposureMultiplier = (generationMode.IsPreview()) ? "1.0" : "GetInverseCurrentExposureMultiplier()";
-            
-            sb.AppendLine(@"$precision3 {0} = {1}({2}.xyz, {3}, {4}, {5});",
+
+            sb.AppendLine("#ifdef SHADERGRAPH_PREVIEW");
+            sb.AppendLine($"$precision inverseExposureMultiplier = 1.0;");
+            sb.AppendLine("#else");
+            sb.AppendLine($"$precision inverseExposureMultiplier = GetInverseCurrentExposureMultiplier();");
+            sb.AppendLine("#endif");
+
+            sb.AppendLine(@"$precision3 {0} = {1}({2}.xyz, {3}, {4}, inverseExposureMultiplier);",
                 outputValue,
                 GetFunctionName(),
                 colorValue,
                 intensityValue,
-                exposureWeightValue,
-                inverseExposureMultiplier
+                exposureWeightValue
             );
         }
 
@@ -116,13 +121,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return $"Unity_HDRP_GetEmissionHDRColor_{concretePrecision.ToShaderString()}";
         }
 
-        public void GenerateNodeFunction(FunctionRegistry registry, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeFunction(FunctionRegistry registry, GenerationMode generationMode)
         {
             registry.ProvideFunction(GetFunctionName(), s =>
                 {
                     // We may need ConvertEvToLuminance() so we include CommonLighting.hlsl
                     s.AppendLine("#include \"Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonLighting.hlsl\"");
-                    
+
                     s.AppendLine("$precision3 {0}($precision3 ldrColor, {1} luminanceIntensity, {1} exposureWeight, {1} inverseCurrentExposureMultiplier)",
                         GetFunctionName(),
                         intensitySlot.concreteValueType.ToShaderString());
@@ -147,7 +152,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (intensityUnit == EmissiveIntensityUnit.EV100)
                 multiplier = LightUtils.ConvertEvToLuminance(intensity);
-            
+
             return ldrColor * intensity;
         }
 

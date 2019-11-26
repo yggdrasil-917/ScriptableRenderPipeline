@@ -22,17 +22,29 @@ To override the Frame Settings for Cameras and set Light Layers on an individual
 After you enable Light Layers, you can then use them to decouple Meshes from certain Lights in your Scene. To do this:
 
 1. Click on a Light in the Hierarchy or the Scene view to view it in the Inspector.
-2. Expose the [advanced properties](Advanced-Properties.html) in the **General** section to expose the **Light Layer** property.
+2. Expose [more options](More-Options.html) in the **General** section to expose the **Light Layer** property.
 3. Use the **Light Layer** property drop-down to select which Light Layers this Light affects.
 4. Click on a Mesh Renderer in the Hierarchy or the Scene view to view it in the Inspector.
 5. Use the **Rendering Layer Mask** drop-down to select which Light Layers affect this Mesh Renderer. When you enable Light Layers, a Light only affects a Mesh Renderer if they both use a matching Light Layer.
 
+<a name="ShadowLightLayers"></a>
+
 ## Shadow Light Layers
 
-When using light layers, the shadow casted by objects are bound to the light layers on them: for example you can't create an object that is not by a light but make this object cast shadows from this light unless you enabled light shadow layers.  
-By default the light layers and shadow layers are synchronized to have the same value so each object that receive light cast shadows, to decouple this behavior you can untick **Link Light Layer** in the shadow map settings. It allows you to modify the **Light Layer** mask below, then this mask will be used against the **Rendering Layer Mask** on **Mesh Renderers** to choose which object will cast shadows.
+When using Light Layers, Meshes only cast shadows for [Lights](Light-Component.html) on the same Light Layer as them. This is because HDRP synchronizes Light Layers and shadow Light Layers by default, so every Mesh that receives light, also casts shadows for it. To make a Mesh cast shadows without the Light also affecting its lighting, you must decouple the shadow Light Layers from that Light's Light Layers.
 
-## Example scenario
+To do this:
+
+1. Click on a Light in the Hierarchy or the Scene view to view it in the Inspector.
+2. Go to the **Shadows** section and disable the **Link Light Layers** checkbox.
+
+You can now use the **Light Layers** drop-down in the **Shadows** section to set the Light Layers that the Light uses for shadowing. You can also still use the **Light Layers** drop-down in the **General** section to set the Light Layers that the Light uses for lighting.
+
+## Renaming Light Layers
+
+Light Layers need humane readable names in order to be easily used by artists. By default they are all named **Light Layer 1-7** in the UI for lights and mesh renderers. At the project level, users can override each layer name individually. To do so, they must change them in the [HDRenderPipeline Asset](HDRP-Asset.html) in the **Lighting** section.
+
+## Example scenario for Light Layers
 
 Using [cookies](https://docs.unity3d.com/Manual/Cookies.html) for light fixtures can sometimes have a negative visual effect on a bulb, such as self-shadowing or transmission contribution. You can use Light Layers to make a bulb Mesh not receive any light from the Light’s cookie, and instead receive light from a separate small Point Light.
 

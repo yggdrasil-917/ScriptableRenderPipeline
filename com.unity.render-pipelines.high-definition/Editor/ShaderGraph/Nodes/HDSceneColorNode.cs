@@ -4,11 +4,13 @@ using UnityEngine;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph;
 using UnityEditor.ShaderGraph.Drawing.Controls;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEditor.ShaderGraph.Internal;
+using UnityEngine.Rendering.HighDefinition;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     [Title("Input", "High Definition Render Pipeline", "HD Scene Color")]
+    [FormerName("UnityEditor.Experimental.Rendering.HDPipeline.HDSceneColorNode")]
     class HDSceneColorNode : AbstractMaterialNode, IGeneratesBodyCode, IGeneratesFunction, IMayRequireCameraOpaqueTexture, IMayRequireScreenPosition
     {
         public HDSceneColorNode()
@@ -64,7 +66,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return $"Unity_HDRP_SampleSceneColor_{concretePrecision.ToShaderString()}";
         }
 
-        public void GenerateNodeFunction(FunctionRegistry registry, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeFunction(FunctionRegistry registry, GenerationMode generationMode)
         {
             registry.ProvideFunction(GetFunctionName(), s =>
                 {
@@ -91,7 +93,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 });
         }
 
-        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GenerationMode generationMode)
         {
             string exposureMultiplier = (exposure.isOn || generationMode.IsPreview()) ? "1.0" : "GetInverseCurrentExposureMultiplier()";
             string uv = GetSlotValue(kUvInputSlotId, generationMode);

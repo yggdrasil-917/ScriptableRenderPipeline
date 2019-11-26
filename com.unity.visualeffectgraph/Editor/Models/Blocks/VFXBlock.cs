@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using Type = System.Type;
 
 namespace UnityEditor.VFX
@@ -39,8 +39,18 @@ namespace UnityEditor.VFX
             get
             {
                 if (GetParent() == null) return true; // a block is invalid only if added to incompatible context.
-                return (compatibleContexts & GetParent().contextType) == GetParent().contextType;
+                if ((compatibleContexts & GetParent().contextType) != GetParent().contextType)
+                    return false;
+                if (GetParent() is VFXBlockSubgraphContext subgraphContext)
+                    return (subgraphContext.compatibleContextType & compatibleContexts) == subgraphContext.compatibleContextType;
+
+                return true;
             }
+        }
+
+        public bool isActive
+        {
+            get { return enabled && isValid; }
         }
 
         public abstract VFXContextType compatibleContexts { get; }

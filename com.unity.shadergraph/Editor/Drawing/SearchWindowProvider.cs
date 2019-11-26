@@ -64,6 +64,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     if (type.IsClass && !type.IsAbstract && (type.IsSubclassOf(typeof(AbstractMaterialNode)))
                         && type != typeof(PropertyNode)
+                        && type != typeof(KeywordNode)
                         && type != typeof(SubGraphNode))
                     {
                         var attrs = type.GetCustomAttributes(typeof(TitleAttribute), false) as TitleAttribute[];
@@ -79,15 +80,15 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var guid in AssetDatabase.FindAssets(string.Format("t:{0}", typeof(SubGraphAsset))))
             {
                 var asset = AssetDatabase.LoadAssetAtPath<SubGraphAsset>(AssetDatabase.GUIDToAssetPath(guid));
-                var node = new SubGraphNode { subGraphAsset = asset };
-                var title = node.subGraphData.path.Split('/').ToList();
+                var node = new SubGraphNode { asset = asset };
+                var title = asset.path.Split('/').ToList();
                 
-                if (node.subGraphData.descendents.Contains(m_Graph.assetGuid) || node.subGraphData.assetGuid == m_Graph.assetGuid)
+                if (asset.descendents.Contains(m_Graph.assetGuid) || asset.assetGuid == m_Graph.assetGuid)
                 {
                     continue;
                 }
 
-                if (string.IsNullOrEmpty(node.subGraphData.path))
+                if (string.IsNullOrEmpty(asset.path))
                 {
                     AddEntries(node, new string[1] { asset.name }, nodeEntries);
                 }
@@ -102,11 +103,18 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var property in m_Graph.properties)
             {
                 var node = new PropertyNode();
-                var property1 = property;
                 node.owner = m_Graph;
-                node.propertyGuid = property1.guid;
+                node.propertyGuid = property.guid;
                 node.owner = null;
                 AddEntries(node, new[] { "Properties", "Property: " + property.displayName }, nodeEntries);
+            }
+            foreach (var keyword in m_Graph.keywords)
+            {
+                var node = new KeywordNode();
+                node.owner = m_Graph;
+                node.keywordGuid = keyword.guid;
+                node.owner = null;
+                AddEntries(node, new[] { "Keywords", "Keyword: " + keyword.displayName }, nodeEntries);
             }
 
             // Sort the entries lexicographically by group then title with the requirement that items always comes before sub-groups in the same group.

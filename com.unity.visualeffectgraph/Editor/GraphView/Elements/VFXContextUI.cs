@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
+using UnityEngine.VFX;
+using UnityEditor.VFX;
 using UnityEngine.UIElements;
 using UnityEngine.Profiling;
 using System.Reflection;
@@ -217,6 +217,11 @@ namespace UnityEditor.VFX.UI
                 m_Label.RemoveFromClassList("empty");
             }
 
+            foreach (var inEdge in m_FlowInputConnectorContainer.Children().OfType<VFXFlowAnchor>().SelectMany(t => t.connections))
+                inEdge.UpdateEdgeControl();
+            foreach (var outEdge in m_FlowOutputConnectorContainer.Children().OfType<VFXFlowAnchor>().SelectMany(t => t.connections))
+                outEdge.UpdateEdgeControl();
+
             RefreshContext();
         }
 
@@ -226,8 +231,8 @@ namespace UnityEditor.VFX.UI
         {
             capabilities |= Capabilities.Selectable | Capabilities.Movable | Capabilities.Deletable | Capabilities.Ascendable;
 
-            styleSheets.Add(Resources.Load<StyleSheet>("VFXContext"));
-            styleSheets.Add(Resources.Load<StyleSheet>("Selectable"));
+            styleSheets.Add(VFXView.LoadStyleSheet("VFXContext"));
+            styleSheets.Add(VFXView.LoadStyleSheet("Selectable"));
 
             AddToClassList("VFXContext");
             AddToClassList("selectable");
@@ -591,10 +596,12 @@ namespace UnityEditor.VFX.UI
         {
             switch (type)
             {
-                case VFXDataType.None:
-                    return Resources.Load<Texture2D>("VFX/Execution");
+                case VFXDataType.SpawnEvent:
+                    return VFXView.LoadImage("Execution");
                 case VFXDataType.Particle:
-                    return Resources.Load<Texture2D>("VFX/Particles");
+                    return VFXView.LoadImage("Particles");
+                case VFXDataType.ParticleStrip:
+                    return VFXView.LoadImage("ParticleStrips");
             }
             return null;
         }
@@ -755,15 +762,19 @@ namespace UnityEditor.VFX.UI
             var contextType = controller.model.GetType();
             foreach (var setting in newContextController.model.GetSettings(true))
             {
-                if(newContextController.model is VFXPlanarPrimitiveOutput && setting.Name == "primitiveType")
+                if(newContextController.model is VFXPlanarPrimitiveOutput && setting.field.Name == "primitiveType")
                     continue;
-                FieldInfo myField = contextType.GetField(setting.Name, BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic);
-                if (myField == null || myField.GetCustomAttributes(typeof(VFXSettingAttribute), true).Length == 0)
+                
+                if (!setting.valid || setting.field.GetCustomAttributes(typeof(VFXSettingAttribute), true).Length == 0)
+                    continue;
+
+                var sourceSetting = controller.model.GetSetting(setting.name);
+                if (!sourceSetting.valid)
                     continue;
 
                 object value;
-                if (VFXConverter.TryConvertTo(myField.GetValue(controller.model), setting.FieldType, out value))
-                    newContextController.model.SetSettingValue(setting.Name, value);
+                if (VFXConverter.TryConvertTo(sourceSetting.value, setting.field.FieldType, out value))
+                    newContextController.model.SetSettingValue(setting.field.Name, value);
             }
 
             //transfer flow edges

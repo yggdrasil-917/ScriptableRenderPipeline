@@ -5,11 +5,11 @@
 #ifndef SHADERVARIABLESLIGHTLOOP_CS_HLSL
 #define SHADERVARIABLESLIGHTLOOP_CS_HLSL
 //
-// UnityEngine.Experimental.Rendering.HDPipeline.ShaderVariablesLightLoop:  static fields
+// UnityEngine.Rendering.HighDefinition.ShaderVariablesLightLoop:  static fields
 //
 #define MAX_ENV2DLIGHT (32)
 
-// Generated from UnityEngine.Experimental.Rendering.HDPipeline.ShaderVariablesLightLoop
+// Generated from UnityEngine.Rendering.HighDefinition.ShaderVariablesLightLoop
 // PackingRules = Exact
     float4 _ShadowAtlasSize;
     float4 _CascadeShadowAtlasSize;
@@ -27,6 +27,7 @@
     float4 _CookieAtlasSize;
     float4 _CookieAtlasData;
     float _MicroShadowOpacity;
+    float _DirectionalTransmissionMultiplier;
     uint _NumTileFtplX;
     uint _NumTileFtplY;
     float g_fClustScale;
@@ -41,7 +42,6 @@
     int _DebugSingleShadowIndex;
     int _EnvSliceSize;
     uint _CookieSizePOT;
-    int _RaytracedAreaShadow;
     int _RaytracedIndirectDiffuse;
 
 

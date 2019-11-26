@@ -1,23 +1,26 @@
-using UnityEditor.Experimental.Rendering.TestFramework;
+using UnityEditor.Rendering.TestFramework;
 using NUnit.Framework;
 using System;
-using UnityEngine.Rendering;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
+namespace UnityEngine.Rendering.HighDefinition.Tests
 {
-    public class FrameSettingsTests
+    class FrameSettingsTests
     {
         Object m_ToClean;
 
         [TearDown]
         public void TearDown()
         {
-            if (m_ToClean != null)
-                CoreUtils.Destroy(m_ToClean);
-            FrameSettingsHistory.frameSettingsHistory.Clear();
+            try
+            {
+                if (m_ToClean != null)
+                    CoreUtils.Destroy(m_ToClean);
+                FrameSettingsHistory.containers?.Clear();
+            }
+            catch { }
         }
 
         [Test]
@@ -52,6 +55,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 }
             }
 
+            FrameSettingsOverrideMask fsm = default;
+            StringBuilder availables = new StringBuilder();
+            for (int i = 0; i < fsm.mask.capacity; ++i)
+            {
+                if(!singleValues.Contains(i))
+                    availables.AppendFormat("{0} ", i);
+            }
+            Debug.Log($"Available bit in FrameSettings: {availables}");
+
             Assert.AreEqual(values.Length, singleValues.Count(), String.Format("Double bit index found: {0}\nNumber of bit index against number of distinct bit index:", messageDuplicates.ToString()));
         }
 
@@ -66,19 +78,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 FrameSettingsOverrideMask fso = default;
                 FrameSettingsRenderType defaultFSType = RandomUtilities.RandomEnumValue<FrameSettingsRenderType>(i);
                 FrameSettings defaultFS;
-                FrameSettings result = FrameSettings.defaultCamera;
+                FrameSettings result = FrameSettings.NewDefaultCamera();
                 FrameSettings tester = default;
                 RenderPipelineSettings supportedFeatures = new RenderPipelineSettings();
                 switch (defaultFSType)
                 {
                     case FrameSettingsRenderType.Camera:
-                        defaultFS = FrameSettings.defaultCamera;
+                        defaultFS = FrameSettings.NewDefaultCamera();
                         break;
                     case FrameSettingsRenderType.CustomOrBakedReflection:
-                        defaultFS = FrameSettings.defaultCustomOrBakeReflectionProbe;
+                        defaultFS = FrameSettings.NewDefaultCustomOrBakeReflectionProbe();
                         break;
                     case FrameSettingsRenderType.RealtimeReflection:
-                        defaultFS = FrameSettings.defaultRealtimeReflectionProbe;
+                        defaultFS = FrameSettings.NewDefaultRealtimeReflectionProbe();
                         break;
                     default:
                         throw new ArgumentException("Unknown FrameSettingsRenderType");
@@ -112,6 +124,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 {
                     tester.SetEnabled(field, fso.mask[(uint)field] ? fs.IsEnabled(field) : defaultFS.IsEnabled(field));
                 }
+                tester.lodBias = result.lodBias;
+                tester.lodBiasMode = result.lodBiasMode;
+                tester.maximumLODLevel = result.maximumLODLevel;
+                tester.maximumLODLevelMode = result.maximumLODLevelMode;
                 FrameSettings.Sanitize(ref tester, cam, supportedFeatures);
 
                 //test
@@ -132,19 +148,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 FrameSettingsOverrideMask fso = default;
                 FrameSettingsRenderType defaultFSType = RandomUtilities.RandomEnumValue<FrameSettingsRenderType>(i);
                 FrameSettings defaultFS;
-                FrameSettings result = FrameSettings.defaultCamera;
+                FrameSettings result = FrameSettings.NewDefaultCamera();
                 FrameSettings tester = default;
                 RenderPipelineSettings supportedFeatures = new RenderPipelineSettings();
                 switch (defaultFSType)
                 {
                     case FrameSettingsRenderType.Camera:
-                        defaultFS = FrameSettings.defaultCamera;
+                        defaultFS = FrameSettings.NewDefaultCamera();
                         break;
                     case FrameSettingsRenderType.CustomOrBakedReflection:
-                        defaultFS = FrameSettings.defaultCustomOrBakeReflectionProbe;
+                        defaultFS = FrameSettings.NewDefaultCustomOrBakeReflectionProbe();
                         break;
                     case FrameSettingsRenderType.RealtimeReflection:
-                        defaultFS = FrameSettings.defaultRealtimeReflectionProbe;
+                        defaultFS = FrameSettings.NewDefaultRealtimeReflectionProbe();
                         break;
                     default:
                         throw new ArgumentException("Unknown FrameSettingsRenderType");
@@ -171,29 +187,38 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 add.defaultFrameSettings = defaultFSType;
                 add.customRenderingSettings = true;
 
-                //gather data two different ways
-                FrameSettingsHistory.AggregateFrameSettings(ref result, cam, add, ref defaultFS, supportedFeatures);
-
+                //gather simulated
                 foreach (FrameSettingsField field in Enum.GetValues(typeof(FrameSettingsField)))
                 {
                     tester.SetEnabled(field, fso.mask[(uint)field] ? fs.IsEnabled(field) : defaultFS.IsEnabled(field));
                 }
-                FrameSettings.Sanitize(ref tester, cam, supportedFeatures);
 
                 //simulate debugmenu changes
                 for (int j = 0; j < 10; ++j)
                 {
                     FrameSettingsField field = RandomUtilities.RandomEnumValue<FrameSettingsField>((i + 0.5f) * (j + 0.3f));
-                    var fsh = FrameSettingsHistory.frameSettingsHistory[cam];
+                    var fshc = FrameSettingsHistory.containers.Where(c => c == add as IFrameSettingsHistoryContainer).First();
                     bool debugValue = RandomUtilities.RandomBool((i + 1) * j);
-                    fsh.debug.SetEnabled(field, debugValue);
-                    FrameSettingsHistory.frameSettingsHistory[cam] = fsh;
 
+                    //simulate on both
+                    fshc.frameSettingsHistory.debug.SetEnabled(field, debugValue);
                     tester.SetEnabled(field, debugValue);
                 }
 
+                FrameSettings.Sanitize(ref tester, cam, supportedFeatures);
+
+                //gather computed
+                FrameSettingsHistory.AggregateFrameSettings(ref result, cam, add, ref defaultFS, supportedFeatures);
+
+                //non bit non tested
+                tester.lodBias = result.lodBias;
+                tester.lodBiasMode = result.lodBiasMode;
+                tester.maximumLODLevel = result.maximumLODLevel;
+                tester.maximumLODLevelMode = result.maximumLODLevelMode;
+
                 //test
-                result = FrameSettingsHistory.frameSettingsHistory[cam].debug;
+                result = FrameSettingsHistory.containers.Where(c => c == add as IFrameSettingsHistoryContainer).First().frameSettingsHistory.debug;
+                Debug.Log($"different {result} {tester}");
                 Assert.AreEqual(result, tester);
 
                 Object.DestroyImmediate(go);
@@ -248,7 +273,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
             DepthPrepassWithDeferredRendering = 1 << 22,
             OpaqueObjects = 1 << 24,
             TransparentObjects = 1 << 25,
-            RealtimePlanarReflection = 1 << 26,
 
             // Async settings
             AsyncCompute = 1 << 23,
@@ -262,59 +286,58 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
         public class LegacyLightLoopSettings
         {
             public LegacyLightLoopSettingsOverrides overrides;
-            public bool enableDeferredTileAndCluster;
-            public bool enableComputeLightEvaluation;
-            public bool enableComputeLightVariants;
-            public bool enableComputeMaterialVariants;
-            public bool enableFptlForForwardOpaque;
-            public bool enableBigTilePrepass;
-            public bool isFptlEnabled;
+            public bool enableDeferredTileAndCluster = false;
+            public bool enableComputeLightEvaluation = false;
+            public bool enableComputeLightVariants = false;
+            public bool enableComputeMaterialVariants = false;
+            public bool enableFptlForForwardOpaque = false;
+            public bool enableBigTilePrepass = false;
+            public bool isFptlEnabled = false;
         }
 
         public class LegacyFrameSettings
         {
             public LegacyFrameSettingsOverrides overrides;
 
-            public bool enableShadow;
-            public bool enableContactShadows;
-            public bool enableShadowMask;
-            public bool enableSSR;
-            public bool enableSSAO;
-            public bool enableSubsurfaceScattering;
-            public bool enableTransmission;
-            public bool enableAtmosphericScattering;
-            public bool enableVolumetrics;
-            public bool enableReprojectionForVolumetrics;
-            public bool enableLightLayers;
-            public bool enableExposureControl;
+            public bool enableShadow = false;
+            public bool enableContactShadows = false;
+            public bool enableShadowMask = false;
+            public bool enableSSR = false;
+            public bool enableSSAO = false;
+            public bool enableSubsurfaceScattering = false;
+            public bool enableTransmission = false;
+            public bool enableAtmosphericScattering = false;
+            public bool enableVolumetrics = false;
+            public bool enableReprojectionForVolumetrics = false;
+            public bool enableLightLayers = false;
+            public bool enableExposureControl = false;
 
-            public float diffuseGlobalDimmer;
-            public float specularGlobalDimmer;
+            public float diffuseGlobalDimmer = 1.0f;
+            public float specularGlobalDimmer = 1.0f;
 
             public LegacyLitShaderMode shaderLitMode;
-            public bool enableDepthPrepassWithDeferredRendering;
+            public bool enableDepthPrepassWithDeferredRendering = false;
 
-            public bool enableTransparentPrepass;
-            public bool enableMotionVectors; // Enable/disable whole motion vectors pass (Camera + Object).
-            public bool enableObjectMotionVectors;
-            public bool enableDecals;
-            public bool enableRoughRefraction; // Depends on DepthPyramid - If not enable, just do a copy of the scene color (?) - how to disable rough refraction ?
-            public bool enableTransparentPostpass;
-            public bool enableDistortion;
-            public bool enablePostprocess;
+            public bool enableTransparentPrepass = false;
+            public bool enableMotionVectors = false; // Enable/disable whole motion vectors pass (Camera + Object).
+            public bool enableObjectMotionVectors = false;
+            public bool enableDecals = false;
+            public bool enableRoughRefraction = false; // Depends on DepthPyramid - If not enable, just do a copy of the scene color (?) - how to disable rough refraction ?
+            public bool enableTransparentPostpass = false;
+            public bool enableDistortion = false;
+            public bool enablePostprocess = false;
 
-            public bool enableOpaqueObjects;
-            public bool enableTransparentObjects;
-            public bool enableRealtimePlanarReflection;
+            public bool enableOpaqueObjects = false;
+            public bool enableTransparentObjects = false;
 
-            public bool enableMSAA;
+            public bool enableMSAA = false;
 
-            public bool enableAsyncCompute;
-            public bool runLightListAsync;
-            public bool runSSRAsync;
-            public bool runSSAOAsync;
-            public bool runContactShadowsAsync;
-            public bool runVolumeVoxelizationAsync;
+            public bool enableAsyncCompute = false;
+            public bool runLightListAsync = false;
+            public bool runSSRAsync = false;
+            public bool runSSAOAsync = false;
+            public bool runContactShadowsAsync = false;
+            public bool runVolumeVoxelizationAsync = false;
 
             public LegacyLightLoopSettings lightLoopSettings;
         }
@@ -386,9 +409,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 }
                 Assert.AreEqual(litShaderModeEquivalent, frameSettingsData.litShaderMode);
 
-                Assert.AreEqual(legacyFrameSettingsData.enableShadow, frameSettingsData.IsEnabled(FrameSettingsField.Shadow));
+                Assert.AreEqual(legacyFrameSettingsData.enableShadow, frameSettingsData.IsEnabled(FrameSettingsField.ShadowMaps));
                 Assert.AreEqual(legacyFrameSettingsData.enableContactShadows, frameSettingsData.IsEnabled(FrameSettingsField.ContactShadows));
-                Assert.AreEqual(legacyFrameSettingsData.enableShadowMask, frameSettingsData.IsEnabled(FrameSettingsField.ShadowMask));
+                Assert.AreEqual(legacyFrameSettingsData.enableShadowMask, frameSettingsData.IsEnabled(FrameSettingsField.Shadowmask));
                 Assert.AreEqual(legacyFrameSettingsData.enableSSR, frameSettingsData.IsEnabled(FrameSettingsField.SSR));
                 Assert.AreEqual(legacyFrameSettingsData.enableSSAO, frameSettingsData.IsEnabled(FrameSettingsField.SSAO));
                 Assert.AreEqual(legacyFrameSettingsData.enableSubsurfaceScattering, frameSettingsData.IsEnabled(FrameSettingsField.SubsurfaceScattering));
@@ -409,7 +432,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 Assert.AreEqual(legacyFrameSettingsData.enablePostprocess, frameSettingsData.IsEnabled(FrameSettingsField.Postprocess));
                 Assert.AreEqual(legacyFrameSettingsData.enableOpaqueObjects, frameSettingsData.IsEnabled(FrameSettingsField.OpaqueObjects));
                 Assert.AreEqual(legacyFrameSettingsData.enableTransparentObjects, frameSettingsData.IsEnabled(FrameSettingsField.TransparentObjects));
-                Assert.AreEqual(legacyFrameSettingsData.enableRealtimePlanarReflection, frameSettingsData.IsEnabled(FrameSettingsField.RealtimePlanarReflection));
                 Assert.AreEqual(legacyFrameSettingsData.enableMSAA, frameSettingsData.IsEnabled(FrameSettingsField.MSAA));
                 Assert.AreEqual(legacyFrameSettingsData.enableAsyncCompute, frameSettingsData.IsEnabled(FrameSettingsField.AsyncCompute));
                 Assert.AreEqual(legacyFrameSettingsData.runLightListAsync, frameSettingsData.IsEnabled(FrameSettingsField.LightListAsync));
@@ -426,9 +448,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 Assert.AreEqual(legacyFrameSettingsData.lightLoopSettings.enableFptlForForwardOpaque, frameSettingsData.IsEnabled(FrameSettingsField.FPTLForForwardOpaque));
 
 
-                Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.Shadow) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.Shadow]);
+                Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.Shadow) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.ShadowMaps]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.ContactShadow) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.ContactShadows]);
-                Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.ShadowMask) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.ShadowMask]);
+                Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.ShadowMask) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.Shadowmask]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.SSR) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.SSR]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.SSAO) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.SSAO]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.SubsurfaceScattering) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.SubsurfaceScattering]);
@@ -449,7 +471,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.Postprocess) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.Postprocess]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.OpaqueObjects) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.OpaqueObjects]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.TransparentObjects) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.TransparentObjects]);
-                Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.RealtimePlanarReflection) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.RealtimePlanarReflection]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.MSAA) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.MSAA]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.AsyncCompute) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.AsyncCompute]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.LightListAsync) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.LightListAsync]);
@@ -546,8 +567,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {{fileID: 11500000, guid: d0ef8dc2c2eabfa4e8cb77be57a837c0, type: 3}}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_ProxyVolume: {{fileID: 0}}
   m_InfiniteProjection: 1
   m_InfluenceVolume:
@@ -608,7 +629,6 @@ MonoBehaviour:
     runVolumeVoxelizationAsync: {(legacyFrameSettings.runVolumeVoxelizationAsync ? 1 : 0)}
     enableOpaqueObjects: {(legacyFrameSettings.enableOpaqueObjects ? 1 : 0)}
     enableTransparentObjects: {(legacyFrameSettings.enableTransparentObjects ? 1 : 0)}
-    enableRealtimePlanarReflection: {(legacyFrameSettings.enableRealtimePlanarReflection ? 1 : 0)}
     enableMSAA: {(legacyFrameSettings.enableMSAA ? 1 : 0)}
     lightLoopSettings:
       overrides: {legacyFrameSettings.lightLoopSettings.overrides}

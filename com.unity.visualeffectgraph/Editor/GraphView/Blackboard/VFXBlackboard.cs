@@ -2,7 +2,7 @@ using System;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.Experimental.VFX;
+using UnityEditor.VFX;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -72,7 +72,7 @@ namespace  UnityEditor.VFX.UI
             Add(m_DefaultCategory);
             m_DefaultCategory.headerVisible = false;
 
-            styleSheets.Add(Resources.Load<StyleSheet>("VFXBlackboard"));
+            styleSheets.Add(VFXView.LoadStyleSheet("VFXBlackboard"));
 
             RegisterCallback<MouseDownEvent>(OnMouseClick, TrickleDown.TrickleDown);
             RegisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
@@ -90,12 +90,11 @@ namespace  UnityEditor.VFX.UI
             m_DragIndicator.style.position = PositionType.Absolute;
             hierarchy.Add(m_DragIndicator);
 
-            cacheAsBitmap = true;
             SetDragIndicatorVisible(false);
 
             Resizer resizer = this.Query<Resizer>();
 
-            hierarchy.Add(new ResizableElement());
+            hierarchy.Add(new UnityEditor.Experimental.GraphView.ResizableElement());
 
             style.position = PositionType.Absolute;
 
@@ -118,7 +117,6 @@ namespace  UnityEditor.VFX.UI
 
         Label m_PathLabel;
         TextField m_PathTextField;
-        bool m_EditPathCancelled;
 
         void OnMouseDownSubTitle(MouseDownEvent evt)
         {
@@ -156,7 +154,6 @@ namespace  UnityEditor.VFX.UI
             switch (evt.keyCode)
             {
                 case KeyCode.Escape:
-                    m_EditPathCancelled = true;
                     m_PathTextField.Q("unity-text-input").Blur();
                     break;
                 case KeyCode.Return:
@@ -177,7 +174,6 @@ namespace  UnityEditor.VFX.UI
 
             controller.graph.categoryPath = newPath;
             m_PathLabel.text = newPath;
-            m_EditPathCancelled = false;
         }
 
         static System.Reflection.PropertyInfo s_LayoutManual = typeof(VisualElement).GetProperty("isLayoutManual",System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);

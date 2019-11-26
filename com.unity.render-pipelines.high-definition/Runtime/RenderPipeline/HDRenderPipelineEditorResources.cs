@@ -1,17 +1,23 @@
 #if UNITY_EDITOR //file must be in realtime assembly folder to be found in HDRPAsset
 using System;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "HDRP-Asset" + Documentation.endURL)]
     public partial class HDRenderPipelineEditorResources : ScriptableObject
     {
         [Reload("Editor/DefaultScene/DefaultSceneRoot.prefab")]
         public GameObject defaultScene;
-        [Reload("Editor/DefaultScene/DefaultRenderingSettings.asset")]
-        public VolumeProfile defaultRenderSettingsProfile;
-        [Reload("Editor/DefaultScene/DefaultPostProcessingSettings.asset")]
+        [Reload("Editor/DefaultDXRScene/DefaultSceneRoot.prefab")]
+        public GameObject defaultDXRScene;
+        [Reload("Editor/DefaultScene/Sky and Fog Settings Profile.asset")]
+        public VolumeProfile defaultSkyAndFogProfile;
+        [Reload("Editor/DefaultDXRScene/Sky and Fog Settings Profile.asset")]
+        public VolumeProfile defaultDXRSkyAndFogProfile;
+        [Reload("Editor/DefaultScene/Scene PostProcess Profile.asset")]
         public VolumeProfile defaultPostProcessingProfile;
+        [Reload("Editor/DefaultDXRScene/Scene PostProcess Profile.asset")]
+        public VolumeProfile defaultDXRPostProcessingProfile;
         [Reload(new[]
         {
             "Runtime/RenderPipelineResources/Skin Diffusion Profile.asset",
@@ -39,6 +45,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Material defaultDecalMat;
             [Reload("Runtime/RenderPipelineResources/Material/DefaultHDTerrainMaterial.mat")]
             public Material defaultTerrainMat;
+            [Reload("Editor/RenderPipelineResources/Materials/GUITextureBlit2SRGB.mat")]
+            public Material GUITextureBlit2SRGB;
         }
 
         [Serializable, ReloadGroup]
@@ -57,10 +65,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Shader autodeskInteractiveTransparent;
         }
 
+        [Serializable, ReloadGroup]
+        public sealed class LookDevResources
+        {
+            [Reload("Editor/RenderPipelineResources/DefaultLookDevProfile.asset")]
+            public VolumeProfile defaultLookDevVolumeProfile;
+        }
+
         public ShaderResources shaders;
         public MaterialResources materials;
         public TextureResources textures;
         public ShaderGraphResources shaderGraphs;
+        public LookDevResources lookDev;
     }
 
 
@@ -78,7 +94,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var resources = target as HDRenderPipelineEditorResources;
                 resources.defaultScene = null;
-                resources.defaultRenderSettingsProfile = null;
+                resources.defaultSkyAndFogProfile = null;
                 resources.defaultPostProcessingProfile = null;
                 resources.defaultDiffusionProfileSettingsList = null;
                 resources.materials = null;

@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
+using UnityEngine.VFX;
+using UnityEditor.VFX;
 
 namespace UnityEditor.VFX
 {
@@ -57,22 +57,6 @@ namespace UnityEditor.VFX
             get
             {
                 return false;
-            }
-        }
-
-        protected override void OnInvalidate(VFXModel model, InvalidationCause cause)
-        {
-            base.OnInvalidate(model, cause);
-
-            if (cause == InvalidationCause.kSettingChanged)
-            {
-                //Delete incompatible blocks
-
-                foreach (var block in children.ToList())
-                {
-                    if (!Accept(block))
-                        RemoveChild(block);
-                }
             }
         }
         public override bool Accept(VFXBlock block, int index = -1)

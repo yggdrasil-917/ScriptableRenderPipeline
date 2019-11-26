@@ -4,14 +4,14 @@ using System.Linq;
 using UnityEditor.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
-using UnityEngine.UIElements;
+using UnityEngine.VFX;
 using UnityEditor.VFX;
+using UnityEngine.UIElements;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityObject = UnityEngine.Object;
 using System.IO;
+using UnityEditor.VersionControl;
 
 namespace  UnityEditor.VFX.UI
 {
@@ -29,18 +29,20 @@ namespace  UnityEditor.VFX.UI
                     {Event.KeyboardEvent("o"), view.FrameOrigin },
                     {Event.KeyboardEvent("^#>"), view.FramePrev },
                     {Event.KeyboardEvent("^>"), view.FrameNext },
-                    {Event.KeyboardEvent("#^r"), view.Resync},
                     {Event.KeyboardEvent("F7"), view.Compile},
                     {Event.KeyboardEvent("#d"), view.OutputToDot},
+                    {Event.KeyboardEvent("^&d"), view.DuplicateSelectionWithEdges},
                     {Event.KeyboardEvent("^#d"), view.OutputToDotReduced},
                     {Event.KeyboardEvent("#c"), view.OutputToDotConstantFolding},
                     {Event.KeyboardEvent("^r"), view.ReinitComponents},
                     {Event.KeyboardEvent("F5"), view.ReinitComponents},
+                    {Event.KeyboardEvent("#^r"), view.ReinitAndPlayComponents},
+                    {Event.KeyboardEvent("#F5"), view.ReinitAndPlayComponents},
                 });
         }
 
         public static VFXViewWindow currentWindow;
-        
+
         [MenuItem("Window/Visual Effects/Visual Effect Graph",false,3011)]
         public static void ShowWindow()
         {
@@ -69,20 +71,44 @@ namespace  UnityEditor.VFX.UI
 
         public void LoadResource(VisualEffectResource resource, VisualEffect effectToAttach = null)
         {
+            m_ResourceHistory.Clear();
             if (graphView.controller == null || graphView.controller.model != resource)
             {
-                bool differentAsset = resource != m_DisplayedResource;
-
-                m_DisplayedResource = resource;
-                graphView.controller = VFXViewController.GetController(resource, true);
-                graphView.UpdateGlobalSelection();
-                if (differentAsset)
-                {
-                    graphView.FrameNewController();
-                }
+                InternalLoadResource(resource);
             }
             if (effectToAttach != null && graphView.controller != null && graphView.controller.model != null && effectToAttach.visualEffectAsset == graphView.controller.model.asset)
                 graphView.attachedComponent = effectToAttach;
+        }
+
+        List<VisualEffectResource> m_ResourceHistory = new List<VisualEffectResource>();
+
+        public IEnumerable<VisualEffectResource> resourceHistory
+        {
+            get { return m_ResourceHistory; }
+        }
+
+        public void PushResource(VisualEffectResource resource)
+        {
+            if (graphView.controller == null || graphView.controller.model != resource)
+            {
+                m_ResourceHistory.Add(m_DisplayedResource);
+                InternalLoadResource(resource);
+            }
+        }
+
+        void InternalLoadResource(VisualEffectResource resource)
+        {
+            m_DisplayedResource = resource;
+            graphView.controller = VFXViewController.GetController(resource, true);
+            graphView.UpdateGlobalSelection();
+            graphView.FrameNewController();
+        }
+
+        public void PopResource()
+        {
+            InternalLoadResource(m_ResourceHistory.Last());
+
+            m_ResourceHistory.RemoveAt(m_ResourceHistory.Count-1);
         }
 
         protected VisualEffectResource GetCurrentResource()
@@ -172,7 +198,7 @@ namespace  UnityEditor.VFX.UI
 
 #endif
 
-        protected void OnDisable()
+        protected void OnDestroy()
         {
 #if USE_EXIT_WORKAROUND_FOGBUGZ_1062258
             EditorApplication.wantsToQuit -= Quitting_Workaround;
@@ -195,6 +221,11 @@ namespace  UnityEditor.VFX.UI
         void OnLeavePanel(DetachFromPanelEvent e)
         {
             rootVisualElement.RemoveManipulator(m_ShortcutHandler);
+        }
+
+        void OnFocus()
+        {
+            graphView.OnFocus();
         }
 
         public bool autoCompile {get; set; }
@@ -241,6 +272,20 @@ namespace  UnityEditor.VFX.UI
                 VFXViewModicationProcessor.assetMoved = false;
             }
             titleContent.text = filename;
+
+            if (graphView?.controller?.model?.visualEffectObject != null)
+            {
+                graphView.checkoutButton.visible = true;
+                if (!AssetDatabase.IsOpenForEdit(graphView.controller.model.visualEffectObject,
+                    StatusQueryOptions.UseCachedIfPossible) && Provider.isActive && Provider.enabled)
+                {
+                    graphView.checkoutButton.SetEnabled(true);
+                }
+                else
+                {
+                    graphView.checkoutButton.SetEnabled(false);
+                }
+            }
         }
 
         [SerializeField]

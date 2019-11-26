@@ -11,18 +11,26 @@ struct RayCone
 // Structure that defines the current state of the intersection
 struct RayIntersection
 {
-	// Origin of the current ray
+	// Origin of the current ray -- FIXME: can be obtained by WorldRayPosition(), should we remove it?
 	float3  origin;
-	// Direction of the current ray
+	// Direction of the current ray -- FIXME: can be obtained by WorldRayDirection(), should we remove it?
 	float3  incidentDirection;
 	// Distance of the intersection
-	float   t;
+	float t;
 	// Value that holds the color of the ray
-	float3  color;
+	float3 color;
 	// Cone representation of the ray
 	RayCone cone;
 	// The remaining available depth for the current Ray
-	uint    remainingDepth;
+	uint remainingDepth;
+	// Current sample index
+	uint sampleIndex;
+	// Ray counter (used for multibounce)
+	uint rayCount;
+	// Pixel coordinate from which the initial ray was launched
+	uint2 pixelCoord;
+	// Max roughness (encountered along the path, used in path tracing)
+	float maxRoughness;
 };
 
 struct AttributeData
@@ -41,8 +49,8 @@ struct IntersectionVertex
 	float3 positionOS;
 	// Object space normal of the vertex
 	float3 normalOS;
-	// Object space normal of the vertex
-	float3 tangentOS;
+	// Object space tangent of the vertex
+	float4 tangentOS;
 	// UV coordinates
 	float2 texCoord0;
 	float2 texCoord1;
@@ -61,20 +69,20 @@ struct IntersectionVertex
 // Fetch the intersetion vertex data for the target vertex
 void FetchIntersectionVertex(uint vertexIndex, out IntersectionVertex outVertex)
 {
-    outVertex.positionOS = UnityRaytracingFetchVertexAttribute3(vertexIndex, kVertexAttributePosition);
-    outVertex.normalOS   = UnityRaytracingFetchVertexAttribute3(vertexIndex, kVertexAttributeNormal);
-    outVertex.tangentOS  = UnityRaytracingFetchVertexAttribute3(vertexIndex, kVertexAttributeTangent);
-    outVertex.texCoord0  = UnityRaytracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord0);
-    outVertex.texCoord1  = UnityRaytracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord1);
-    outVertex.texCoord2  = UnityRaytracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord2);
-    outVertex.texCoord3  = UnityRaytracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord3);
-    outVertex.color      = UnityRaytracingFetchVertexAttribute4(vertexIndex, kVertexAttributeColor);
+    outVertex.positionOS = UnityRayTracingFetchVertexAttribute3(vertexIndex, kVertexAttributePosition);
+    outVertex.normalOS   = UnityRayTracingFetchVertexAttribute3(vertexIndex, kVertexAttributeNormal);
+    outVertex.tangentOS  = UnityRayTracingFetchVertexAttribute4(vertexIndex, kVertexAttributeTangent);
+    outVertex.texCoord0  = UnityRayTracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord0);
+    outVertex.texCoord1  = UnityRayTracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord1);
+    outVertex.texCoord2  = UnityRayTracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord2);
+    outVertex.texCoord3  = UnityRayTracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord3);
+    outVertex.color      = UnityRayTracingFetchVertexAttribute4(vertexIndex, kVertexAttributeColor);
 }
 
 void GetCurrentIntersectionVertex(AttributeData attributeData, out IntersectionVertex outVertex)
 {
 	// Fetch the indices of the currentr triangle
-	uint3 triangleIndices = UnityRaytracingFetchTriangleIndices(PrimitiveIndex());
+	uint3 triangleIndices = UnityRayTracingFetchTriangleIndices(PrimitiveIndex());
 
 	// Fetch the 3 vertices
 	IntersectionVertex v0, v1, v2;

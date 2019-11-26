@@ -1,8 +1,8 @@
 using UnityEngine.Profiling;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
-    public enum CustomSamplerId
+    internal enum CustomSamplerId
     {
         PushGlobalParameters,
         CopySetDepthBuffer,
@@ -11,9 +11,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Forward,
         RenderSSAO,
         ResolveSSAO,
-        RenderShadows,
+        ResolveStencilBuffer,
         ScreenSpaceShadows,
         BuildLightList,
+        ContactShadows,
         BlitToFinalRT,
         Distortion,
         ApplyDistortion,
@@ -53,6 +54,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ClearSsrBuffers,
         HDRenderPipelineRender,
         CullResultsCull,
+        CustomPassCullResultsCull,
         CopyDepth,
         UpdateStencilCopyForSSRExclusion,
         GizmosPrePostprocess,
@@ -65,18 +67,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RaytracingFilterReflection,
         RaytracingAmbientOcclusion,
         RaytracingFilterAO,
-        RaytracingShadowIntegration,
-        RaytracingShadowCombination,
+        RaytracingDirectionalLightShadow,
+        RaytracingLightShadow,
+        RaytracingIntegrateIndirectDiffuse,
+        RaytracingFilterIndirectDiffuse,
         RaytracingDebug,
 
+        // Profile sampler for prepare light for GPU
+        PrepareLightsForGPU,
+        PushLightDataGlobalParameters,
+
+        // Profile sampler for shadow
+        RenderShadowMaps,
+        PushShadowGlobalParameters,
+
         // Profile sampler for tile pass
-        TPPrepareLightsForGPU,
         TPPushGlobalParameters,
         TPTiledLightingDebug,
         TPScreenSpaceShadows,
         TPTileSettingsEnableTileAndCluster,
         TPForwardPass,
-        TPForwardTiledClusterpass,
         TPDisplayShadows,
         TPRenderDeferredLighting,
 
@@ -89,6 +99,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         UpsampleLowResTransparent,
 
         // Post-processing
+        AlphaCopy,
         StopNaNs,
         Exposure,
         TemporalAntialiasing,
@@ -115,11 +126,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         FXAA,
         SMAA,
         FinalPost,
+        CustomPostProcessBeforePP,
+        CustomPostProcessAfterPP,
+        CustomPostProcessAfterOpaqueAndSky,
 
         Max
     }
 
-    public static class HDCustomSamplerExtension
+    internal static class HDCustomSamplerExtension
     {
         static CustomSampler[] s_Samplers;
 

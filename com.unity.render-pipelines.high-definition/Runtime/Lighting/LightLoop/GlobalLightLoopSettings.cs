@@ -1,10 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Serialization;
 using System;
+using UnityEngine.Serialization;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     // RenderRenderPipelineSettings represent settings that are immutable at runtime.
     // There is a dedicated RenderRenderPipelineSettings for each platform
@@ -76,7 +73,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public struct GlobalLightLoopSettings
     {
         /// <summary>Default GlobalDecalSettings</summary>
-        public static readonly GlobalLightLoopSettings @default = new GlobalLightLoopSettings()
+        [Obsolete("Since 2019.3, use GlobalLightLoopSettings.NewDefault() instead.")]
+        public static readonly GlobalLightLoopSettings @default = default;
+        /// <summary>Default GlobalDecalSettings</summary>
+        public static GlobalLightLoopSettings NewDefault() => new GlobalLightLoopSettings()
         {
             cookieAtlasSize = CookieAtlasResolution.CookieResolution2048,
             pointCookieSize = CubeCookieResolution.CubeCookieResolution128,

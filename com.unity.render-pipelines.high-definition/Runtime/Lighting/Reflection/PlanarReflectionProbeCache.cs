@@ -1,10 +1,10 @@
 using System;
-using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 using System.Collections.Generic;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
-    public class PlanarReflectionProbeCache
+    class PlanarReflectionProbeCache
     {
         internal static readonly int s_InputTexID = Shader.PropertyToID("_InputTex");
         internal static readonly int s_LoDID = Shader.PropertyToID("_LoD");
@@ -27,9 +27,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         bool                    m_PerformBC6HCompression;
         Dictionary<int, uint>   m_TextureHashes = new Dictionary<int, uint>();
 
-        public PlanarReflectionProbeCache(HDRenderPipelineAsset hdAsset, IBLFilterGGX iblFilter, int probeSize, GraphicsFormat probeFormat, bool isMipmaped)
+        public PlanarReflectionProbeCache(RenderPipelineResources defaultResources, IBLFilterGGX iblFilter, int atlasResolution, GraphicsFormat probeFormat, bool isMipmaped)
         {
-            m_ConvertTextureMaterial = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.shaders.blitCubeTextureFacePS);
+            m_ConvertTextureMaterial = CoreUtils.CreateEngineMaterial(defaultResources.shaders.blitCubeTextureFacePS);
             m_ConvertTextureMPB = new MaterialPropertyBlock();
 
             // BC6H requires CPP feature not yet available
@@ -37,8 +37,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             Debug.Assert(probeFormat == GraphicsFormat.RGB_BC6H_UFloat || probeFormat == GraphicsFormat.R16G16B16A16_UNorm, "Reflection Probe Cache format for HDRP can only be BC6H or FP16.");
 
-            m_ProbeSize = probeSize;
-            m_TextureAtlas = new PowerOfTwoTextureAtlas(probeSize, 0, probeFormat, useMipMap: isMipmaped, name: "PlanarReflectionProbe Atlas");
+            m_ProbeSize = atlasResolution;
+            m_TextureAtlas = new PowerOfTwoTextureAtlas(atlasResolution, 0, probeFormat, useMipMap: isMipmaped, name: "PlanarReflectionProbe Atlas");
             m_IBLFilterGGX = iblFilter;
 
             m_PerformBC6HCompression = probeFormat == GraphicsFormat.RGB_BC6H_UFloat;
@@ -151,9 +151,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_ConvolutionTargetTexture;
         }
 
-        public Vector4 FetchSlice(CommandBuffer cmd, Texture texture)
+        public Vector4 FetchSlice(CommandBuffer cmd, Texture texture, out int fetchIndex)
         {
             Vector4 scaleOffset = Vector4.zero;
+
+            // TODO: we must store here the fetch index of the probes !
+            fetchIndex = 0;
 
             if (m_TextureAtlas.Contains(texture, out scaleOffset))
             {

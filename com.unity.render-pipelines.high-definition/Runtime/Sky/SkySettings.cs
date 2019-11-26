@@ -1,8 +1,8 @@
 using System;
 using System.Diagnostics;
-using UnityEngine.Rendering;
+using System.Collections.Generic;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     // This class is used to associate a unique ID to a sky class.
     // This is needed to be able to automatically register sky classes and avoid collisions and refactoring class names causing data compatibility issues.
@@ -28,6 +28,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         Exposure,
         Lux,
+        Multiplier,
     }
 
     [System.Flags]
@@ -36,6 +37,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ShowMultiplierAndEV = (1 << 0),
         ShowRotation =        (1 << 1),
         ShowUpdateMode =      (1 << 2),
+    }
+
+    public enum BackplateType
+    {
+        Disc,
+        Rectangle,
+        Ellipse,
+        Infinite
+    }
+
+    [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
+    public sealed class BackplateTypeParameter : VolumeParameter<BackplateType>
+    {
+        public BackplateTypeParameter(BackplateType value, bool overrideState = false)
+            : base(value, overrideState) { }
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
@@ -57,6 +73,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public MinFloatParameter        multiplier = new MinFloatParameter(1.0f, 0.0f);
         [Tooltip("Informative helper that displays the relative intensity (in Lux) for the current HDR texture set in HDRI Sky.")]
         public MinFloatParameter        upperHemisphereLuxValue = new MinFloatParameter(1.0f, 0.0f);
+        [Tooltip("Informative helper that displays Show the color of Shadow.")]
+        public Vector3Parameter         upperHemisphereLuxColor = new Vector3Parameter(new Vector3(0, 0, 0));
         [Tooltip("Sets the absolute intensity (in Lux) of the current HDR texture set in HDRI Sky. Functions as a Lux intensity multiplier for the sky.")]
         public FloatParameter           desiredLuxValue = new FloatParameter(20000);
         [Tooltip("Specifies when HDRP updates the environment lighting. When set to OnDemand, use HDRenderPipeline.RequestSkyEnvironmentUpdate() to request an update.")]
@@ -70,24 +88,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         bool m_useMIS = false;
         public bool useMIS { get { return m_useMIS; } }
 
+        static Dictionary<Type, int>  skyUniqueIDs = new Dictionary<Type, int>();
+
         public override int GetHashCode()
         {
             unchecked
             {
+                // UpdateMode and period should not be part of the hash as they do not influence rendering itself.
                 int hash = 13;
                 hash = hash * 23 + rotation.GetHashCode();
                 hash = hash * 23 + exposure.GetHashCode();
                 hash = hash * 23 + multiplier.GetHashCode();
                 hash = hash * 23 + desiredLuxValue.GetHashCode();
-
-                // TODO: Fixme once we switch to .Net 4.6+
-                //>>>
-                hash = hash * 23 + ((int)updateMode.value).GetHashCode();
-                hash = hash * 23 + ((int)skyIntensityMode.value).GetHashCode();
-                //<<<
-
-                hash = hash * 23 + updatePeriod.GetHashCode();
+                hash = hash * 23 + skyIntensityMode.GetHashCode();
                 hash = hash * 23 + includeSunInBaking.GetHashCode();
+
                 return hash;
             }
         }
@@ -99,13 +114,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static int GetUniqueID(Type type)
         {
-            var uniqueIDs = type.GetCustomAttributes(typeof(SkyUniqueID), false);
-            if (uniqueIDs.Length == 0)
-                return -1;
-            else
-                return ((SkyUniqueID)uniqueIDs[0]).uniqueID;
+            int uniqueID;
+
+            if (!skyUniqueIDs.TryGetValue(type, out uniqueID))
+            {
+                var uniqueIDs = type.GetCustomAttributes(typeof(SkyUniqueID), false);
+                uniqueID = (uniqueIDs.Length == 0) ? -1 : ((SkyUniqueID)uniqueIDs[0]).uniqueID;
+                skyUniqueIDs[type] = uniqueID;
+            }
+
+            return uniqueID;
         }
 
-        public abstract SkyRenderer CreateRenderer();
+        public abstract Type GetSkyRendererType();
     }
 }

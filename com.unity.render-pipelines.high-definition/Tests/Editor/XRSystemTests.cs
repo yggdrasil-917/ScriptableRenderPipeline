@@ -1,12 +1,10 @@
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using UnityEngine.TestTools.Constraints;
 using Is = UnityEngine.TestTools.Constraints.Is;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
+namespace UnityEngine.Rendering.HighDefinition.Tests
 {
-    public class XRSystemTests
+    class XRSystemTests
     {
         XRSystem xrSystem;
         Camera[] cameras;
@@ -20,7 +18,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
         [SetUp]
         public void SetUp()
         {
-            xrSystem = new XRSystem();
+            xrSystem = new XRSystem(null);
+            TextureXR.maxViews = k_ViewCount;
             cameras = new Camera[k_CameraCount];
             for (int cameraIndex = 0; cameraIndex < k_CameraCount; ++cameraIndex)
             {
@@ -44,7 +43,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
             {
                 for (int passIndex = 0; passIndex < k_PassCount; ++passIndex)
                 {
-                    var xrPass = XRPass.Create(passIndex);
+                    var passCreateInfo = new XRPassCreateInfo
+                    {
+                        multipassId = 0,
+                        cullingPassId = 0,
+                        cullingParameters = new ScriptableCullingParameters(),
+                        renderTarget = camera.targetTexture,
+                        customMirrorView = null
+                    };
+
+                    var xrPass = XRPass.Create(passCreateInfo);
 
                     for (int viewIndex = 0; viewIndex < k_ViewCount; ++viewIndex)
                     {

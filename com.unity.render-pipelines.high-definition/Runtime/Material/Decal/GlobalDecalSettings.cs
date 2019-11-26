@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using System;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     // RenderRenderPipelineSettings represent settings that are immutable at runtime.
     // There is a dedicated RenderRenderPipelineSettings for each platform
@@ -12,7 +9,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public struct GlobalDecalSettings
     {
         /// <summary>Default GlobalDecalSettings</summary>
-        public static readonly GlobalDecalSettings @default = new GlobalDecalSettings()
+        [Obsolete("Since 2019.3, use GlobalDecalSettings.NewDefault() instead.")]
+        public static readonly GlobalDecalSettings @default = default;
+        /// <summary>Default GlobalDecalSettings</summary>
+        public static GlobalDecalSettings NewDefault() => new GlobalDecalSettings()
         {
             drawDistance = 1000,
             atlasWidth = 4096,

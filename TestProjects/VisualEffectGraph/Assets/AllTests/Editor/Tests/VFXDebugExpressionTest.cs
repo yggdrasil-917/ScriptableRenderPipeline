@@ -2,26 +2,33 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
+using UnityEngine.VFX;
+using UnityEditor.VFX;
 using UnityEditor;
 using UnityEngine.TestTools;
 using System.Linq;
 using UnityEditor.VFX.UI;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 namespace UnityEditor.VFX.Test
 {
     public class VFXDebugExpressionTest
     {
-        string tempFilePath = "Assets/TmpTests/vfxTest_time.vfx";
+        static readonly string tempDirectory = "Assets/TmpTests";
+        static readonly string tempFilePath = tempDirectory + "/vfxTest_time.vfx";
 
         VFXGraph MakeTemporaryGraph()
         {
             if (System.IO.File.Exists(tempFilePath))
             {
                 AssetDatabase.DeleteAsset(tempFilePath);
+            }
+
+            if (!Directory.Exists(tempDirectory))
+            {
+                Directory.CreateDirectory(tempDirectory);
             }
 
             var asset = VisualEffectAssetEditorUtility.CreateNewAsset(tempFilePath);
@@ -39,8 +46,8 @@ namespace UnityEditor.VFX.Test
         [SetUp]
         public void Init()
         {
-            m_previousFixedTimeStep = UnityEngine.Experimental.VFX.VFXManager.fixedTimeStep;
-            m_previousMaxDeltaTime = UnityEngine.Experimental.VFX.VFXManager.maxDeltaTime;
+            m_previousFixedTimeStep = UnityEngine.VFX.VFXManager.fixedTimeStep;
+            m_previousMaxDeltaTime = UnityEngine.VFX.VFXManager.maxDeltaTime;
 
             m_gameObject = new GameObject("MainGameObject");
 
@@ -53,8 +60,8 @@ namespace UnityEditor.VFX.Test
         [TearDown]
         public void CleanUp()
         {
-            UnityEngine.Experimental.VFX.VFXManager.fixedTimeStep = m_previousFixedTimeStep;
-            UnityEngine.Experimental.VFX.VFXManager.maxDeltaTime = m_previousMaxDeltaTime;
+            UnityEngine.VFX.VFXManager.fixedTimeStep = m_previousFixedTimeStep;
+            UnityEngine.VFX.VFXManager.maxDeltaTime = m_previousMaxDeltaTime;
             AssetDatabase.DeleteAsset(tempFilePath);
 
             UnityEngine.Object.DestroyImmediate(m_gameObject);
@@ -79,7 +86,9 @@ namespace UnityEditor.VFX.Test
             initContext.LinkTo(outputContext);
 
             var slotRate = constantRate.GetInputSlot(0);
-            var totalTime = VFXLibrary.GetOperators().First(o => o.name == VFXExpressionOperation.TotalTime.ToString()).CreateInstance();
+            string opName = ObjectNames.NicifyVariableName(VFXExpressionOperation.TotalTime.ToString());
+
+            var totalTime = VFXLibrary.GetOperators().First(o => o.name == opName).CreateInstance();
             slotRate.Link(totalTime.GetOutputSlot(0));
 
             spawnerContext.AddChild(constantRate);
@@ -95,6 +104,7 @@ namespace UnityEditor.VFX.Test
             int maxFrame = 512;
             while (vfxComponent.culled && --maxFrame > 0)
             {
+
                 yield return null;
             }
             Assert.IsTrue(maxFrame > 0);
@@ -114,7 +124,6 @@ namespace UnityEditor.VFX.Test
         [UnityTest]
         public IEnumerator Create_Asset_And_Component_Check_Overflow_MaxDeltaTime([ValueSource("updateModes")] object updateMode)
         {
-            EditorApplication.ExecuteMenuItem("Window/General/Game");
             var graph = MakeTemporaryGraph();
             graph.visualEffectResource.updateMode = (VFXUpdateMode)updateMode;
 
@@ -138,22 +147,20 @@ namespace UnityEditor.VFX.Test
             float fixedTimeStep = 1.0f / 20.0f;
             float maxTimeStep = 1.0f / 10.0f;
 
-            UnityEngine.Experimental.VFX.VFXManager.fixedTimeStep = fixedTimeStep;
-            UnityEngine.Experimental.VFX.VFXManager.maxDeltaTime = maxTimeStep;
+            UnityEngine.VFX.VFXManager.fixedTimeStep = fixedTimeStep;
+            UnityEngine.VFX.VFXManager.maxDeltaTime = maxTimeStep;
 
-            /* waiting for culling */
+            /* waiting for culling (simulating big delay between each frame) */
             int maxFrame = 512;
-            while (vfxComponent.culled && --maxFrame > 0)
+            VFXSpawnerState spawnerState = VisualEffectUtility.GetSpawnerState(vfxComponent, 0u);
+            float sleepTimeInSeconds = maxTimeStep * 5.0f;
+            while (--maxFrame > 0 && spawnerState.deltaTime != maxTimeStep)
             {
+                System.Threading.Thread.Sleep((int)(sleepTimeInSeconds * 1000.0f));
                 yield return null;
+                spawnerState = VisualEffectUtility.GetSpawnerState(vfxComponent, 0u);
             }
             Assert.IsTrue(maxFrame > 0);
-
-            float sleepTimeInSeconds = maxTimeStep * 5.0f;
-            System.Threading.Thread.Sleep((int)(sleepTimeInSeconds * 1000.0f));
-            yield return null;
-
-            var spawnerState = VisualEffectUtility.GetSpawnerState(vfxComponent, 0u);
             if (graph.visualEffectResource.updateMode == VFXUpdateMode.FixedDeltaTime)
             {
                 Assert.AreEqual(maxTimeStep, spawnerState.deltaTime);
@@ -217,7 +224,8 @@ namespace UnityEditor.VFX.Test
             branch.outputSlots[0].UnlinkAll();
             graph.RecompileIfNeeded(); //Back to a legal state
 
-            quadOutput.SetSettingValue("blendMode", VFXAbstractParticleOutput.BlendMode.Masked);
+            quadOutput.SetSettingValue("blendMode", VFXAbstractParticleOutput.BlendMode.Opaque);
+            quadOutput.SetSettingValue("useAlphaClipping", true);
             Assert.IsTrue(modulo.outputSlots[0].Link(quadOutput.inputSlots.First(o => o.name.Contains("alphaThreshold"))));
             graph.RecompileIfNeeded(); //Should also be legal (alphaTreshold relying on particleId)
 

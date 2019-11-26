@@ -82,7 +82,7 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
     const float3 scale3 = float3(length(worldToObject[0]), length(worldToObject[1]), length(worldToObject[2]));
     const float coneWidthOS = rayCone.width * (scale3.x + scale3.y + scale3.z) / 3;
     const float uvArea = GetIntersectionTextureArea(intersectionVertex, _UVMappingMask, _BaseColorMap_ST.xy, _TexWorldScale);
-    const float baseLOD = computeBaseTextureLOD(V, input.worldToTangent[2], coneWidthOS, uvArea, intersectionVertex.triangleArea);
+    const float baseLOD = computeBaseTextureLOD(V, input.tangentToWorld[2], coneWidthOS, uvArea, intersectionVertex.triangleArea);
     #else
     const float baseLOD = 0;
     #endif
@@ -95,8 +95,13 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
     #endif
     surfaceData.baseColor = SAMPLE_TEXTURE2D_LOD(_BaseColorMap, sampler_BaseColorMap, uvBase, lod).rgb * _BaseColor.rgb;
 
-    // Transparency Data
-    float alpha = SAMPLE_TEXTURE2D_LOD(_BaseColorMap, sampler_BaseColorMap, uvBase, lod).a * _BaseColor.a;
+    // If we are using this value to do an alpha test, we should read from the base LOD and not from the rough LOD
+    #ifdef _ALPHATEST_ON
+    float alphaLOD = baseLOD;
+    #else
+    float alphaLOD = lod;
+    #endif
+    float alpha = SAMPLE_TEXTURE2D_LOD(_BaseColorMap, sampler_BaseColorMap, uvBase, alphaLOD).a * _BaseColor.a;
 
 #ifdef _ALPHATEST_ON
     if(alpha < _AlphaCutoff)
@@ -121,7 +126,7 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
     float3 normalTS = UnpackNormalmapRGorAG(SAMPLE_TEXTURE2D_LOD(_NormalMap, sampler_NormalMap, uvBase, lod), _NormalScale);
     GetNormalWS(input, normalTS, surfaceData.normalWS, doubleSidedConstants);
     #else
-    surfaceData.normalWS = input.worldToTangent[2];
+    surfaceData.normalWS = input.tangentToWorld[2];
     #endif
 
     // Default smoothness
@@ -207,8 +212,9 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
     surfaceData.thickness = _Thickness;
 #endif
 
-    // Default tangentWS
-    surfaceData.tangentWS = normalize(input.worldToTangent[0].xyz);
+    // Default tangent and normal (non-mapped, smooth normal here)
+    surfaceData.tangentWS = normalize(input.tangentToWorld[0].xyz);
+    surfaceData.geomNormalWS = input.tangentToWorld[2];
 
     // Transparency
 #if HAS_REFRACTION
@@ -222,8 +228,6 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
 #endif
 
     surfaceData.atDistance = _ATDistance;
-    // Thickness already defined with SSS (from both thickness and thicknessMap)
-    surfaceData.thickness *= _ThicknessMultiplier;
     // Rough refraction don't use opacity. Instead we use opacity as a transmittance mask.
     surfaceData.transmittanceMask = (1.0 - alpha);
     alpha = 1.0;
@@ -234,7 +238,13 @@ bool GetSurfaceDataFromIntersection(FragInputs input, float3 V, PositionInputs p
     surfaceData.transmittanceMask = 0.0;
 #endif
 
-    InitBuiltinData(posInput, alpha, surfaceData.normalWS, -input.worldToTangent[2], input.texCoord1, input.texCoord2, builtinData);
+#if defined(DEBUG_DISPLAY)
+    // We need to call ApplyDebugToSurfaceData after filling the surfarcedata and before filling builtinData
+    // as it can modify attribute use for static lighting
+    ApplyDebugToSurfaceData(input.tangentToWorld, surfaceData);
+#endif
+
+    InitBuiltinData(posInput, alpha, surfaceData.normalWS, -input.tangentToWorld[2], input.texCoord1, input.texCoord2, builtinData);
     builtinData.emissiveColor = _EmissiveColor * lerp(float3(1.0, 1.0, 1.0), surfaceData.baseColor.rgb, _AlbedoAffectEmissive);
 #if _EMISSIVE_COLOR_MAP
     #ifdef USE_RAY_CONE_LOD

@@ -1,13 +1,16 @@
 using System;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     /// <summary>Defines how the view matrix is provided to the camera.</summary>
     [Serializable]
     public struct CameraPositionSettings
     {
         /// <summary>Default value.</summary>
-        public static readonly CameraPositionSettings @default = new CameraPositionSettings
+        [Obsolete("Since 2019.3, use CameraPositionSettings.NewDefault() instead.")]
+        public static readonly CameraPositionSettings @default = default;
+        /// <summary>Default value.</summary>
+        public static CameraPositionSettings NewDefault() => new CameraPositionSettings
         {
             mode = Mode.ComputeWorldToCameraMatrix,
             position = Vector3.zero,

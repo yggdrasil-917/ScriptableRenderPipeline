@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
 
     public enum LowResTransparentUpsample : byte
@@ -13,17 +13,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public struct GlobalLowResolutionTransparencySettings
     {
         /// <summary>Default GlobalLowResolutionTransparencySettings</summary>
-        public static readonly GlobalLowResolutionTransparencySettings @default = new GlobalLowResolutionTransparencySettings()
+        [Obsolete("Since 2019.3, use GlobalLowResolutionTransparencySettings.NewDefault() instead.")]
+        public static readonly GlobalLowResolutionTransparencySettings @default = default;
+        /// <summary>Default GlobalLowResolutionTransparencySettings</summary>
+        public static GlobalLowResolutionTransparencySettings NewDefault() => new GlobalLowResolutionTransparencySettings()
         {
             enabled = true,
             checkerboardDepthBuffer = true,
             upsampleType = LowResTransparentUpsample.NearestDepth
         };
-        
+
         public bool enabled;
         public bool checkerboardDepthBuffer;
 
-        
+
         public LowResTransparentUpsample upsampleType;
     }
 }

@@ -71,12 +71,11 @@ namespace UnityEditor.VFX.UI
         {
             RecreateResources();
 
-            var tpl = Resources.Load<VisualTreeAsset>("uxml/VFXSystemBorder");
+            var tpl = VFXView.LoadUXML("VFXSystemBorder");
             tpl.CloneTree(this);
 
             this.AddStyleSheetPath("VFXSystemBorder");
 
-            this.cacheAsBitmap = false;
             this.style.overflow = Overflow.Visible;
 
             m_Title = this.Query<Label>("title");
@@ -99,6 +98,7 @@ namespace UnityEditor.VFX.UI
             Add(content);
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
             this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
+            visible = false;
         }
         public void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
@@ -193,6 +193,7 @@ namespace UnityEditor.VFX.UI
         {
             if (m_WaitingRecompute)
                 return;
+            visible = true;
             //title width should be at least as wide as a context to be valid.
             float titleWidth = m_Title.layout.width;
             bool invalidTitleWidth = float.IsNaN(titleWidth) || titleWidth < 50;
@@ -349,8 +350,8 @@ namespace UnityEditor.VFX.UI
                 s_Mesh.uv2 = uvsDistance;
                 s_Mesh.SetIndices(indices, MeshTopology.Quads, 0);
             }
-
-            m_Mat = new Material(Shader.Find("Hidden/VFX/GradientDashedBorder"));
+            if( m_Mat == null)
+                m_Mat = new Material(Shader.Find("Hidden/VFX/GradientDashedBorder"));
         }
 
         void IDisposable.Dispose()

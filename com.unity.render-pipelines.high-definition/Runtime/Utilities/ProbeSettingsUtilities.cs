@@ -1,7 +1,6 @@
 using System;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     /// <summary>Utilities for <see cref="ProbeSettings"/></summary>
     public static class ProbeSettingsUtilities
@@ -25,10 +24,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ref ProbeCapturePositionSettings probePosition,         // In parameter
             ref CameraSettings cameraSettings,                      // InOut parameter
             ref CameraPositionSettings cameraPosition,              // InOut parameter
-            float referenceFieldOfView = 90
+            float referenceFieldOfView = 90,
+            float referenceAspect = 1
         )
         {
-            cameraSettings = settings.camera;
+            cameraSettings = settings.cameraSettings;
             // Compute the modes for each probe type
             PositionMode positionMode;
             bool useReferenceTransformAsNearClipPlane;
@@ -40,7 +40,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     ApplyPlanarFrustumHandling(
                         ref settings, ref probePosition,
                         ref cameraSettings, ref cameraPosition,
-                        referenceFieldOfView
+                        referenceFieldOfView, referenceAspect
                     );
                     break;
                 case ProbeSettings.ProbeType.ReflectionProbe:
@@ -91,6 +91,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 );
             }
 
+            // Propagate the desired custom exposure
+            cameraSettings.probeRangeCompressionFactor = settings.lighting.rangeCompressionFactor;
+
             // Frame Settings Overrides
             switch (settings.mode)
             {
@@ -108,9 +111,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 case ProbeSettings.ProbeType.ReflectionProbe:
                     cameraSettings.customRenderingSettings = true;
-                    // Disable specular lighting for reflection probes, they must not have view dependent information when baking
-                    cameraSettings.renderingPathCustomFrameSettings.SetEnabled(FrameSettingsField.SpecularLighting, false);
-                    cameraSettings.renderingPathCustomFrameSettingsOverrideMask.mask[(int)FrameSettingsField.SpecularLighting] = true;
                     break;
             }
         }
@@ -126,14 +126,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
             var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
             var mirrorForward = proxyMatrix.MultiplyVector(settings.proxySettings.mirrorRotationProxySpace * Vector3.forward);
+            var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(mirrorPosition, mirrorForward);
 
             var worldToCameraRHS = GeometryUtils.CalculateWorldToCameraMatrixRHS(
                 probePosition.referencePosition,
-                //probePosition.referenceRotation
-                // The capture always look at the center of the probe influence
-                Quaternion.LookRotation(mirrorPosition - probePosition.referencePosition, Vector3.up)
+
+                // TODO: The capture camera should look at a better direction to only capture texels that
+                //   will actually be sampled.
+                //   The position it should look at is the center of the visible influence volume of the probe.
+                //   (visible influence volume: the intersection of the frustum with the probe's influence volume).
+                //   But this is not trivial to get.
+                //   So currently, only look in the mirrored direction of the reference. This will capture
+                //   more pixels than we want with a lesser resolution, but still work for most cases.
+
+                // Note: looking at the center of the influence volume don't work in all cases (see case 1157921)
+                probePosition.referenceRotation
             );
-            var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(mirrorPosition, mirrorForward);
             cameraPosition.worldToCameraMatrix = worldToCameraRHS * reflectionMatrix;
             // We must invert the culling because we performed a plane reflection
             cameraSettings.invertFaceCulling = true;
@@ -150,13 +158,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ref ProbeCapturePositionSettings probePosition,         // In parameter
             ref CameraSettings cameraSettings,                      // InOut parameter
             ref CameraPositionSettings cameraPosition,              // InOut parameter
-            float referenceFieldOfView
+            float referenceFieldOfView, float referenceAspect
         )
         {
             const float k_MaxFieldOfView = 170;
 
             var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
             var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
+
+            cameraSettings.frustum.aspect = referenceAspect;
 
             switch (settings.frustum.fieldOfViewMode)
             {
@@ -201,7 +211,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
 
             var sourceProjection = Matrix4x4.Perspective(
-                cameraSettings.frustum.fieldOfView,
+                HDUtils.ClampFOV(cameraSettings.frustum.fieldOfView),
                 cameraSettings.frustum.aspect,
                 cameraSettings.frustum.nearClipPlane,
                 cameraSettings.frustum.farClipPlane

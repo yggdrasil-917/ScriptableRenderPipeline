@@ -1,9 +1,8 @@
-using UnityEngine.Rendering;
-using System.Collections.Generic;
+using UnityEngine.Experimental.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
-    public class LightCookieManager
+    class LightCookieManager
     {
         HDRenderPipelineAsset m_RenderPipelineAsset = null;
 
@@ -30,8 +29,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public LightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
         {
+
             // Keep track of the render pipeline asset
             m_RenderPipelineAsset = hdAsset;
+            var hdResources = HDRenderPipeline.defaultAsset.renderPipelineResources; // TODO !
 
             // Create the texture cookie cache that we shall be using for the area lights
             GlobalLightLoopSettings gLightLoopSettings = hdAsset.currentPlatformRenderPipelineSettings.lightLoopSettings;
@@ -43,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // m_AreaCookieTexArray.AllocTextureArray(cookieSize, cookieResolution, cookieResolution, TextureFormat.RGBA32, true);
 
             // Also make sure to create the engine material that is used for the filtering
-            m_MaterialFilterAreaLights = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.shaders.filterAreaLightCookiesPS);
+            m_MaterialFilterAreaLights = CoreUtils.CreateEngineMaterial(hdResources.shaders.filterAreaLightCookiesPS);
 
             int cookieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
             int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
@@ -51,14 +52,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             
             m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, 0, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)", useMipMap: false);
 
-            m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.shaders.cubeToPanoPS);
+            m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(hdResources.shaders.cubeToPanoPS);
 
             m_CubeCookieTexArray = new TextureCacheCubemap("Cookie");
             m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
         }
 
+        internal void NewFrame()
+        {
+            // m_AreaCookieTexArray.NewFrame();
+            m_CubeCookieTexArray.NewFrame();
+
+            // TODO: remove this !
+            m_CookieAtlas.ResetAllocator();
+        }
+
         public void ReleaseResources()
         {
+            // TODO
             // if(m_AreaCookieTexArray != null)
             // {
             //     m_AreaCookieTexArray.Release();
@@ -91,6 +102,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        // TODO
         // public Texture GetTexCache()
         // {
         //     return m_AreaCookieTexArray.GetTexCache();
@@ -108,11 +120,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         //     }
         //     return sliceIndex;
         // }
-
-        public void NewFrame()
-        {
-            m_CubeCookieTexArray.NewFrame();
-        }
 
         Texture FilterAreaLightTexture(CommandBuffer cmd, Texture source)
         {
@@ -224,7 +231,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_CookieAtlas.ClearTarget(cmd);
         }
 
-        public RTHandleSystem.RTHandle atlasTexture => m_CookieAtlas.AtlasTexture;
+        public RTHandle atlasTexture => m_CookieAtlas.AtlasTexture;
         public Texture cubeCache => m_CubeCookieTexArray.GetTexCache();
 
         public PowerOfTwoTextureAtlas atlas => m_CookieAtlas;

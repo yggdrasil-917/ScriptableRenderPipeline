@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEditor.Experimental;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using UnityEditor.VFX;
 using UnityEditor.VFX.UI;
 
@@ -16,33 +16,36 @@ using System.Reflection;
 
 [CustomEditor(typeof(VFXModel), true)]
 [CanEditMultipleObjects]
-public class VFXSlotContainerEditor : Editor
+class VFXSlotContainerEditor : Editor
 {
     protected void OnEnable()
     {
-        //SceneView.onSceneGUIDelegate += OnSceneGUI;
         SceneView.duringSceneGui += OnSceneGUI;
     }
 
     protected void OnDisable()
     {
-        //SceneView.onSceneGUIDelegate -= OnSceneGUI;
         SceneView.duringSceneGui -= OnSceneGUI;
+    }
+
+    protected virtual SerializedProperty FindProperty(VFXSetting setting)
+    {
+        return serializedObject.FindProperty(setting.field.Name);
     }
 
     public virtual void DoInspectorGUI()
     {
         var slotContainer = targets[0] as VFXModel;
-        IEnumerable<FieldInfo> settingFields = slotContainer.GetSettings(false, VFXSettingAttribute.VisibleFlags.InInspector);
+        IEnumerable<VFXSetting> settingFields = slotContainer.GetSettings(false, VFXSettingAttribute.VisibleFlags.InInspector);
 
         for (int i = 1; i < targets.Length; ++i)
         {
-            IEnumerable<FieldInfo> otherSettingFields = (targets[i] as VFXModel).GetSettings(false, VFXSettingAttribute.VisibleFlags.InInspector);
+            IEnumerable<VFXSetting> otherSettingFields = (targets[i] as VFXModel).GetSettings(false, VFXSettingAttribute.VisibleFlags.InInspector);
 
             settingFields = settingFields.Intersect(otherSettingFields);
         }
 
-        foreach (var prop in settingFields.Select(t => new KeyValuePair<FieldInfo, SerializedProperty>(t, serializedObject.FindProperty(t.Name))).Where(t => t.Value != null))
+        foreach (var prop in settingFields.Select(t => new KeyValuePair<FieldInfo, SerializedProperty>(t.field, FindProperty(t))).Where(t => t.Value != null))
         {
             var attrs = prop.Key.GetCustomAttributes(typeof(StringProviderAttribute), true);
             if (attrs.Length > 0)
@@ -131,7 +134,7 @@ public class VFXSlotContainerEditor : Editor
             EditorGUI.BeginChangeCheck();
             GUILayout.BeginHorizontal();
             GUI.enabled = gizmoableAnchors.Count > 1;
-            int result = EditorGUILayout.Popup(current, gizmoableAnchors.Select(t => t.name).ToArray(), GUILayout.Width(100));
+            int result = EditorGUILayout.Popup(current, gizmoableAnchors.Select(t => t.name).ToArray());
             GUI.enabled = true;
             if (EditorGUI.EndChangeCheck() && result != current)
             {

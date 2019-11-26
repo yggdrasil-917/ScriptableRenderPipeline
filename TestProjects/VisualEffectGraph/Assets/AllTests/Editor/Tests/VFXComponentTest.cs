@@ -2,8 +2,8 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
+using UnityEngine.VFX;
+using UnityEditor.VFX;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 using System.Linq;
@@ -104,11 +104,11 @@ namespace UnityEditor.VFX.Test
             camera.transform.LookAt(m_mainCamera.transform);
 
             m_previousCaptureFrameRate = Time.captureFramerate;
-            m_previousFixedTimeStep = UnityEngine.Experimental.VFX.VFXManager.fixedTimeStep;
-            m_previousMaxDeltaTime = UnityEngine.Experimental.VFX.VFXManager.maxDeltaTime;
+            m_previousFixedTimeStep = UnityEngine.VFX.VFXManager.fixedTimeStep;
+            m_previousMaxDeltaTime = UnityEngine.VFX.VFXManager.maxDeltaTime;
             Time.captureFramerate = 10;
-            UnityEngine.Experimental.VFX.VFXManager.fixedTimeStep = 0.1f;
-            UnityEngine.Experimental.VFX.VFXManager.maxDeltaTime = 0.1f;
+            UnityEngine.VFX.VFXManager.fixedTimeStep = 0.1f;
+            UnityEngine.VFX.VFXManager.maxDeltaTime = 0.1f;
         }
 
         [OneTimeTearDown]
@@ -116,8 +116,8 @@ namespace UnityEditor.VFX.Test
         {
             Debug.unityLogger.logEnabled = true;
             Time.captureFramerate = m_previousCaptureFrameRate;
-            UnityEngine.Experimental.VFX.VFXManager.fixedTimeStep = m_previousFixedTimeStep;
-            UnityEngine.Experimental.VFX.VFXManager.maxDeltaTime = m_previousMaxDeltaTime;
+            UnityEngine.VFX.VFXManager.fixedTimeStep = m_previousFixedTimeStep;
+            UnityEngine.VFX.VFXManager.maxDeltaTime = m_previousMaxDeltaTime;
 
             UnityEngine.Object.DestroyImmediate(m_mainObject);
             UnityEngine.Object.DestroyImmediate(m_cubeEmpty);
@@ -157,6 +157,11 @@ namespace UnityEditor.VFX.Test
             {
                 AssetDatabase.DeleteAsset(tempFilePath);
             }
+            else
+            {
+                System.IO.Directory.CreateDirectory("Assets/TmpTests/");
+            }
+
             var asset = VisualEffectAssetEditorUtility.CreateNewAsset(tempFilePath);
             VisualEffectResource resource = asset.GetResource(); // force resource creation
 
@@ -325,6 +330,43 @@ namespace UnityEditor.VFX.Test
             Assert.AreEqual(size.x / 2.0f, bounds.extents.x, 10e-5);
             Assert.AreEqual(size.y / 2.0f, bounds.extents.y, 10e-5);
             Assert.AreEqual(size.z / 2.0f, bounds.extents.z, 10e-5);
+
+            UnityEngine.Object.DestroyImmediate(currentObject);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CreateComponent_And_Check_NoneTexture_Constraint_Doesnt_Generate_Any_Error()
+        {
+            EditorApplication.ExecuteMenuItem("Window/General/Game");
+            var graph = CreateGraph_And_System();
+
+            var burst = ScriptableObject.CreateInstance<VFXSpawnerBurst>();
+            burst.inputSlots.First(o => o.name.ToLowerInvariant().Contains("count")).value = 147.0f;
+            graph.children.OfType<VFXBasicSpawner>().First().AddChild(burst);
+
+            var operatorSample3D = ScriptableObject.CreateInstance<Operator.SampleTexture3D>();
+            operatorSample3D.inputSlots.First(o => o.valueType == VFXValueType.Texture3D).value = null;
+            graph.AddChild(operatorSample3D);
+
+            var initialize = graph.children.First(o => o is VFXBasicInitialize);
+            bool r = operatorSample3D.outputSlots.First().Link(initialize.children.OfType<VFXBlock>().First().inputSlots.First());
+            Assert.IsTrue(r);
+            graph.SetExpressionGraphDirty();
+            graph.RecompileIfNeeded();
+
+            GameObject currentObject = new GameObject("TemporaryGameObject_NoneTexture", typeof(VisualEffect));
+            var vfx = currentObject.GetComponent<VisualEffect>();
+            var asset = graph.visualEffectResource.asset;
+            vfx.visualEffectAsset = asset;
+
+            int maxFrame = 512;
+            while ((vfx.culled || vfx.aliveParticleCount == 0) && --maxFrame > 0)
+                yield return null;
+
+            //Wait for a few frame to be sure the rendering has been triggered
+            for (int i = 0; i < 3; ++i)
+                yield return null;
 
             UnityEngine.Object.DestroyImmediate(currentObject);
             yield return null;

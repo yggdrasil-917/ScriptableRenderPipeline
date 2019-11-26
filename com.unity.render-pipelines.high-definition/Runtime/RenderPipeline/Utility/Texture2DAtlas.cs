@@ -1,11 +1,14 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine.Rendering;
-using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+namespace UnityEngine.Rendering.HighDefinition
 {
-    public class AtlasAllocator
+    class AtlasAllocator
     {
         private class AtlasNode
         {
@@ -128,20 +131,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
     }
 
-    public class Texture2DAtlas
+    class Texture2DAtlas
     {
-        protected RTHandleSystem.RTHandle m_AtlasTexture = null;
+        protected RTHandle m_AtlasTexture = null;
         protected int m_Width;
         protected int m_Height;
         protected bool m_UseMipMaps;
         protected GraphicsFormat m_Format;
-        protected AtlasAllocator m_AtlasAllocator = null;
-        protected Dictionary<int, Vector4> m_AllocationCache = new Dictionary<int, Vector4>();
-        protected Dictionary<int, uint> m_RenderTextureUpdateCache = new Dictionary<int, uint>();
+        private AtlasAllocator m_AtlasAllocator = null;
+        private Dictionary<int, Vector4> m_AllocationCache = new Dictionary<int, Vector4>();
+        private Dictionary<int, uint> m_RenderTextureUpdateCache = new Dictionary<int, uint>();
 
         static readonly Vector4 fullScaleOffset = new Vector4(1, 1, 0, 0);
 
-        public RTHandleSystem.RTHandle AtlasTexture
+        public RTHandle AtlasTexture
         {
             get
             {
@@ -229,7 +232,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (allocated)
                 BlitTexture(cmd, scaleOffset, texture, fullScaleOffset);
             else
-                Debug.LogError("Can't place texture " + texture + " in the atlas " + m_AtlasTexture.m_Name + ": Atlas is out of space");
+                Debug.LogError("Can't place texture " + texture + " in the atlas " + m_AtlasTexture.name + ": Atlas is out of space");
 
             return allocated;
         }

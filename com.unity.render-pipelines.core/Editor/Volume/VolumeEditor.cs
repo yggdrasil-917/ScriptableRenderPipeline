@@ -18,6 +18,8 @@ namespace UnityEditor.Rendering
 
         VolumeProfile profileRef => actualTarget.HasInstantiatedProfile() ? actualTarget.profile : actualTarget.sharedProfile;
 
+        readonly GUIContent[] m_Modes = { new GUIContent("Global"), new GUIContent("Local") };
+
         void OnEnable()
         {
             var o = new PropertyFetcher<Volume>(serializedObject);
@@ -48,12 +50,34 @@ namespace UnityEditor.Rendering
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(m_IsGlobal);
-
-            if (!m_IsGlobal.boolValue) // Blend radius is not needed for global volumes
+            GUIContent label = EditorGUIUtility.TrTextContent("Mode", "A global volume is applied to the whole scene.");
+            Rect lineRect = EditorGUILayout.GetControlRect();
+            int isGlobal = m_IsGlobal.boolValue ? 0 : 1;
+            EditorGUI.BeginProperty(lineRect, label, m_IsGlobal);
             {
-                if (actualTarget.GetComponent<Collider>() == null)
+                EditorGUI.BeginChangeCheck();
+                isGlobal = EditorGUILayout.Popup(label, isGlobal, m_Modes);
+                if (EditorGUI.EndChangeCheck())
+                    m_IsGlobal.boolValue = isGlobal == 0;
+            }
+            EditorGUI.EndProperty();
+
+            if (isGlobal != 0) // Blend radius is not needed for global volumes
+            {
+                if (!actualTarget.TryGetComponent<Collider>(out _))
+                {
                     EditorGUILayout.HelpBox("Add a Collider to this GameObject to set boundaries for the local Volume.", MessageType.Info);
+
+                    if (GUILayout.Button(EditorGUIUtility.TrTextContent("Add Collider"), EditorStyles.miniButton))
+                    {
+                        var menu = new GenericMenu();
+                        menu.AddItem(EditorGUIUtility.TrTextContent("Box"), false, () => Undo.AddComponent<BoxCollider>(actualTarget.gameObject));
+                        menu.AddItem(EditorGUIUtility.TrTextContent("Sphere"), false, () => Undo.AddComponent<SphereCollider>(actualTarget.gameObject));
+                        menu.AddItem(EditorGUIUtility.TrTextContent("Capsule"), false, () => Undo.AddComponent<CapsuleCollider>(actualTarget.gameObject));
+                        menu.AddItem(EditorGUIUtility.TrTextContent("Mesh"), false, () => Undo.AddComponent<MeshCollider>(actualTarget.gameObject));
+                        menu.ShowAsContext();
+                    }
+                }
 
                 EditorGUILayout.PropertyField(m_BlendRadius);
                 m_BlendRadius.floatValue = Mathf.Max(m_BlendRadius.floatValue, 0f);
@@ -70,7 +94,7 @@ namespace UnityEditor.Rendering
             // fields, do the layout manually instead
             int buttonWidth = showCopy ? 45 : 60;
             float indentOffset = EditorGUI.indentLevel * 15f;
-            var lineRect = GUILayoutUtility.GetRect(1, EditorGUIUtility.singleLineHeight);
+            lineRect = EditorGUILayout.GetControlRect();
             var labelRect = new Rect(lineRect.x, lineRect.y, EditorGUIUtility.labelWidth - indentOffset, lineRect.height);
             var fieldRect = new Rect(labelRect.xMax, lineRect.y, lineRect.width - labelRect.width - buttonWidth * (showCopy ? 2 : 1), lineRect.height);
             var buttonNewRect = new Rect(fieldRect.xMax, lineRect.y, buttonWidth, lineRect.height);

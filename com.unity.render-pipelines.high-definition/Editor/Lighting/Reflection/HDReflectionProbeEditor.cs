@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEditor.Rendering;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     [CustomEditorForRenderPipeline(typeof(ReflectionProbe), typeof(HDRenderPipelineAsset))]
     [CanEditMultipleObjects]
@@ -84,25 +84,30 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         };
 
-        public ProbeSettingsOverride displayedAdvancedCaptureSettings => new ProbeSettingsOverride();
-        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableCaptureSettings => new ProbeSettingsOverride();
-        public ProbeSettingsOverride overrideableAdvancedCaptureSettings => new ProbeSettingsOverride();
+        public ProbeSettingsOverride displayedAdvancedCaptureSettings => new ProbeSettingsOverride
+        {
+            probe = ProbeSettingsFields.lightingRangeCompression
+        };
 
-        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedAdvancedSettings => new ProbeSettingsOverride
+        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedCustomSettings => new ProbeSettingsOverride
         {
             probe = ProbeSettingsFields.lightingLightLayer
                 | ProbeSettingsFields.lightingMultiplier
-                | ProbeSettingsFields.lightingWeight,
+                | ProbeSettingsFields.lightingWeight
+                | ProbeSettingsFields.lightingFadeDistance,
             camera = new CameraSettingsOverride
             {
                 camera = CameraSettingsFields.none
             }
         };
-        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableAdvancedSettings => new ProbeSettingsOverride();
 
         Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Cubemap);
-        static readonly HDProbeUI.ToolBar[] k_ToolBars
-        = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.NormalBlend | HDProbeUI.ToolBar.Blend, HDProbeUI.ToolBar.CapturePosition };
+        static readonly HDProbeUI.ToolBar[] k_ToolBars =
+        {
+            HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.NormalBlend | HDProbeUI.ToolBar.Blend,
+            HDProbeUI.ToolBar.CapturePosition,
+            HDProbeUI.ToolBar.ShowChromeGizmo
+        };
         HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_ToolBars;
 
         static Dictionary<KeyCode, HDProbeUI.ToolBar> k_ToolbarShortCutKey = new Dictionary<KeyCode, HDProbeUI.ToolBar>

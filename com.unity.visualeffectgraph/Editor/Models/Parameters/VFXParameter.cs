@@ -58,6 +58,7 @@ namespace UnityEditor.VFX
                     {
                         var newSlot = VFXSlot.Create(new VFXProperty(outputSlots[0].property.type, "i"), VFXSlot.Direction.kInput);
                         newSlot.value = outputSlots[0].value;
+                        outputSlots[0].UnlinkAll(true);
                         RemoveSlot(outputSlots[0]);
                         AddSlot(newSlot);
 
@@ -73,6 +74,7 @@ namespace UnityEditor.VFX
                     {
                         var newSlot = VFXSlot.Create(new VFXProperty(inputSlots[0].property.type, "o"), VFXSlot.Direction.kOutput);
                         newSlot.value = inputSlots[0].value;
+                        inputSlots[0].UnlinkAll(true);
                         RemoveSlot(inputSlots[0]);
                         AddSlot(newSlot);
                         m_ExprSlots = outputSlots[0].GetVFXValueTypeSlots().ToArray();
@@ -326,10 +328,9 @@ namespace UnityEditor.VFX
 
         public void UpdateDefaultExpressionValue()
         {
-            for (int i = 0; i < m_ExprSlots.Length; ++i)
-            {
-                m_ValueExpr[i].SetContent(m_ExprSlots[i].value);
-            }
+            if (!isOutput)
+                for (int i = 0; i < m_ExprSlots.Length; ++i)
+                    m_ValueExpr[i].SetContent(m_ExprSlots[i].value);
         }
 
         protected override IEnumerable<VFXPropertyWithValue> inputProperties { 
@@ -540,6 +541,11 @@ namespace UnityEditor.VFX
                     if (info.expandedSlots == null)
                     {
                         info.expandedSlots = new List<VFXSlot>();
+                    }
+                    else
+                    {
+                        if (info.expandedSlots.Any(t => t == null))
+                            info.expandedSlots = info.expandedSlots.Where(t => t != null).ToList();
                     }
 
                     if (usedIds.Contains(info.id))

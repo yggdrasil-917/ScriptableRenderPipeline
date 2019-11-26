@@ -1,6 +1,4 @@
-using UnityEngine;
-
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     //-----------------------------------------------------------------------------
     // structure definition
@@ -20,8 +18,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Tube, // Keep Line lights before Rectangle. This is needed because of a compiler bug (see LightLoop.hlsl)
         Rectangle,
         // Currently not supported in real time (just use for reference)
+        Disc,
         // Sphere,
-        // Disk,
     };
 
     public static class GPULightTypeExtension
@@ -39,7 +37,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     // This is use to distinguish between reflection and refraction probe in LightLoop
     [GenerateHLSL]
-    public enum GPUImageBasedLightingType
+    enum GPUImageBasedLightingType
     {
         Reflection,
         Refraction
@@ -55,7 +53,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     // These structures share between C# and hlsl need to be align on float4, so we pad them.
     [GenerateHLSL(PackingRules.Exact, false)]
-    public struct DirectionalLightData
+    struct DirectionalLightData
     {
         // Packing order depends on chronological access to avoid cache misses
         // Make sure to respect the 16-byte alignment
@@ -64,8 +62,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float   lightDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
-        public float   angleScale;              // Sun disk highlight
-        public float   angleOffset;             // Sun disk highlight
 
         public Vector3 forward;
         public CookieMode cookieMode;
@@ -79,21 +75,39 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public int     contactShadowIndex;      // -1 if unused (TODO: 16 bit)
 
         public Vector3 color;
-        public int     contactShadowMask;      // 0 if unused (TODO: 16 bit)
+        public int     contactShadowMask;       // 0 if unused (TODO: 16 bit)
 
+        public Vector3 shadowTint;              // Use to tint shadow color
         public float   shadowDimmer;
+
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
+        public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
+        public float   minRoughness;            // Hack
+        public int     screenSpaceShadowIndex;  // -1 if unused (TODO: 16 bit)
+
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
+        public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
+
         public float   diffuseDimmer;
         public float   specularDimmer;
+        public float   penumbraTint;
+        public float   isRayTracedContactShadow;
 
-        public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
-        
-        public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
-        public float   minRoughness;            // Hack
+        public float   distanceFromCamera;      // -1 -> no sky interaction
+        public float   angularDiameter;         // Units: radians
+        public float   flareFalloff;
+        public float   __unused__;
+
+        public Vector3 flareTint;
+        public float   flareSize;               // Units: radians
+
+        public Vector3 surfaceTint;
+        public int     surfaceTextureIndex;     // -1 if unused (TODO: 16 bit)
     };
 
     [GenerateHLSL(PackingRules.Exact, false)]
-    public struct LightData
+    struct LightData
     {
         // Packing order depends on chronological access to avoid cache misses
         // Make sure to respect the 16-byte alignment
@@ -102,13 +116,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float   lightDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   angleScale;              // Spot light
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   angleOffset;             // Spot light
 
         public Vector3 forward;
         public GPULightType lightType;          // TODO: move this up?
 
         public Vector3 right;                   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeWidth)
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   range;
 
         public Vector3 up;                      // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeHeight)
@@ -124,24 +141,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector4 cookieScaleOffset;       // coordinates of the cookie texture in the atlas
         public int     contactShadowMask;       // negative if unused (TODO: 16 bit)
 
-        // TODO: Instead of doing this, we should pack the ray traced shadow index into the tile cookie for instance
-        public int     rayTracedAreaShadowIndex;
-
+        public Vector3 shadowTint;              // Use to tint shadow color
         public float   shadowDimmer;
+
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask feature (TODO: use a bitfield)
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   minRoughness;            // This is use to give a small "area" to punctual light, as if we have a light with a radius.
+        // TODO: Instead of doing this, we should pack the ray traced shadow index into the tile cookie for instance
+        public int     screenSpaceShadowIndex;  // -1 if unused (TODO: 16 bit)
 
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
-        public Vector2 size;                    // Used by area (X = length or width, Y = height) and punctual lights (X = radius)
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
+        public Vector4 size;                    // Used by area (X = length or width, Y = height, Z = CosBarnDoorAngle, W = BarnDoorLength) and punctual lights (X = radius) 
+
         public float   diffuseDimmer;
         public float   specularDimmer;
+        public float   isRayTracedContactShadow;
+        public float   penumbraTint;
+
+        public Vector3 padding;
+        public float   boxLightSafeExtent;
     };
 
 
     [GenerateHLSL]
-    public enum EnvShapeType
+    enum EnvShapeType
     {
         None,
         Box,
@@ -150,7 +177,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     };
 
     [GenerateHLSL]
-    public enum EnvConstants
+    enum EnvConstants
     {
         SpecCubeLodStep = 6
     }
@@ -162,7 +189,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // Users can also chose to not have any projection, in this case we use the property minProjectionDistance to minimize code change. minProjectionDistance is set to huge number
     // that simulate effect of no shape projection
     [GenerateHLSL(PackingRules.Exact, false)]
-    public struct EnvLightData
+    struct EnvLightData
     {
         // Packing order depends on chronological access to avoid cache misses
         public uint lightLayers;
@@ -175,6 +202,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Sphere: extents.x = sphere radius
         public Vector3 proxyExtents;
         // User can chose if they use This is use in case we want to force infinite projection distance (i.e no projection);
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float minProjectionDistance;
 
         public Vector3 proxyPositionRWS;
@@ -196,17 +224,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 blendNormalDistancePositive;
         public Vector3 blendNormalDistanceNegative;
 
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector3 boxSideFadePositive;
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector3 boxSideFadeNegative;
         public float weight;
         public float multiplier;
+        public float rangeCompressionFactorCompensation;
 
         // Sampling properties
         public int envIndex;
     };
 
     [GenerateHLSL]
-    public enum EnvCacheType
+    enum EnvCacheType
     {
         Texture2D,
         Cubemap
@@ -220,7 +251,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // 3. unused
     [GenerateHLSL]
     // Caution: Value below are hardcoded in some shader (because properties doesn't support include). If order or value is change, please update corresponding ".shader"
-    public enum StencilLightingUsage
+    enum StencilLightingUsage
     {
         NoLighting,
         SplitLighting,

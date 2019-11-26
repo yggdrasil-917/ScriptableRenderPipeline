@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditor.Experimental.VFX;
+using UnityEditor.VFX;
 
 using NodeID = System.UInt32;
 
@@ -180,9 +180,10 @@ namespace UnityEditor.VFX.UI
             //Paste Everything else
             PasteGroupNodes(ref serializableGraph, ui);
             PasteStickyNotes(ref serializableGraph, ui);
+
+            PasteDatas(ref serializableGraph); // TODO Data settings should be pasted at context creation. This can lead to issues as blocks are added before data is initialized
             PasteDataEdges(ref serializableGraph);
             PasteFlowEdges(ref serializableGraph);
-            PasteDatas(ref serializableGraph);
 
             // Create all ui based on model
             viewController.LightApplyChanges();
@@ -230,6 +231,25 @@ namespace UnityEditor.VFX.UI
             }
         }
 
+        void PasteSubOutputs(VFXAbstractRenderedOutput output, ref Context src)
+        {
+            if (src.subOutputs == null)
+                return;
+
+            var newSubOutputs = new List<VFXSRPSubOutput>(src.subOutputs.Length);
+            for (int i = 0; i < src.subOutputs.Length; ++i)
+            {
+                Type type = (Type)src.subOutputs[i].type;
+                if (type != null)
+                {
+                    newSubOutputs.Add((VFXSRPSubOutput)ScriptableObject.CreateInstance(type));
+                    PasteModelSettings(newSubOutputs.Last(), src.subOutputs[i].settings, type);
+                }
+            }
+
+            output.InitSubOutputs(newSubOutputs);
+        }
+
         VFXContext PasteContext(VFXViewController controller, ref Context context)
         {
             VFXContext newContext = PasteAndInitializeNode<VFXContext>(controller, ref context.node);
@@ -241,6 +261,9 @@ namespace UnityEditor.VFX.UI
             }
 
             newContext.label = context.label;
+
+            if (newContext is VFXAbstractRenderedOutput)
+                PasteSubOutputs((VFXAbstractRenderedOutput)newContext, ref context);
 
             List<VFXBlock> blocks = new List<VFXBlock>();
             foreach (var block in context.blocks)
@@ -307,7 +330,7 @@ namespace UnityEditor.VFX.UI
 
             var slotContainer = model as IVFXSlotContainer;
             var inputSlots = slotContainer.inputSlots;
-            for (int i = 0; i < node.inputSlots.Length; ++i)
+            for (int i = 0; i < node.inputSlots.Length && i< inputSlots.Count; ++i)
             {
                 if (inputSlots[i].name == node.inputSlots[i].name)
                 {
@@ -636,6 +659,7 @@ namespace UnityEditor.VFX.UI
                         if (targetData != null)
                         {
                             PasteModelSettings(targetData, data.settings, targetData.GetType());
+                            targetData.Invalidate(VFXModel.InvalidationCause.kSettingChanged);
                         }
                     }
                 }
