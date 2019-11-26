@@ -63,7 +63,9 @@ namespace UnityEngine.Rendering.Universal
 
         public IEnumerator<Action<RenderTargetIdentifier, CommandBuffer>> captureActions;
 
+        [Obsolete("This field isn't used anymore and will return a default value.")]
         public LayerMask volumeLayerMask;
+        [Obsolete("This field isn't used anymore and will return a default value.")]
         public Transform volumeTrigger;
 
         public bool isStopNaNEnabled;

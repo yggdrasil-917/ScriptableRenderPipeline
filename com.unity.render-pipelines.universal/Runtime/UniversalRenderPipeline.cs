@@ -327,8 +327,6 @@ namespace UnityEngine.Rendering.Universal
                 cameraData.maxShadowDistance = (additionalCameraData.renderShadows) ? cameraData.maxShadowDistance : 0.0f;
                 cameraData.requiresDepthTexture = additionalCameraData.requiresDepthTexture;
                 cameraData.requiresOpaqueTexture = additionalCameraData.requiresColorTexture;
-                cameraData.volumeLayerMask = additionalCameraData.volumeLayerMask;
-                cameraData.volumeTrigger = additionalCameraData.volumeTrigger == null ? camera.transform : additionalCameraData.volumeTrigger;
                 cameraData.postProcessEnabled = additionalCameraData.renderPostProcessing;
                 cameraData.isStopNaNEnabled = cameraData.postProcessEnabled && additionalCameraData.stopNaN && SystemInfo.graphicsShaderLevel >= 35;
                 cameraData.isDitheringEnabled = cameraData.postProcessEnabled && additionalCameraData.dithering;
@@ -339,8 +337,6 @@ namespace UnityEngine.Rendering.Universal
             {
                 cameraData.requiresDepthTexture = settings.supportsCameraDepthTexture;
                 cameraData.requiresOpaqueTexture = settings.supportsCameraOpaqueTexture;
-                cameraData.volumeLayerMask = 1; // "Default"	
-                cameraData.volumeTrigger = null;
                 cameraData.postProcessEnabled = CoreUtils.ArePostProcessesEnabled(camera);
                 cameraData.isStopNaNEnabled = false;
                 cameraData.isDitheringEnabled = false;
@@ -351,8 +347,6 @@ namespace UnityEngine.Rendering.Universal
             {
                 cameraData.requiresDepthTexture = settings.supportsCameraDepthTexture;
                 cameraData.requiresOpaqueTexture = settings.supportsCameraOpaqueTexture;
-                cameraData.volumeLayerMask = 1; // "Default"	
-                cameraData.volumeTrigger = null;
                 cameraData.postProcessEnabled = false;
                 cameraData.isStopNaNEnabled = false;
                 cameraData.isDitheringEnabled = false;
