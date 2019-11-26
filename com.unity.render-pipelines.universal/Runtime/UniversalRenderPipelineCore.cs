@@ -63,6 +63,9 @@ namespace UnityEngine.Rendering.Universal
 
         public IEnumerator<Action<RenderTargetIdentifier, CommandBuffer>> captureActions;
 
+        public LayerMask volumeLayerMask;
+        public Transform volumeTrigger;
+
         public bool isStopNaNEnabled;
         public bool isDitheringEnabled;
         public AntialiasingMode antialiasing;
