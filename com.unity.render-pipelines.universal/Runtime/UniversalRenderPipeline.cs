@@ -260,7 +260,7 @@ namespace UnityEngine.Rendering.Universal
 
         static void UpdateVolumeFramework(Camera camera, UniversalAdditionalCameraData additionalCameraData)
         {
-            // Default values are for the scene view and when there's no additional camera data available
+            // Default values when there's no additional camera data available
             LayerMask layerMask = 1; // "Default"
             Transform trigger = null;
 
@@ -268,6 +268,14 @@ namespace UnityEngine.Rendering.Universal
             {
                 layerMask = additionalCameraData.volumeLayerMask;
                 trigger = additionalCameraData.volumeTrigger ?? camera.transform;
+            }
+            else if (camera.cameraType == CameraType.SceneView)
+            {
+                // Try to mirror the MainCamera volume layer mask for the scene view - do not mirror the target
+                var mainCamera = Camera.main;
+
+                if (mainCamera != null && mainCamera.TryGetComponent<UniversalAdditionalCameraData>(out var mainAdditionalCameraData))
+                    layerMask = mainAdditionalCameraData.volumeLayerMask;
             }
 
             VolumeManager.instance.Update(trigger, layerMask);
