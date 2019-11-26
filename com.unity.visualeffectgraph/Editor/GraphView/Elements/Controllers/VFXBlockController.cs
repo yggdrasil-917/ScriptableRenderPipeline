@@ -20,6 +20,9 @@ namespace UnityEditor.VFX.UI
                 (model as VFXSubgraphBlock).RecreateCopy();
             }
         }
+        public VFXBlockController(VFXBlock model, VFXViewController viewController) : base(model, viewController)
+        {
+        }
 
         protected override VFXDataAnchorController AddDataAnchor(VFXSlot slot, bool input, bool hidden)
         {
