@@ -31,8 +31,7 @@ packages = manifest['packages']
 
 core_package = packages['com.unity.render-pipelines.core']
 
-#do i want the minimum version here?
-version = core_package['minimumVersion']
+version = core_package['version']
 
 package_url = 'https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-candidates-master/com.unity.render-pipelines.core/' + version
 
@@ -69,6 +68,7 @@ response = requests.post(url, data=data, headers={'Authorization': key})
 response_json = response.json()
 
 job_id = response_json[id]
+print('Yamato job id: ' + job_id)
 
 status = ''
 
@@ -79,6 +79,7 @@ while results not in status:
   get_job = requests.get(url + '/' + job_id, headers={'Authorization': key})
   job_json = get_job.json()
   status = job_json['status']
+  print('current job status: ' + status)
 
 #maybe this part needs to log the yamato job link so the person checking the log can find where to look?
 if status == 'success':
