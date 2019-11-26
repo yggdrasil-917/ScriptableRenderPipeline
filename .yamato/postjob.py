@@ -7,11 +7,10 @@ import time
 url = "https://yamato-api.cds.internal.unity3d.com/jobs"
 srp_revision = ""
 
-#hg log -r . --template "{node}"
 unity_revision = ""
 
 try:
-    HG_REV = subprocess.check_output(['hg', 'id', '-i']).strip()
+    HG_REV = subprocess.check_output(['hg', 'log', '-r', '.', '--template', '{node}']).strip()
 except OSError:
     HG_REV = "? (Couldn't find hg)"
 except subprocess.CalledProcessError as e:
@@ -59,7 +58,8 @@ data = '''{
 ]
 }'''
 
-key = 'ApiKey ' + api_key
+# please do not use this api key without checking in #devs-yamato first!
+key = 'ApiKey kHzZ5rjyDYnDDjdL7dieBfnv7PelJsFXSYZjBODwVMhhwfA2Z2MPRoGSQNFDCTFq'
 
 response = requests.post(url, data=data, headers={'Authorization': key})
 
