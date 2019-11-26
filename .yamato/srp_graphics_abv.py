@@ -31,7 +31,8 @@ packages = manifest['packages']
 
 core_package = packages['com.unity.render-pipelines.core']
 
-version = core_package['version']
+#do i want the minimum version here?
+version = core_package['minimumVersion']
 
 package_url = 'https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-candidates-master/com.unity.render-pipelines.core/' + version
 
