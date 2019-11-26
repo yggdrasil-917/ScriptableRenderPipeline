@@ -59,7 +59,7 @@ data = '''{
 }'''
 
 # please do not use this api key without checking in #devs-yamato first!
-key = 'ApiKey kHzZ5rjyDYnDDjdL7dieBfnv7PelJsFXSYZjBODwVMhhwfA2Z2MPRoGSQNFDCTFq'
+key = 'ApiKey '
 
 response = requests.post(url, data=data, headers={'Authorization': key})
 
