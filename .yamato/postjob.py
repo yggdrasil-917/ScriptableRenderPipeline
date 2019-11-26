@@ -68,6 +68,7 @@ response = requests.post(url, data=data, headers={'Authorization': key})
 response_json = response.json()
 
 job_id = response_json[id]
+print('Yamato job id: ' + job_id)
 
 status = ''
 
@@ -78,6 +79,7 @@ while results not in status:
   get_job = requests.get(url + '/' + job_id, headers={'Authorization': key})
   job_json = get_job.json()
   status = job_json['status']
+  print('current job status: ' + status)
 
 #maybe this part needs to log the yamato job link so the person checking the log can find where to look?
 if status == 'success':
