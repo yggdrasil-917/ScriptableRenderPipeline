@@ -16,7 +16,7 @@ The base unit of [luminous intensity](Glossary.html#LuminousIntensity) in the In
 
 The unit of [luminous flux](Glossary.html#LuminousFlux). Describes the total amount of visible light that a light source emits in all directions. When you use this unit, the amount of visible light is independent of the source's size meaning the illumination level of a Scene does not change depending on the size of a light source. However, highlights that a light source produces dim as the area of the light source increases. This is because the same power is spread across a larger area.
 
-A light source emitting 1 [candela](#Candela) of luminous intensity from an area of 1 steradian has a luminous flux of 1 lumen.
+A light source that emits 1 [candela](#Candela) of [luminous intensity](Glossary.html#LuminousIntensity) from an area of 1 steradian has a luminous flux of 1 lumen.
 
 <a name="Lux"></a>
 
