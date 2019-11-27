@@ -144,6 +144,7 @@ float4 SampleEnv(LightLoopContext lightLoopContext, int index, float3 texCoord, 
             );
             if (dot(capturedForwardWS, texCoord) < 0.0)
                 color.a = 0.0;
+            color = float4(0, 0, 1000, 1);
         }
         else if (cacheType == ENVCACHETYPE_CUBEMAP)
         {

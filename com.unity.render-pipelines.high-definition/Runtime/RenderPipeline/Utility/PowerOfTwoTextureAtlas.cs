@@ -32,7 +32,7 @@ namespace UnityEngine.Rendering.HighDefinition
             Vector2 textureSize = GetPowerOfTwoTextureSize(texture);
             bool bilinear = texture.filterMode != FilterMode.Point;
 
-            using (new ProfilingSample(cmd, "Blit texture with padding"))
+            using (new ProfilingSample(cmd, "Blit texture in POT atlas"))
             {
                 for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
                 {

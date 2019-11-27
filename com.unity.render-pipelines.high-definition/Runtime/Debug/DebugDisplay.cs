@@ -751,7 +751,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 });
             }
 
-            list.Add(new DebugUI.BoolField { displayName = "Display Planar Reflection Probe Atlas", getter = () => data.lightingDebugSettings.displayPlanarReflectionProbeAtlas, setter = value => data.lightingDebugSettings.displayPlanarReflectionProbeAtlas = value, onValueChanged = RefreshLightingDebug});
+            list.Add(new DebugUI.BoolField { displayName = "Display Planar Reflection Atlas", getter = () => data.lightingDebugSettings.displayPlanarReflectionProbeAtlas, setter = value => data.lightingDebugSettings.displayPlanarReflectionProbeAtlas = value, onValueChanged = RefreshLightingDebug});
             if (data.lightingDebugSettings.displayPlanarReflectionProbeAtlas)
             {
                 list.Add(new DebugUI.Container

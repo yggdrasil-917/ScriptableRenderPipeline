@@ -255,6 +255,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     ZERO_INITIALIZE(CBSDF, cbsdf);
 
     float3 N = bsdfData.normalWS;
+
     float NdotV = preLightData.NdotV;
     float NdotL = dot(N, L);
     float clampedNdotV = ClampNdotV(NdotV);

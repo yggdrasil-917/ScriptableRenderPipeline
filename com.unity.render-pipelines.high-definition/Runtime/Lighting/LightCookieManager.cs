@@ -29,7 +29,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public LightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
         {
-
             // Keep track of the render pipeline asset
             m_RenderPipelineAsset = hdAsset;
             var hdResources = HDRenderPipeline.defaultAsset.renderPipelineResources; // TODO !
