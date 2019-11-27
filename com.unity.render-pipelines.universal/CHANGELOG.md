@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Deprecated the CinemachineUniversalPixelPerfect extension. Use the one from Cinemachine v2.4 instead.
 - Replaced PlayerSettings.virtualRealitySupported with XRGraphics.tryEnable.
 - `CameraData.volumeLayerMask` and `CameraData.volumeTrigger` have been deprecated.
-- The scene view now mirrors the volume layer mask set on the MainCamera.
+- The Scene view now mirrors the Volume Layer Mask set on the Main Camera.
 
 ### Fixed
 - Fixed an issue where linear to sRGB conversion occurred twice on certain Android devices.
@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed inconsistent lighting between the forward renderer and the deferred renderer, that was caused by a missing normalize operation on vertex normals on some speedtree shader variants.
 - Fixed issue where XR Multiview failed to render when using URP Shader Graph Shaders
 - Fixed lazy initialization with last version of ResourceReloader
-- Fixed the depth texture being created when post-processing was enabled but no effect made use of it.
+- Fixed an issue where a depth texture was always created when post-processing was enabled, even if no effects made use of it.
 
 ## [7.1.1] - 2019-09-05
 ### Upgrade Guide
