@@ -51,7 +51,8 @@ all_project_ci_nightly:
     - path: .yamato/upm-ci-{{ project.name | downcase }}.yml#All_{{ project.name }}_2019.3
       rerun: always
   {% endfor %}
-
+    - path: .yamato/upm-ci-packages.yml#all_package_ci
+      rerun: always
   triggers:
     recurring:
       - branch: release/2019.3
