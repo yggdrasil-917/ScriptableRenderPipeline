@@ -1378,7 +1378,7 @@ namespace UnityEngine.Rendering.HighDefinition
             lightData.specularDimmer        = lightDistanceFade * (additionalLightData.affectSpecular ? additionalLightData.lightDimmer * hdCamera.frameSettings.specularGlobalDimmer : 0);
             lightData.volumetricLightDimmer = lightDistanceFade * (additionalLightData.volumetricDimmer);
 
-            lightData.cookieMode = CookieMode.Clamp;
+            lightData.cookieMode = CookieMode.None;
             lightData.cookieIndex = -1;
             lightData.shadowIndex = -1;
             lightData.screenSpaceShadowIndex = -1;
@@ -1404,6 +1404,7 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 // Projectors lights must always have a cookie texture.
                 // As long as the cache is a texture array and not an atlas, the 4x4 white texture will be rescaled to 128
+                lightData.cookieMode = CookieMode.Clamp;
                 lightData.cookieScaleOffset = m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, Texture2D.whiteTexture);
             }
             else if (lightData.lightType == GPULightType.Rectangle && additionalLightData.areaLightCookie != null)
@@ -1686,7 +1687,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                         var scaleOffset = m_TextureCaches.reflectionPlanarProbeCache.FetchSlice(cmd, probe.texture, out int fetchIndex);
                         // Indices start at 1, because -0 == 0, we can know from the bit sign which cache to use
-                        // envIndex = scaleOffset == Vector4.zero ? int.MinValue : -(fetchIndex + 1);
+                        envIndex = scaleOffset == Vector4.zero ? int.MinValue : -(fetchIndex + 1);
 
                         // If the max number of planar on screen is reached
                         // TODO: add a counter for this: 
@@ -3077,21 +3078,11 @@ namespace UnityEngine.Rendering.HighDefinition
                 cmd.SetGlobalTexture(HDShaderIDs._CookieAtlas, param.textureCaches.lightCookieManager.atlasTexture);
                 cmd.SetGlobalVector(HDShaderIDs._CookieAtlasSize, param.textureCaches.lightCookieManager.GetCookieAtlasSize());
                 cmd.SetGlobalVector(HDShaderIDs._CookieAtlasData, param.textureCaches.lightCookieManager.GetCookieAtlasDatas());
-                // cmd.SetGlobalTexture(HDShaderIDs._AreaCookieTextures, param.textureCaches.lightCookieManager.GetTexCache()); // TODO
 
                 // TODO: cleanup the unused cookie and planar stuff
                 cmd.SetGlobalTexture(HDShaderIDs._CookieCubeTextures, param.textureCaches.cubeCookieTexArray.GetTexCache());
                 cmd.SetGlobalTexture(HDShaderIDs._EnvCubemapTextures, param.textureCaches.reflectionProbeCache.GetTexCache());
                 cmd.SetGlobalInt(HDShaderIDs._EnvSliceSize, param.textureCaches.reflectionProbeCache.GetEnvSliceSize());
-
-                // Compute the power of 2 size of the texture
-                // TODO: Move _CookieSizePOT to the light data, not required because area cookies are in a different buffer
-                // int pot = Mathf.RoundToInt( 1.4426950408889634073599246810019f * Mathf.Log( m_Cookie.GetTexCache().width ) );
-                // cmd.SetGlobalInt(HDShaderIDs._CookieSizePOT, pot);
-
-                // Compute the power of 2 size of the texture
-                // int pot = Mathf.RoundToInt( 1.4426950408889634073599246810019f * Mathf.Log(param.textureCaches.cookieTexArray.GetTexCache().width ) );
-                // cmd.SetGlobalInt(HDShaderIDs._CookieSizePOT, pot);
                 cmd.SetGlobalTexture(HDShaderIDs._Env2DTextures, param.textureCaches.reflectionPlanarProbeCache.GetTexCache());
                 cmd.SetGlobalMatrixArray(HDShaderIDs._Env2DCaptureVP, param.textureCaches.env2DCaptureVP);
                 cmd.SetGlobalFloatArray(HDShaderIDs._Env2DCaptureForward, param.textureCaches.env2DCaptureForward);

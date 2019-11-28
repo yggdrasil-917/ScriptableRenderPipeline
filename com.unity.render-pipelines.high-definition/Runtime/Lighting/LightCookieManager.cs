@@ -31,7 +31,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             // Keep track of the render pipeline asset
             m_RenderPipelineAsset = hdAsset;
-            var hdResources = HDRenderPipeline.defaultAsset.renderPipelineResources; // TODO !
+            var hdResources = HDRenderPipeline.defaultAsset.renderPipelineResources;
 
             // Create the texture cookie cache that we shall be using for the area lights
             GlobalLightLoopSettings gLightLoopSettings = hdAsset.currentPlatformRenderPipelineSettings.lightLoopSettings;
@@ -48,8 +48,8 @@ namespace UnityEngine.Rendering.HighDefinition
             int cookieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
             int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
-            
-            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, 0, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)", useMipMap: false);
+
+            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, 0, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)", useMipMap: true);
 
             m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(hdResources.shaders.cubeToPanoPS);
 
@@ -61,9 +61,6 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             // m_AreaCookieTexArray.NewFrame();
             m_CubeCookieTexArray.NewFrame();
-
-            // TODO: remove this !
-            m_CookieAtlas.ResetAllocator();
         }
 
         public void ReleaseResources()
@@ -134,12 +131,13 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (m_TempRenderTexture0 == null )
             {
+                string cacheName = m_AreaCookieTexArray.GetCacheName();
                 m_TempRenderTexture0 = new RenderTexture(texCache.width, texCache.height, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
                 {
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
                     autoGenerateMips = false,
-                    name = "AreaCookieTempAreaLightRT0"
+                    name = cacheName + "TempAreaLightRT0"
                 };
 
                 // We start by a horizontal gaussian into mip 1 that reduces the width by a factor 2 but keeps the same height
@@ -148,7 +146,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
                     autoGenerateMips = false,
-                    name = "AreaCookieTempAreaLightRT1"
+                    name = cacheName + "TempAreaLightRT1"
                 };
             }
 
@@ -200,7 +198,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 sourceHeight = targetHeight;
             }
-            #endif
+#endif
 
             return m_TempRenderTexture0;
         }
@@ -209,8 +207,24 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             Vector4 scaleBias = Vector4.zero;
 
+            // TODO: disable mipmaps for these textures !
             if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias))
                 return Vector4.zero;
+
+            return scaleBias;
+        }
+
+        public Vector4 FetchAreaCookie(CommandBuffer cmd, Texture cookie)
+        {
+            Vector4 scaleBias = Vector4.zero;
+            // Update the mips
+
+            if (!m_CookieAtlas.IsCached(out _, cookie) || m_CookieAtlas.NeedsUpdate(cookie))
+            {
+                Texture filteredAreaLight = FilterAreaLightTexture(cmd, cookie);
+                m_CookieAtlas.AllocateTextureWithoutBlit(cookie, cookie.width, cookie.height, ref scaleBias);
+                m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, new Vector4(1, 1, 0, 0));
+            }
 
             return scaleBias;
         }
@@ -250,7 +264,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             float padding = Mathf.Pow(2.0f, m_CookieAtlas.mipPadding) * 2.0f;
             return new Vector4(
-                m_CookieAtlas.mipPadding,
+                Mathf.Log(m_CookieAtlas.AtlasTexture.rt.width, 2),
                 padding / (float)m_CookieAtlas.AtlasTexture.rt.width,
                 0,
                 0

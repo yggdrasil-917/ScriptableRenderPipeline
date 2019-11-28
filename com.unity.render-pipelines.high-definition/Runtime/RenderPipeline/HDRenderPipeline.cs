@@ -229,12 +229,9 @@ namespace UnityEngine.Rendering.HighDefinition
             int highestDim = Math.Max(currentPlatformRenderPipelineSettings.decalSettings.atlasWidth, currentPlatformRenderPipelineSettings.decalSettings.atlasHeight);
             return (int)Math.Log(highestDim, 2);
         }
-        public int GetCookieAtlasMipCount()
-        {
-            int size = (int)currentPlatformRenderPipelineSettings.lightLoopSettings.cookieAtlasSize;
-            // return (int)Mathf.Log(size, 2);
-            return 0; // We don't have cookie atlas mips currently
-        }
+
+        public int GetCookieAtlasMipCount() => (int)Mathf.Log((int)currentPlatformRenderPipelineSettings.lightLoopSettings.cookieAtlasSize, 2);
+
         public int GetPlanarReflectionProbeMipCount()
         {
             int size = (int)currentPlatformRenderPipelineSettings.lightLoopSettings.planarReflectionAtlasSize;

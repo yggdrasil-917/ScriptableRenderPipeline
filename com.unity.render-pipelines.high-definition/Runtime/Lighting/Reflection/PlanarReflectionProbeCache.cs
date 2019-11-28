@@ -26,6 +26,7 @@ namespace UnityEngine.Rendering.HighDefinition
         MaterialPropertyBlock   m_ConvertTextureMPB;
         bool                    m_PerformBC6HCompression;
         Dictionary<int, uint>   m_TextureHashes = new Dictionary<int, uint>();
+        int                     m_FrameProbeIndex;
 
         public PlanarReflectionProbeCache(RenderPipelineResources defaultResources, IBLFilterGGX iblFilter, int atlasResolution, GraphicsFormat probeFormat, bool isMipmaped)
         {
@@ -68,6 +69,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 m_ConvolutionTargetTexture.enableRandomWrite = true;
                 m_ConvolutionTargetTexture.Create();
             }
+
+            m_FrameProbeIndex = 0;
         }
 
         public void Release()
@@ -154,9 +157,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public Vector4 FetchSlice(CommandBuffer cmd, Texture texture, out int fetchIndex)
         {
             Vector4 scaleOffset = Vector4.zero;
-
-            // TODO: we must store here the fetch index of the probes !
-            fetchIndex = 0;
+            fetchIndex = m_FrameProbeIndex++;
 
             if (m_TextureAtlas.Contains(texture, out scaleOffset))
             {

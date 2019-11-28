@@ -71,11 +71,13 @@ float3 SampleAreaLightCookie(float4 cookieScaleOffset, float4x3 L, float3 F)
     // From this, we find the mip level as: mip = log2( sqrt( A_covered ) ) = log2( A_covered ) / 2
     // Also, assuming that A_sqTexels is of the form 2^n * 2^n we get the simplified expression: mip = log2( Pi.d^2 / A ) / 2 + n
     //
-    const float COOKIE_MIPS_COUNT = _CookieSizePOT;
-    float   mipLevel = 0.5 * log2(1e-8 + PI * hitDistance*hitDistance * rsqrt(sqArea)) + COOKIE_MIPS_COUNT;
+    // Compute the cookie mip count using the cookie size in the atlas
+    float   cookieWidth = cookieScaleOffset.x * _CookieAtlasSize.x; // cookies and atlas are guaranteed to be POT
+    float   cookieMipCount = round(LOG2_E * log(cookieWidth));
+    float   mipLevel = 0.5 * log2(1e-8 + PI * hitDistance*hitDistance * rsqrt(sqArea)) + cookieMipCount;
+    mipLevel = clamp(mipLevel, 0, cookieMipCount - 1);
 
-    return SampleCookie2D(hitUV, cookieScaleOffset, mipLevel);
-    // return SAMPLE_TEXTURE2D_ARRAY_LOD(_AreaCookieTextures, s_trilinear_clamp_sampler, hitUV, cookieIndex, mipLevel).xyz;
+    return SampleCookie2D(saturate(hitUV), cookieScaleOffset, mipLevel);
 }
 
 // This function transforms a rectangular area light according the the barn door inputs defined by the user.

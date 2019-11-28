@@ -583,8 +583,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     {
                         case HDLightType.Spot:
                             lightData.cookieMode = (additionalLightData.legacyLight.cookie.wrapMode == TextureWrapMode.Repeat) ? CookieMode.Repeat : CookieMode.Clamp;
-                            // TODO: re-add cookie support!
-                            // lightData.cookieScaleOffset = FetchCookieAtlas(cmd, light.cookie);
+                            lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, light.cookie);
                             break;
                         case HDLightType.Point:
                         case HDLightType.Area:
@@ -597,11 +596,11 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     // Projectors lights must always have a cookie texture.
                     // As long as the cache is a texture array and not an atlas, the 4x4 white texture will be rescaled to 128
-                    // lightData.cookieScaleOffset = FetchCookieAtlas(cmd, Texture2D.whiteTexture);
+                    lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, Texture2D.whiteTexture);
                 }
                 else if (lightData.lightType == GPULightType.Rectangle && additionalLightData.areaLightCookie != null)
                 {
-                    // lightData.cookieIndex = m_RenderPipeline.m_TextureCaches.lightCookieManager.FetchSlice(cmd, additionalLightData.areaLightCookie);
+                    lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, additionalLightData.areaLightCookie);
                 }
 
                 {

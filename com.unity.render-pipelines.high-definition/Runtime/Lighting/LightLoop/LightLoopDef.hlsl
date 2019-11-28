@@ -40,9 +40,6 @@ float3 SampleCookie2D(float2 coord, float4 scaleOffset, float lod = 0) // TODO: 
     float2 offset       = scaleOffset.zw;
     float2 scale        = scaleOffset.xy;
 
-    // Clamp lod to the maximum level of the texture we are sampling
-    // lod = min(_CookieAtlasData.x, lod);
-
     // Remap the uv to take in account the padding
     coord = RemapUVWithPadding(coord, scale, _CookieAtlasData.y);
 
@@ -51,8 +48,8 @@ float3 SampleCookie2D(float2 coord, float4 scaleOffset, float lod = 0) // TODO: 
 
     float3 color = SAMPLE_TEXTURE2D_LOD(_CookieAtlas, s_trilinear_clamp_sampler, atlasCoords, lod).rgb;
     
-    // Mip visualization (0 -> red, 10 -> blue)
-    // color *= saturate(1 - abs(3 * lod / 10 - float4(0, 1, 2, 3))).rgb;
+    // Mip visualization (0 -> red, 8 -> blue)
+    // color = saturate(1 - abs(3 * lod / 8 - float4(0, 1, 2, 3))).rgb;
 
     return color;
 }
@@ -144,7 +141,6 @@ float4 SampleEnv(LightLoopContext lightLoopContext, int index, float3 texCoord, 
             );
             if (dot(capturedForwardWS, texCoord) < 0.0)
                 color.a = 0.0;
-            color = float4(0, 0, 1000, 1);
         }
         else if (cacheType == ENVCACHETYPE_CUBEMAP)
         {
