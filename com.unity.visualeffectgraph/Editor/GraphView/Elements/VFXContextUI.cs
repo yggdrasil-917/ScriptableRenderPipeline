@@ -789,7 +789,8 @@ namespace UnityEditor.VFX.UI
             {
                 InitilializeNewNodeSearcher();
 
-                SearcherWindow.Show(VFXViewWindow.currentWindow, m_RootSearcherItems, new VFXContextSearcherAdapter("Create Block",view), item => {
+                var searcher = new UnityEditor.Searcher.Searcher(new VFXSearcherDatabase(m_RootSearcherItems), new VFXContextSearcherAdapter("Create Block", view));
+                SearcherWindow.Show(VFXViewWindow.currentWindow, searcher, item => {
                     if (item is VFXContextSearcherItem vfxItem)
                         if (vfxItem.descriptor is VFXBlockProvider.NewBlockDescriptor newBlockDesc)
                             AddBlock(referencePosition, newBlockDesc.newBlock);
@@ -804,7 +805,7 @@ namespace UnityEditor.VFX.UI
                             newModel.SetSettingValue("m_Subgraph", subgraphBlock);
                         }
                     return true;
-                }, referencePosition, null);
+                }, referencePosition,null);
             }
             else
                 VFXFilterWindow.Show(VFXViewWindow.currentWindow, referencePosition, screenPosition, m_BlockProvider);
