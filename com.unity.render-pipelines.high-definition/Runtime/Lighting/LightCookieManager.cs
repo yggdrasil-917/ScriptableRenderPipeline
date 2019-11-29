@@ -6,9 +6,6 @@ namespace UnityEngine.Rendering.HighDefinition
     {
         HDRenderPipelineAsset m_RenderPipelineAsset = null;
 
-        // Structure for cookies used by area lights
-        // TextureCache2D m_AreaCookieTexArray;
-
         internal static readonly int s_texSource = Shader.PropertyToID("_SourceTexture");
         internal static readonly int s_sourceMipLevel = Shader.PropertyToID("_SourceMipLevel");
         internal static readonly int s_sourceSize = Shader.PropertyToID("_SourceSize");
@@ -26,6 +23,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         // Structure for cookies used by point lights
         TextureCacheCubemap m_CubeCookieTexArray;
+        int cookieAtlasLastValidMip;
 
         public LightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
         {
@@ -35,12 +33,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // Create the texture cookie cache that we shall be using for the area lights
             GlobalLightLoopSettings gLightLoopSettings = hdAsset.currentPlatformRenderPipelineSettings.lightLoopSettings;
-            // m_AreaCookieTexArray = new TextureCache2D("AreaCookie");
             int cookieSize = gLightLoopSettings.cookieAreaTextureArraySize;
-            // int cookieResolution = (int)gLightLoopSettings.cookieAreaTextureSize;
-            // if (TextureCache2D.GetApproxCacheSizeInByte(cookieSize, cookieResolution, 1) > maxCacheSize)
-                // cookieSize = TextureCache2D.GetMaxCacheSizeForWeightInByte(maxCacheSize, cookieResolution, 1);
-            // m_AreaCookieTexArray.AllocTextureArray(cookieSize, cookieResolution, cookieResolution, TextureFormat.RGBA32, true);
 
             // Also make sure to create the engine material that is used for the filtering
             m_MaterialFilterAreaLights = CoreUtils.CreateEngineMaterial(hdResources.shaders.filterAreaLightCookiesPS);
@@ -49,7 +42,7 @@ namespace UnityEngine.Rendering.HighDefinition
             int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
 
-            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, 0, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)", useMipMap: true);
+            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, gLightLoopSettings.cookieAtlasLastValidMip, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)", useMipMap: true);
 
             m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(hdResources.shaders.cubeToPanoPS);
 
@@ -59,19 +52,11 @@ namespace UnityEngine.Rendering.HighDefinition
 
         internal void NewFrame()
         {
-            // m_AreaCookieTexArray.NewFrame();
             m_CubeCookieTexArray.NewFrame();
         }
 
         public void ReleaseResources()
         {
-            // TODO
-            // if(m_AreaCookieTexArray != null)
-            // {
-            //     m_AreaCookieTexArray.Release();
-            //     m_AreaCookieTexArray = null;
-            // }
-
             CoreUtils.Destroy(m_MaterialFilterAreaLights);
             CoreUtils.Destroy(m_CubeToPanoMaterial);
 
@@ -97,25 +82,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 m_CubeCookieTexArray = null;
             }
         }
-
-        // TODO
-        // public Texture GetTexCache()
-        // {
-        //     return m_AreaCookieTexArray.GetTexCache();
-        // }
-
-        // public int FetchSlice(CommandBuffer cmd, Texture texture)
-        // {
-        //     bool needUpdate;
-        //     int sliceIndex = m_AreaCookieTexArray.ReserveSlice(texture, out needUpdate);
-        //     if (sliceIndex != -1 && needUpdate)
-        //     {
-        //         Texture filteredAreaLight = FilterAreaLightTexture(cmd, texture);
-        //         m_AreaCookieTexArray.UpdateSlice(cmd, sliceIndex, filteredAreaLight, m_AreaCookieTexArray.GetTextureHash(texture));
-
-        //     }
-        //     return sliceIndex;
-        // }
 
         Texture FilterAreaLightTexture(CommandBuffer cmd, Texture source)
         {
@@ -266,7 +232,7 @@ namespace UnityEngine.Rendering.HighDefinition
             return new Vector4(
                 Mathf.Log(m_CookieAtlas.AtlasTexture.rt.width, 2),
                 padding / (float)m_CookieAtlas.AtlasTexture.rt.width,
-                0,
+                cookieAtlasLastValidMip,
                 0
             );
         }

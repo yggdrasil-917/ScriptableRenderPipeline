@@ -75,7 +75,7 @@ float3 SampleAreaLightCookie(float4 cookieScaleOffset, float4x3 L, float3 F)
     float   cookieWidth = cookieScaleOffset.x * _CookieAtlasSize.x; // cookies and atlas are guaranteed to be POT
     float   cookieMipCount = round(LOG2_E * log(cookieWidth));
     float   mipLevel = 0.5 * log2(1e-8 + PI * hitDistance*hitDistance * rsqrt(sqArea)) + cookieMipCount;
-    mipLevel = clamp(mipLevel, 0, cookieMipCount - 1);
+    mipLevel = clamp(mipLevel, 0, cookieMipCount);
 
     return SampleCookie2D(saturate(hitUV), cookieScaleOffset, mipLevel);
 }

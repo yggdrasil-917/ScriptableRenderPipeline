@@ -58,18 +58,6 @@ namespace UnityEngine.Rendering.HighDefinition
     }
 
     [Serializable]
-    public enum AreaCookieResolution
-    {
-        AreaCookieResolution64 = 64,
-        AreaCookieResolution128 = 128,
-        AreaCookieResolution256 = 256,
-        AreaCookieResolution512 = 512,
-        AreaCookieResolution1024 = 1024,
-        AreaCookieResolution2048 = 2048,
-        AreaCookieResolution4096 = 4096
-    }
-
-    [Serializable]
     public struct GlobalLightLoopSettings
     {
         /// <summary>Default GlobalDecalSettings</summary>
@@ -82,7 +70,7 @@ namespace UnityEngine.Rendering.HighDefinition
             pointCookieSize = CubeCookieResolution.CubeCookieResolution128,
             cubeCookieTexArraySize = 16,
 
-            cookieAreaTextureSize = AreaCookieResolution.AreaCookieResolution128,
+            cookieAtlasLastValidMip = 0,
             cookieAreaTextureArraySize = 16,
 
             planarReflectionAtlasSize = PlanarReflectionAtlasResolution.PlanarReflectionResolution1024,
@@ -105,7 +93,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public CubeCookieResolution pointCookieSize;
         public int cubeCookieTexArraySize;
 
-        public AreaCookieResolution cookieAreaTextureSize;
+        public int cookieAtlasLastValidMip;
         public int cookieAreaTextureArraySize;
 
         [FormerlySerializedAs("planarReflectionTextureSize")]

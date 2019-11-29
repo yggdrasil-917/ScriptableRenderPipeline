@@ -8,6 +8,7 @@ namespace UnityEditor.Rendering.HighDefinition
         public SerializedProperty root;
 
         public SerializedProperty cookieAtlasSize;
+        public SerializedProperty cookieAtlasLastValidMip;
         public SerializedProperty pointCookieSize;
         public SerializedProperty cubeCookieTexArraySize;
         public SerializedProperty reflectionProbeCacheSize;
@@ -30,6 +31,7 @@ namespace UnityEditor.Rendering.HighDefinition
             this.root = root;
 
             cookieAtlasSize = root.Find((GlobalLightLoopSettings s) => s.cookieAtlasSize);
+            cookieAtlasLastValidMip = root.Find((GlobalLightLoopSettings s) => s.cookieAtlasLastValidMip);
             pointCookieSize = root.Find((GlobalLightLoopSettings s) => s.pointCookieSize);
             cubeCookieTexArraySize = root.Find((GlobalLightLoopSettings s) => s.cubeCookieTexArraySize);
 
