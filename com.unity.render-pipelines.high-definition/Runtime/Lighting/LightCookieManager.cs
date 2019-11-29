@@ -174,7 +174,7 @@ namespace UnityEngine.Rendering.HighDefinition
             Vector4 scaleBias = Vector4.zero;
 
             // TODO: disable mipmaps for these textures !
-            if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias))
+            if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias, blitMips: false))
                 return Vector4.zero;
 
             return scaleBias;
