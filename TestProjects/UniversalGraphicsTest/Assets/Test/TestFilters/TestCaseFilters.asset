@@ -13,12 +13,6 @@ MonoBehaviour:
   m_Name: TestCaseFilters
   m_EditorClassIdentifier: 
   filters:
-  - FilteredScene: {fileID: 102900000, guid: 245a2b08a4f72437193b06846a5c8e33, type: 3}
-    ColorSpace: -1
-    BuildPlatform: 13
-    GraphicsDevice: 4
-    Reason: 'Known issue: expected: less than or equal to 0.00100000005f but was
-      0.00151021837f'
   - FilteredScene: {fileID: 102900000, guid: c4dab86134e72034aac45c19df32ceb7, type: 3}
     ColorSpace: -1
     BuildPlatform: 13
