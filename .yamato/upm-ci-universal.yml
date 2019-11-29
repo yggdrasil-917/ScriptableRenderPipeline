@@ -22,7 +22,7 @@ platforms:
     flavor: b1.large
   - name: Android
     type: Unity::mobile::android
-    image: mobile/android-execution:r19-390185
+    image: mobile/android-execution-r19:stable
     flavor: b1.large
 testplatforms:
   - name: Standalone
@@ -34,7 +34,7 @@ testplatforms:
 mobiles:
   - name: Android
     type: Unity::mobile::android
-    image: mobile/android-execution:r19-390185
+    image: mobile/android-execution-r19:stable
     flavor: b1.large
 projects:
   - name: Universal
