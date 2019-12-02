@@ -19,12 +19,21 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             referenceName = "SPEEDTREE_",
             type = KeywordType.Enum,
             definition = KeywordDefinition.ShaderFeature,
-            scope = KeywordScope.Global,
+            scope = KeywordScope.Local,
             entries = new KeywordEntry[]
             {
                     new KeywordEntry() { displayName = "Version 7", referenceName = "V7" },
                     new KeywordEntry() { displayName = "Version 8", referenceName = "V8" },
             }
+        };
+
+        public static KeywordDescriptor LodFadePercentage = new KeywordDescriptor()
+        {
+            displayName = "LOD Fade Percentage",
+            referenceName = "LOD_FADE_PERCENTAGE",
+            type = KeywordType.Boolean,
+            definition = KeywordDefinition.MultiCompile,
+            scope = KeywordScope.Local,
         };
 
         public bool IsValid(IMasterNode masterNode)
@@ -38,6 +47,21 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
         public bool IsPipelineCompatible(RenderPipelineAsset currentPipeline)
         {
             return currentPipeline is HDRenderPipelineAsset;
+        }
+
+        private SubShaderDescriptor UpdateSubShader(ref SubShaderDescriptor origDescriptor)
+        {
+            SubShaderDescriptor modDescriptor = origDescriptor;
+
+            modDescriptor.renderQueueOverride = "AlphaTest";
+
+            foreach(PassCollection.Item p in modDescriptor.passes)
+            {
+                p.descriptor.keywords.Add(SpeedTreeVersion);
+                p.descriptor.keywords.Add(LodFadePercentage);
+            }
+
+            return modDescriptor;
         }
 
         public void SetupTarget(ref TargetSetupContext context)
@@ -58,7 +82,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                     break;
                 case HDLitMasterNode hdLitMasterNode:
                 default:
-                    context.SetupSubShader(HDSubShaders.HDLit);
+                    context.SetupSubShader(UpdateSubShader(ref HDSubShaders.HDLit));
                     break;
                 case FabricMasterNode fabricMasterNode:
                     context.SetupSubShader(HDSubShaders.Fabric);
