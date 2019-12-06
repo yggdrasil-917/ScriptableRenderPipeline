@@ -1002,7 +1002,9 @@ namespace UnityEngine.Rendering.Universal.Internal
                     // Classic two pass gaussian blur - use mipUp as a temporary target
                     //   First pass does 2x downsampling + 9-tap gaussian
                     //   Second pass does 9-tap gaussian using a 5-tap filter + bilinear filtering
+                    cmd.SetGlobalTexture(Shader.PropertyToID("_BlitTex"), lastDown);
                     cmd.Blit(lastDown, mipUp, bloomMaterial, 1);
+                    cmd.SetGlobalTexture(Shader.PropertyToID("_BlitTex"), mipUp);
                     cmd.Blit(mipUp, mipDown, bloomMaterial, 2);
                     lastDown = mipDown;
                 }
