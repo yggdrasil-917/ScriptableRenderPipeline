@@ -753,12 +753,15 @@ namespace UnityEngine.Rendering.Universal.Internal
                 cmd.Blit(source, ShaderConstants._PingTexture, material, 1);
 
                 // Bokeh blur
+                cmd.SetGlobalTexture(Shader.PropertyToID("_BlitTex"), ShaderConstants._PingTexture);
                 cmd.Blit(ShaderConstants._PingTexture, ShaderConstants._PongTexture, material, 2);
 
                 // Post-filtering
+                cmd.SetGlobalTexture(Shader.PropertyToID("_BlitTex"), ShaderConstants._PongTexture);
                 cmd.Blit(ShaderConstants._PongTexture, BlitDstDiscardContent(cmd, ShaderConstants._PingTexture), material, 3);
 
                 // Composite
+                cmd.SetGlobalTexture(Shader.PropertyToID("_BlitTex"), source);
                 cmd.SetGlobalTexture(ShaderConstants._DofTexture, ShaderConstants._PingTexture);
                 cmd.Blit(source, BlitDstDiscardContent(cmd, destination), material, 4);
             }
@@ -1012,6 +1015,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                     int dst = ShaderConstants._BloomMipUp[i];
 
                     cmd.SetGlobalTexture(ShaderConstants._MainTexLowMip, lowMip);
+                    cmd.SetGlobalTexture(Shader.PropertyToID("_BlitTex"), highMip);
                     cmd.Blit(highMip, BlitDstDiscardContent(cmd, dst), bloomMaterial, 3);
                 }
             }
