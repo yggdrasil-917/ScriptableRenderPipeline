@@ -31,11 +31,11 @@ testplatforms:
     args: --suite=editor --platform=editmode
 ---
 {% for editor in editors %}
-{% if editor.version == 'CUSTOM-REVISION' %}
+all_project_ci_{{ editor.version }}:
+  {% if editor.version == 'CUSTOM-REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
-{% endif %}
-all_project_ci_{{ editor.version }}:
+  {% endif %}
   name: _ABV for SRP repository - {{ editor.version }}
   agent:
     type: Unity::VM
@@ -87,11 +87,11 @@ all_project_ci_nightly:
 
 {% for testplatform in testplatforms %} 
 {% for editor in editors %}
-{% if editor.version == 'CUSTOM-REVISION' %}
+smoke_test_{{ testplatform.name }}_{{ editor.version }}:
+  {% if editor.version == 'CUSTOM-REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
-{% endif %}
-smoke_test_{{ testplatform.name }}_{{ editor.version }}:
+  {% endif %}
   name: SRP Smoke Test - {{ testplatform.name }}_{{ editor.version }}
   agent:
     {% if testplatform.name == "editmode" %}
@@ -138,11 +138,11 @@ all_smoke_tests:
       paths:
         - "**/test-results/**"
 {% for editor in editors %}
-{% if editor.version == 'CUSTOM-REVISION' %}
+trunk_verification_{{ editor.version }}:
+  {% if editor.version == 'CUSTOM-REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
-{% endif %}
-trunk_verification_{{ editor.version }}:
+  {% endif %}
   name: z_(do not use) Trunk verification _{{ editor.version }}
   dependencies:
     {% for project in projects %}  
