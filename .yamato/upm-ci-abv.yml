@@ -32,15 +32,15 @@ testplatforms:
 ---
 {% for editor in editors %}
 all_project_ci_{{ editor.version }}:
-  {% if editor.version == 'CUSTOM-REVISION' %}
-  variables:
-    CUSTOM_REVISION: custom_revision_not_set
-  {% endif %}
   name: _ABV for SRP repository - {{ editor.version }}
   agent:
     type: Unity::VM
     image: cds-ops/ubuntu-18.04-agent:latest
     flavor: b1.small
+  {% if editor.version == 'CUSTOM-REVISION' %}
+  variables:
+    CUSTOM_REVISION: custom_revision_not_set
+  {% endif %}
   commands:
     - dir
   dependencies:
@@ -88,10 +88,6 @@ all_project_ci_nightly:
 {% for testplatform in testplatforms %} 
 {% for editor in editors %}
 smoke_test_{{ testplatform.name }}_{{ editor.version }}:
-  {% if editor.version == 'CUSTOM-REVISION' %}
-  variables:
-    CUSTOM_REVISION: custom_revision_not_set
-  {% endif %}
   name: SRP Smoke Test - {{ testplatform.name }}_{{ editor.version }}
   agent:
     {% if testplatform.name == "editmode" %}
@@ -101,6 +97,10 @@ smoke_test_{{ testplatform.name }}_{{ editor.version }}:
     {% endif %}
     image: sdet/gamecode_win10:stable
     flavor: b1.large
+  {% if editor.version == 'CUSTOM-REVISION' %}
+  variables:
+    CUSTOM_REVISION: custom_revision_not_set
+  {% endif %}
   commands:
   - git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/SRP_SmokeTest/utr
   - npm install upm-ci-utils -g --registry https://api.bintray.com/npm/unity/unity-npm
@@ -139,11 +139,11 @@ all_smoke_tests:
         - "**/test-results/**"
 {% for editor in editors %}
 trunk_verification_{{ editor.version }}:
+  name: z_(do not use) Trunk verification _{{ editor.version }}
   {% if editor.version == 'CUSTOM-REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
   {% endif %}
-  name: z_(do not use) Trunk verification _{{ editor.version }}
   dependencies:
     {% for project in projects %}  
     {% for testplatform in testplatforms %}
