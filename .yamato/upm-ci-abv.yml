@@ -177,4 +177,8 @@ trunk_verification_{{ editor.version }}:
     {% endif %}
     {% endfor %}
     {% endfor %}
+  artifacts:
+    logs:
+      paths:
+        - "**/test-results/**"
 {% endfor %}    
