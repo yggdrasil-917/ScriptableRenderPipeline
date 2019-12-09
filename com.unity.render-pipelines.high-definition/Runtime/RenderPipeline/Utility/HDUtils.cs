@@ -188,8 +188,7 @@ namespace UnityEngine.Rendering.HighDefinition
             cmd.DrawProcedural(Matrix4x4.identity, GetBlitMaterial(source.dimension), bilinear ? 3 : 2, MeshTopology.Quads, 4, 1, s_PropertyBlock);
         }
 
-        // TODO: rename
-        public static void BlitPaddedQuad(CommandBuffer cmd, Texture source, Vector2 textureSize, Vector4 scaleBiasTex, Vector4 scaleBiasRT, int mipLevelTex, bool bilinear, int paddingInPixels)
+        public static void BlitQuadWithPadding(CommandBuffer cmd, Texture source, Vector2 textureSize, Vector4 scaleBiasTex, Vector4 scaleBiasRT, int mipLevelTex, bool bilinear, int paddingInPixels)
         {
             s_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, source);
             s_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, scaleBiasTex);

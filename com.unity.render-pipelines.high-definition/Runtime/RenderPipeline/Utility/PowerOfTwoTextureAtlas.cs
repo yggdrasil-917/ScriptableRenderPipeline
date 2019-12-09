@@ -52,7 +52,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
                 {
                     cmd.SetRenderTarget(m_AtlasTexture, mipLevel);
-                    HDUtils.BlitPaddedQuad(cmd, texture, textureSize, sourceScaleOffset, scaleOffset, mipLevel, bilinear, pixelPadding);
+                    HDUtils.BlitQuadWithPadding(cmd, texture, textureSize, sourceScaleOffset, scaleOffset, mipLevel, bilinear, pixelPadding);
                 }
             }
         }
