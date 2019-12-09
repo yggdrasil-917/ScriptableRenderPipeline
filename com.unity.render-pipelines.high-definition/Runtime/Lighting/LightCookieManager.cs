@@ -49,6 +49,7 @@ namespace UnityEngine.Rendering.HighDefinition
             int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
             var cookieAtlasFormat = (GraphicsFormat)gLightLoopSettings.cookieAtlasFormat;
+            cookieAtlasLastValidMip = gLightLoopSettings.cookieAtlasLastValidMip;
 
             if (PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(1, cookieAtlasSize, true, cookieAtlasFormat) > HDRenderPipeline.k_MaxCacheSize)
                 cookieAtlasSize = PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, true, cookieAtlasFormat);
