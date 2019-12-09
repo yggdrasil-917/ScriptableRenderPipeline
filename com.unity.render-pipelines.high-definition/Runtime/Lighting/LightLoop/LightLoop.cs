@@ -204,8 +204,6 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             // Structure for cookies used by directional and spotlights
             public LightCookieManager           lightCookieManager { get; private set; }
-            // Structure for cookies used by point lights
-            public TextureCacheCubemap          cubeCookieTexArray { get; private set; }
             public ReflectionProbeCache         reflectionProbeCache { get; private set; }
             public PlanarReflectionProbeCache   reflectionPlanarProbeCache { get; private set; }
             public List<Matrix4x4>              env2DCaptureVP { get; private set; }
@@ -234,13 +232,6 @@ namespace UnityEngine.Rendering.HighDefinition
                     env2DAtlasScaleOffset.Add(Vector4.zero);
                 }
 
-                cubeCookieTexArray = new TextureCacheCubemap("Cookie");
-                int coockieCubeSize = lightLoopSettings.cubeCookieTexArraySize;
-                int coockieCubeResolution = (int)lightLoopSettings.pointCookieSize;
-                if (TextureCacheCubemap.GetApproxCacheSizeInByte(coockieCubeSize, coockieCubeResolution, 1) > k_MaxCacheSize)
-                    coockieCubeSize = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, coockieCubeResolution, 1);
-                cubeCookieTexArray.AllocTextureArray(coockieCubeSize, coockieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
-
                 // For regular reflection probes, we need to convolve with all the BSDF functions
                 TextureFormat probeCacheFormat = lightLoopSettings.reflectionCacheCompressed ? TextureFormat.BC6H : TextureFormat.RGBAHalf;
                 int reflectionCubeSize = lightLoopSettings.reflectionProbeCacheSize;
@@ -259,7 +250,6 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 reflectionProbeCache.Release();
                 reflectionPlanarProbeCache.Release();
-                cubeCookieTexArray.Release();
                 lightCookieManager.ReleaseResources();
 
                 CoreUtils.Destroy(m_CubeToPanoMaterial);
@@ -268,7 +258,6 @@ namespace UnityEngine.Rendering.HighDefinition
             public void NewFrame()
             {
                 lightCookieManager.NewFrame();
-                cubeCookieTexArray.NewFrame();
                 reflectionProbeCache.NewFrame();
                 reflectionPlanarProbeCache.NewFrame();
             }
@@ -1385,7 +1374,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (lightComponent != null && lightComponent.cookie != null)
             {
-                // TODO: add texture atlas support for cookie textures.
                 switch (lightType)
                 {
                     case HDLightType.Spot:
@@ -1393,6 +1381,7 @@ namespace UnityEngine.Rendering.HighDefinition
                         lightData.cookieScaleOffset = m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, lightComponent.cookie);
                         break;
                     case HDLightType.Point:
+                        lightData.cookieMode = CookieMode.Clamp;
                         lightData.cookieIndex = m_TextureCaches.lightCookieManager.FetchCubeCookie(cmd, lightComponent.cookie);
                         break;
                 }
@@ -3077,7 +3066,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 cmd.SetGlobalVector(HDShaderIDs._CookieAtlasData, param.textureCaches.lightCookieManager.GetCookieAtlasDatas());
 
                 // TODO: cleanup the unused cookie and planar stuff
-                cmd.SetGlobalTexture(HDShaderIDs._CookieCubeTextures, param.textureCaches.cubeCookieTexArray.GetTexCache());
+                cmd.SetGlobalTexture(HDShaderIDs._CookieCubeTextures, param.textureCaches.lightCookieManager.cubeCache);
                 cmd.SetGlobalTexture(HDShaderIDs._EnvCubemapTextures, param.textureCaches.reflectionProbeCache.GetTexCache());
                 cmd.SetGlobalInt(HDShaderIDs._EnvSliceSize, param.textureCaches.reflectionProbeCache.GetEnvSliceSize());
                 cmd.SetGlobalTexture(HDShaderIDs._Env2DTextures, param.textureCaches.reflectionPlanarProbeCache.GetTexCache());
@@ -3656,7 +3645,7 @@ namespace UnityEngine.Rendering.HighDefinition
             return parameters;
         }
 
-        static void RenderLightLoopDebugOverlay(in DebugParameters debugParameters, CommandBuffer cmd, ref float x, ref float y, float overlaySize, RTHandle depthTexture)
+        static void RenderLightLoopDebugOverlay(in DebugParameters debugParameters, CommandBuffer cmd, ref float x, ref float y, float overlaySize, RTHandle depthTexture, MaterialPropertyBlock mpb)
         {
             var hdCamera = debugParameters.hdCamera;
             var parameters = debugParameters.lightingOverlayParameters;
@@ -3715,17 +3704,16 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
             }
 
-            // TODO
-            using (new ProfilingSample(cmd, "Display Cookie Atlas", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
+            if (lightingDebug.clearCookieAtlas)
             {
-                if (lightingDebug.clearCookieAtlas)
-                {
-                    parameters.cookieManager.ResetAllocator();
-                    parameters.cookieManager.ClearAtlasTexture(cmd);
-                    lightingDebug.clearCookieAtlas = false;
-                }
-                
-                if (lightingDebug.displayCookieAtlas)
+                parameters.cookieManager.ResetAllocator();
+                parameters.cookieManager.ClearAtlasTexture(cmd);
+                lightingDebug.clearCookieAtlas = false;
+            }
+
+            if (lightingDebug.displayCookieAtlas)
+            {
+                using (new ProfilingSample(cmd, "Display Cookie Atlas", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
                 {
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
                     HDUtils.BlitQuad(cmd, parameters.cookieManager.atlasTexture, new Vector4(1, 1, 0, 0), new Vector4(1, 1, 0, 0), (int)lightingDebug.cookieAtlasMipLevel, false);
@@ -3733,15 +3721,29 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
             }
 
-            using (new ProfilingSample(cmd, "Display Planar Reflection Probe Atlas", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
+            if (lightingDebug.displayCookieCubeArray)
             {
-                if (lightingDebug.clearPlanarReflectionProbeAtlas)
+                using (new ProfilingSample(cmd, "Display Point Light Cookie Array", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
                 {
-                    parameters.planarProbeCache.Clear(cmd);
-                    lightingDebug.clearPlanarReflectionProbeAtlas = false;
+                    mpb.SetTexture(HDShaderIDs._InputCubemap, parameters.cookieManager.cubeCache);
+                    mpb.SetFloat(HDShaderIDs._Mipmap, 0);
+                    mpb.SetFloat(HDShaderIDs._SliceIndex, lightingDebug.cookieCubeArraySliceIndex);
+                    mpb.SetFloat(HDShaderIDs._DebugExposure, lightingDebug.debugExposure);
+                    cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
+                    cmd.DrawProcedural(Matrix4x4.identity, debugParameters.debugLatlongMaterial, 0, MeshTopology.Triangles, 3, 1, mpb);
+                    HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
                 }
-                
-                if (lightingDebug.displayPlanarReflectionProbeAtlas)
+            }
+
+            if (lightingDebug.clearPlanarReflectionProbeAtlas)
+            {
+                parameters.planarProbeCache.Clear(cmd);
+                lightingDebug.clearPlanarReflectionProbeAtlas = false;
+            }
+
+            if (lightingDebug.displayPlanarReflectionProbeAtlas)
+            {
+                using (new ProfilingSample(cmd, "Display Planar Reflection Probe Atlas", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
                 {
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
                     HDUtils.BlitQuad(cmd, parameters.planarProbeCache.GetTexCache(), new Vector4(1, 1, 0, 0), new Vector4(1, 1, 0, 0), (int)lightingDebug.planarReflectionProbeMipLevel, false);

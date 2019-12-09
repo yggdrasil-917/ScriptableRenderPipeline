@@ -46,19 +46,23 @@ namespace UnityEngine.Rendering.HighDefinition
             m_MaterialFilterAreaLights = CoreUtils.CreateEngineMaterial(hdResources.shaders.filterAreaLightCookiesPS);
 
             int cookieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
-            int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
-            var cookieAtlasFormat = (GraphicsFormat)gLightLoopSettings.cookieAtlasFormat;
+            var cookieFormat = (GraphicsFormat)gLightLoopSettings.cookieAtlasFormat;
             cookieAtlasLastValidMip = gLightLoopSettings.cookieAtlasLastValidMip;
 
-            if (PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(1, cookieAtlasSize, true, cookieAtlasFormat) > HDRenderPipeline.k_MaxCacheSize)
-                cookieAtlasSize = PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, true, cookieAtlasFormat);
+            if (PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(1, cookieAtlasSize, true, cookieFormat) > HDRenderPipeline.k_MaxCacheSize)
+                cookieAtlasSize = PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, true, cookieFormat);
 
-            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, gLightLoopSettings.cookieAtlasLastValidMip, cookieAtlasFormat, name: "Cookie Atlas (Punctual Lights)", useMipMap: true);
+            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, gLightLoopSettings.cookieAtlasLastValidMip, cookieFormat, name: "Cookie Atlas (Punctual Lights)", useMipMap: true);
 
             m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(hdResources.shaders.cubeToPanoPS);
 
             m_CubeCookieTexArray = new TextureCacheCubemap("Cookie");
+            int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
+            if (TextureCacheCubemap.GetApproxCacheSizeInByte(cookieCubeSize, cookieCubeResolution, 1) > HDRenderPipeline.k_MaxCacheSize)
+                cookieCubeSize = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, cookieCubeResolution, 1);
+
+            // TODO: hardcoded format RGBA32, we need to move it to GraphicsFormat and then use the cookie format settings for this as well
             m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
         }
 
@@ -185,6 +189,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             Vector4 scaleBias = Vector4.zero;
 
+            // TODO: check if the blitMips actually does something.
             if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias, blitMips: false))
                 return Vector4.zero;
 
@@ -206,20 +211,11 @@ namespace UnityEngine.Rendering.HighDefinition
             return scaleBias;
         }
 
-        public int FetchCubeCookie(CommandBuffer cmd, Texture cookie)
-        {
-            return m_CubeCookieTexArray.FetchSlice(cmd, cookie);
-        }
+        public int FetchCubeCookie(CommandBuffer cmd, Texture cookie) => m_CubeCookieTexArray.FetchSlice(cmd, cookie);
 
-        public void ResetAllocator()
-        {
-            m_CookieAtlas.ResetAllocator();
-        }
+        public void ResetAllocator() => m_CookieAtlas.ResetAllocator();
 
-        public void ClearAtlasTexture(CommandBuffer cmd)
-        {
-            m_CookieAtlas.ClearTarget(cmd);
-        }
+        public void ClearAtlasTexture(CommandBuffer cmd) => m_CookieAtlas.ClearTarget(cmd);
 
         public RTHandle atlasTexture => m_CookieAtlas.AtlasTexture;
         public Texture cubeCache => m_CubeCookieTexArray.GetTexCache();

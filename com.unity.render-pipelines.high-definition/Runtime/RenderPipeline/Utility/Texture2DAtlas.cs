@@ -234,8 +234,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (allocated)
                 BlitTexture(cmd, scaleOffset, texture, fullScaleOffset);
-            else
-                Debug.LogError("Can't place texture " + texture + " in the atlas " + m_AtlasTexture.name + ": Atlas is out of space");
 
             return allocated;
         }

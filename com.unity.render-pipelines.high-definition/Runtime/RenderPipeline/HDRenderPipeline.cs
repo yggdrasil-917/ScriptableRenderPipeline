@@ -231,6 +231,7 @@ namespace UnityEngine.Rendering.HighDefinition
         }
 
         public int GetCookieAtlasMipCount() => (int)Mathf.Log((int)currentPlatformRenderPipelineSettings.lightLoopSettings.cookieAtlasSize, 2);
+        public int GetCookieCubeArraySize() => currentPlatformRenderPipelineSettings.lightLoopSettings.cubeCookieTexArraySize;
 
         public int GetPlanarReflectionProbeMipCount()
         {
@@ -4107,6 +4108,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 mpb.SetTexture(HDShaderIDs._InputCubemap, debugParameters.skyReflectionTexture);
                 mpb.SetFloat(HDShaderIDs._Mipmap, lightingDebug.skyReflectionMipmap);
                 mpb.SetFloat(HDShaderIDs._DebugExposure, lightingDebug.debugExposure);
+                mpb.SetFloat(HDShaderIDs._SliceIndex, lightingDebug.cookieCubeArraySliceIndex);
                 cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
                 cmd.DrawProcedural(Matrix4x4.identity, debugParameters.debugLatlongMaterial, 0, MeshTopology.Triangles, 3, 1, mpb);
                 HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, debugParameters.hdCamera);
@@ -4160,7 +4162,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 RenderSkyReflectionOverlay(debugParams, cmd, m_SharedPropertyBlock, ref x, ref y, overlaySize);
                 RenderRayCountOverlay(debugParams, cmd, ref x, ref y, overlaySize);
-                RenderLightLoopDebugOverlay(debugParams, cmd, ref x, ref y, overlaySize, m_SharedRTManager.GetDepthTexture());
+                RenderLightLoopDebugOverlay(debugParams, cmd, ref x, ref y, overlaySize, m_SharedRTManager.GetDepthTexture(), m_SharedPropertyBlock);
 
                 HDShadowManager.ShadowDebugAtlasTextures atlases = debugParams.lightingOverlayParameters.shadowManager.GetDebugAtlasTextures();
                 RenderShadowsDebugOverlay(debugParams, atlases, cmd, ref x, ref y, overlaySize, m_SharedPropertyBlock);

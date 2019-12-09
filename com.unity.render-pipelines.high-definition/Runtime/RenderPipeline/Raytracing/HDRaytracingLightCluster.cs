@@ -577,7 +577,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 if (light.cookie != null)
                 {
-                    // TODO: add texture atlas support for cookie textures.
                     // TODO: why not using GPULightData here too?
                     switch (lightType)
                     {
@@ -587,7 +586,8 @@ namespace UnityEngine.Rendering.HighDefinition
                             break;
                         case HDLightType.Point:
                         case HDLightType.Area:
-                            lightData.cookieIndex = m_RenderPipeline.m_TextureCaches.cubeCookieTexArray.FetchSlice(cmd, light.cookie);
+                            lightData.cookieMode = CookieMode.Clamp;
+                            lightData.cookieIndex = m_RenderPipeline.m_TextureCaches.lightCookieManager.FetchCubeCookie(cmd, light.cookie);
                             break;
                     }
                 }

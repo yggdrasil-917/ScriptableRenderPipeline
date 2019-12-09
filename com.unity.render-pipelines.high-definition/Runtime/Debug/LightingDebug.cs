@@ -145,6 +145,8 @@ namespace UnityEngine.Rendering.HighDefinition
         public float                debugExposure = 0.0f;
 
         public bool                 displayCookieAtlas = false;
+        public bool                 displayCookieCubeArray = false;
+        public uint                 cookieCubeArraySliceIndex = 0;
         public uint                 cookieAtlasMipLevel = 0;
         public bool                 clearCookieAtlas = false;
 
