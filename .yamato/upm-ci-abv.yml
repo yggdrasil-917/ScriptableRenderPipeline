@@ -31,6 +31,10 @@ testplatforms:
     args: --suite=editor --platform=editmode
 ---
 {% for editor in editors %}
+{% if editor.version == 'CUSTOM-REVISION' %}
+  variables:
+    CUSTOM_REVISION: custom_revision_not_set
+{% endif %}
 all_project_ci_{{ editor.version }}:
   name: _ABV for SRP repository - {{ editor.version }}
   agent:
@@ -82,7 +86,11 @@ all_project_ci_nightly:
         - "**/test-results/**"       
 
 {% for testplatform in testplatforms %} 
-{% for editor in editors %}     
+{% for editor in editors %}
+{% if editor.version == 'CUSTOM-REVISION' %}
+  variables:
+    CUSTOM_REVISION: custom_revision_not_set
+{% endif %}
 smoke_test_{{ testplatform.name }}_{{ editor.version }}:
   name: SRP Smoke Test - {{ testplatform.name }}_{{ editor.version }}
   agent:
@@ -129,9 +137,13 @@ all_smoke_tests:
     logs:
       paths:
         - "**/test-results/**"
-
-trunk_verification:
-  name: z_(do not use) Trunk verification 
+{% for editor in editors %}
+{% if editor.version == 'CUSTOM-REVISION' %}
+  variables:
+    CUSTOM_REVISION: custom_revision_not_set
+{% endif %}
+trunk_verification_{{ editor.version }}:
+  name: z_(do not use) Trunk verification _{{ editor.version }}
   dependencies:
     {% for project in projects %}  
     {% for testplatform in testplatforms %}
@@ -153,3 +165,4 @@ trunk_verification:
     {% endif %}
     {% endfor %}
     {% endfor %}
+{% endfor %}    
