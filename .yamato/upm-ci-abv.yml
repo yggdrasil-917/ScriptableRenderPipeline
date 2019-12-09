@@ -119,17 +119,22 @@ smoke_test_{{ testplatform.name }}_{{ editor.version }}:
 {% endfor %}
 {% endfor %}
 
-all_smoke_tests:
+{% for editor in editors %}
+
+all_smoke_tests_{{ editor.version }}:
   name: All Smoke Tests
   agent:
     type: Unity::VM
     image: cds-ops/ubuntu-18.04-agent:latest
     flavor: b1.small
+  {% if editor.version == 'CUSTOM-REVISION' %}
+  variables:
+    CUSTOM_REVISION: custom_revision_not_set
+  {% endif %}
   commands:
     - dir
   dependencies:
-  {% for testplatform in testplatforms %} 
-  {% for editor in editors %}
+  {% for testplatform in testplatforms %}   
   - .yamato/upm-ci-abv.yml#smoke_test_{{ testplatform.name }}_{{ editor.version }}
   {% endfor %}
   {% endfor %}
