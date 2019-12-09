@@ -122,7 +122,7 @@ smoke_test_{{ testplatform.name }}_{{ editor.version }}:
 {% for editor in editors %}
 
 all_smoke_tests_{{ editor.version }}:
-  name: All Smoke Tests
+  name: All Smoke Tests - {{ editor.version }}
   agent:
     type: Unity::VM
     image: cds-ops/ubuntu-18.04-agent:latest
