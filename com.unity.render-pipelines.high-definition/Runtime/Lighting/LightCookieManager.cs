@@ -2,6 +2,13 @@ using UnityEngine.Experimental.Rendering;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
+    [System.Serializable]
+    public enum CookieAtlasGraphicsFormat
+    {
+        R11G11B10 = GraphicsFormat.B10G11R11_UFloatPack32,
+        R16G16B16A16 = GraphicsFormat.R16G16B16A16_SFloat,
+    }
+
     class LightCookieManager
     {
         HDRenderPipelineAsset m_RenderPipelineAsset = null;
@@ -41,8 +48,12 @@ namespace UnityEngine.Rendering.HighDefinition
             int cookieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
             int cookieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
+            var cookieAtlasFormat = (GraphicsFormat)gLightLoopSettings.cookieAtlasFormat;
 
-            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, gLightLoopSettings.cookieAtlasLastValidMip, GraphicsFormat.R8G8B8A8_UNorm, name: "Cookie Atlas (Punctual Lights)", useMipMap: true);
+            if (PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(1, cookieAtlasSize, true, cookieAtlasFormat) > HDRenderPipeline.k_MaxCacheSize)
+                cookieAtlasSize = PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, true, cookieAtlasFormat);
+
+            m_CookieAtlas = new PowerOfTwoTextureAtlas(cookieAtlasSize, gLightLoopSettings.cookieAtlasLastValidMip, cookieAtlasFormat, name: "Cookie Atlas (Punctual Lights)", useMipMap: true);
 
             m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(hdResources.shaders.cubeToPanoPS);
 
@@ -173,7 +184,6 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             Vector4 scaleBias = Vector4.zero;
 
-            // TODO: disable mipmaps for these textures !
             if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias, blitMips: false))
                 return Vector4.zero;
 

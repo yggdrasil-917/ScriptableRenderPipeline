@@ -207,9 +207,12 @@ namespace UnityEngine.Rendering.HighDefinition
             return (texture is Texture2D || rt?.dimension == TextureDimension.Tex2D);
         }
 
-        protected void Blit2DTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset)
+        protected void Blit2DTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset, bool blitMips = true)
         {
             int mipCount = GetTextureMipmapCount(texture.width, texture.height);
+
+            if (!blitMips)
+                mipCount = 1;
 
             for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
             {
@@ -218,11 +221,11 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        public virtual void BlitTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset)
+        public virtual void BlitTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset, bool blitMips = true)
         {
             // This atlas only support 2D texture so we only blit 2D textures
             if (Is2D(texture))
-                Blit2DTexture(cmd, scaleOffset, texture, sourceScaleOffset);
+                Blit2DTexture(cmd, scaleOffset, texture, sourceScaleOffset, blitMips);
         }
 
         public virtual bool AllocateTexture(CommandBuffer cmd, ref Vector4 scaleOffset, Texture texture, int width, int height)
@@ -306,13 +309,13 @@ namespace UnityEngine.Rendering.HighDefinition
             return IsCached(out scaleOffset, texture);
         }
 
-        public virtual bool UpdateTexture(CommandBuffer cmd, Texture oldTexture, Texture newTexture, ref Vector4 scaleOffset, Vector4 sourceScaleOffset, bool updateIfNeeded = true)
+        public virtual bool UpdateTexture(CommandBuffer cmd, Texture oldTexture, Texture newTexture, ref Vector4 scaleOffset, Vector4 sourceScaleOffset, bool updateIfNeeded = true, bool blitMips = true)
         {
             // In case the old texture is here, we Blit the new one at the scale offset of the old one
             if (IsCached(out scaleOffset, oldTexture))
             {
                 if (updateIfNeeded && NeedsUpdate(newTexture))
-                    BlitTexture(cmd, scaleOffset, newTexture, sourceScaleOffset);
+                    BlitTexture(cmd, scaleOffset, newTexture, sourceScaleOffset, blitMips);
                 return true;
             }
             else // else we try to allocate the updated texture
@@ -321,9 +324,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        public virtual bool UpdateTexture(CommandBuffer cmd, Texture texture, ref Vector4 scaleOffset, bool updateIfNeeded = true)
-        {
-            return UpdateTexture(cmd, texture, texture, ref scaleOffset, fullScaleOffset, updateIfNeeded);
-        }
+        public virtual bool UpdateTexture(CommandBuffer cmd, Texture texture, ref Vector4 scaleOffset, bool updateIfNeeded = true, bool blitMips = true)
+            => UpdateTexture(cmd, texture, texture, ref scaleOffset, fullScaleOffset, updateIfNeeded, blitMips);
     }
 }

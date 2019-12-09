@@ -111,11 +111,12 @@ namespace UnityEditor.Rendering.HighDefinition
         const string k_CacheInfoFormat = "Reserving {0} in memory at runtime.";
         const string k_MultipleDifferentValueMessage = "Multiple different values";
 
-        static readonly GUIContent k_CookieAtlasSizeContent = EditorGUIUtility.TrTextContent("Cookie Atlas Size", "Specifies the size of the atlas used for 2D cookies (Directional and Spot Lights).");
+        static readonly GUIContent k_CookieAtlasSizeContent = EditorGUIUtility.TrTextContent("2D Atlas Size", "Specifies the size of the atlas used for 2D cookies (Directional, Spot and Rectangle Lights).");
+        static readonly GUIContent k_CookieAtlasFormatContent = EditorGUIUtility.TrTextContent("2D Atlas Format", "Specifies the HDR format of the atlas used for 2D cookies. R16G16B16");
         static readonly GUIContent k_CookieTextureArraySizeContent = EditorGUIUtility.TrTextContent("Texture Array Size", "Sets the maximum Texture Array size for the 2D cookies HDRP uses for Directional and Spot Lights. Higher values allow HDRP to use more cookies concurrently on screen.");
         static readonly GUIContent k_PointCookieSizeContent = EditorGUIUtility.TrTextContent("Point Cookie Size", "Specifies the maximum size for the Cube cookies HDRP uses for Point Lights.");
         static readonly GUIContent k_PointCookieTextureArraySizeContent = EditorGUIUtility.TrTextContent("Cubemap Array Size", "Sets the maximum Texture Array size for the Cube cookies HDRP uses for Directional and Spot Lights. Higher values allow HDRP to use more cookies concurrently on screen.");
-        static readonly GUIContent k_CookieAtlasLastValidMipContent = EditorGUIUtility.TrTextContent("Cookie Atlas Last Valid Mip", "Apply border when the cookie is copied into the atlas. It avoid the cookie border to be clamped when sampling mips but can intoduce some blurriness.");
+        static readonly GUIContent k_CookieAtlasLastValidMipContent = EditorGUIUtility.TrTextContent("2D Atlas Last Valid Mip", "Apply border when the cookie is copied into the atlas. It avoid the cookie border to be clamped when sampling mips but can intoduce some blurriness.");
 
 
         static readonly GUIContent k_CompressProbeCacheContent = EditorGUIUtility.TrTextContent("Compress Reflection Probe Cache", "When enabled, HDRP compresses the Reflection Probe cache to save disk space.");

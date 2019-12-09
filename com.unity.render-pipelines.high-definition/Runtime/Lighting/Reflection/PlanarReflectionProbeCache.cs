@@ -256,14 +256,10 @@ namespace UnityEngine.Rendering.HighDefinition
             m_TextureAtlas.ResetAllocator();
         }
 
-        internal static long GetApproxCacheSizeInByte(int nbElement, int resolution, int sliceSize)
-        {
-            return TextureCache2D.GetApproxCacheSizeInByte(nbElement, resolution, sliceSize);
-        }
+        internal static long GetApproxCacheSizeInByte(int nbElement, int atlasResolution, GraphicsFormat format)
+            => PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(nbElement, atlasResolution, true, format);
 
-        internal static int GetMaxCacheSizeForWeightInByte(int weight, int resolution, int sliceSize)
-        {
-            return TextureCache2D.GetMaxCacheSizeForWeightInByte(weight, resolution, sliceSize);
-        }
+        internal static int GetMaxCacheSizeForWeightInByte(int weight, GraphicsFormat format)
+            => PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(weight, true, format);
     }
 }

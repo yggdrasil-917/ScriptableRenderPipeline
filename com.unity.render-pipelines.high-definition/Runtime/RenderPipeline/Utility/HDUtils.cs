@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.Rendering;
+using System.Text.RegularExpressions;
+
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
 #endif
@@ -751,6 +753,39 @@ namespace UnityEngine.Rendering.HighDefinition
                 return hdCamera;
 
             return s_DefaultHDAdditionalCameraData;
+        }
+
+        static Dictionary<GraphicsFormat, int> graphicsFormatSizeCache = new Dictionary<GraphicsFormat, int>
+        {
+            // Init some default format so we don't allocate more memory on the first frame.
+            {GraphicsFormat.R8G8B8A8_UNorm, 4},
+            {GraphicsFormat.R16G16B16A16_SFloat, 8},
+            {GraphicsFormat.RGB_BC6H_SFloat, 1}, // BC6H uses 128 bits for each 4x4 tile which is 8 bits per pixel
+        };
+
+        /// <summary>
+        /// Compute the size in bytes of a GraphicsFormat. Does not works with compressed formats.
+        /// </summary>
+        /// <param name="format"></param>
+        /// <returns>Size in Bytes</returns>
+        internal static int GetFormatSizeInBytes(GraphicsFormat format)
+        {
+            if (graphicsFormatSizeCache.TryGetValue(format, out var size))
+                return size;
+
+            // Compute the size by parsing the enum name: Note that it does not works with compressed formats
+            string name = format.ToString();
+            int underscoreIndex = name.IndexOf('_');
+            name = name.Substring(0, underscoreIndex == -1 ? name.Length : underscoreIndex);
+
+            // Extract all numbers from the format name:
+            int bits = 0;
+            foreach (Match m in Regex.Matches(name, @"\d+"))
+                bits += int.Parse(m.Value);
+
+            size = bits / 8;
+            graphicsFormatSizeCache[format] = size;
+            return size;
         }
     }
 }

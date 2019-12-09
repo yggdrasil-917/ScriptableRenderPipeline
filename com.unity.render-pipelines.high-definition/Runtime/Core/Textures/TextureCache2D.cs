@@ -47,16 +47,16 @@ namespace UnityEngine.Rendering.HighDefinition
 
             for (int texIDx = 0; texIDx < textureArray.Length; ++texIDx)
             {
+                if (!TextureHasMipmaps(textureArray[texIDx]))
+                    Debug.LogWarning("The texture '" + textureArray[texIDx] + "' should have mipmaps to be handled by the cookie texture array");
+
                 if (mismatch)
                 {
                     cmd.ConvertTexture(textureArray[texIDx], 0, m_Cache, m_SliceSize * sliceIndex + texIDx);
                 }
                 else
                 {
-                    if (TextureHasMipmaps(textureArray[texIDx]))
-                        cmd.CopyTexture(textureArray[texIDx], 0, m_Cache, m_SliceSize * sliceIndex + texIDx);
-                    else
-                        Debug.LogWarning("The texture '" + textureArray[texIDx] + "' should have mipmaps to be handled by the cookie texture array");
+                    cmd.CopyTexture(textureArray[texIDx], 0, m_Cache, m_SliceSize * sliceIndex + texIDx);
                 }
             }
             return true;

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Serialization;
+using UnityEngine.Experimental.Rendering;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
@@ -67,6 +68,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public static GlobalLightLoopSettings NewDefault() => new GlobalLightLoopSettings()
         {
             cookieAtlasSize = CookieAtlasResolution.CookieResolution2048,
+            cookieAtlasFormat = CookieAtlasGraphicsFormat.R11G11B10,
             pointCookieSize = CubeCookieResolution.CubeCookieResolution128,
             cubeCookieTexArraySize = 16,
 
@@ -90,6 +92,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         [FormerlySerializedAs("cookieSize")]
         public CookieAtlasResolution cookieAtlasSize;
+        public CookieAtlasGraphicsFormat cookieAtlasFormat;
         public CubeCookieResolution pointCookieSize;
         public int cubeCookieTexArraySize;
 
