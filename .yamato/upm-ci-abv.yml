@@ -162,6 +162,12 @@ trunk_verification_{{ editor.version }}:
     {% if project.name == "HDRP_Standalone" %}
     # skip
     {% else %}
+    {% if project.name == "Universal_Stereo" %}
+    # skip
+    {% else %}
+    {% if project.name == "ShaderGraph_Stereo" %}
+    # skip
+    {% else %}
     {% if testplatform.name == "Standalone" %}
     # skip
     {% else %}
@@ -172,6 +178,8 @@ trunk_verification_{{ editor.version }}:
     
     - path: .yamato/upm-ci-{{ project.name | downcase }}.yml#{{ project.name }}_Win_DX11_{{ testplatform.name }}_{{ editor.version }}
       rerun: always
+    {% endif %}
+    {% endif %}
     {% endif %}
     {% endif %}
     {% endif %}
