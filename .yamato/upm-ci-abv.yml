@@ -140,6 +140,12 @@ all_smoke_tests:
 {% for editor in editors %}
 trunk_verification_{{ editor.version }}:
   name: z_(do not use) Trunk verification _{{ editor.version }}
+  agent:
+    type: Unity::VM
+    image: cds-ops/ubuntu-18.04-agent:latest
+    flavor: b1.small
+  commands:
+    - dir
   {% if editor.version == 'CUSTOM-REVISION' %}
   variables:
     CUSTOM_REVISION: custom_revision_not_set
