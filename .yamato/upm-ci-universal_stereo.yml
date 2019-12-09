@@ -73,6 +73,10 @@ All_{{ project.name }}_{{ editor.version }}:
     flavor: b1.small
   commands:
     - dir
+  {% if editor.version == 'CUSTOM-REVISION' %}
+  variables:
+    CUSTOM_REVISION: custom_revision_not_set
+  {% endif %}
   dependencies:
   {% for platform in platforms %}
   {% for testplatform in testplatforms %}
