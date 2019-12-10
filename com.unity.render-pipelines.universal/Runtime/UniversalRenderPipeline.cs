@@ -365,6 +365,10 @@ namespace UnityEngine.Rendering.Universal
             // Disables post if GLes2
             cameraData.postProcessEnabled &= SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES2;
 
+#pragma warning disable CS0618 // Type or member is obsolete
+            cameraData.volumeLayerMask = -1;
+#pragma warning restore CS0618
+
             cameraData.requiresDepthTexture |= cameraData.isSceneViewCamera || CheckPostProcessForDepth(ref cameraData);
 
             var commonOpaqueFlags = SortingCriteria.CommonOpaque;
