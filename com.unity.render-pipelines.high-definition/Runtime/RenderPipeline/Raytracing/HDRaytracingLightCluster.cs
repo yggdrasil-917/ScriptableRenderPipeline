@@ -585,7 +585,6 @@ namespace UnityEngine.Rendering.HighDefinition
                             lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, light.cookie);
                             break;
                         case HDLightType.Point:
-                        case HDLightType.Area:
                             lightData.cookieMode = CookieMode.Clamp;
                             lightData.cookieIndex = m_RenderPipeline.m_TextureCaches.lightCookieManager.FetchCubeCookie(cmd, light.cookie);
                             break;

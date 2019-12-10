@@ -143,7 +143,6 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _CookieAtlas = Shader.PropertyToID("_CookieAtlas");
         public static readonly int _CookieAtlasSize = Shader.PropertyToID("_CookieAtlasSize");
         public static readonly int _CookieAtlasData = Shader.PropertyToID("_CookieAtlasData");
-        public static readonly int _AreaCookieTextures = Shader.PropertyToID("_AreaCookieTextures");
         public static readonly int _CookieCubeTextures = Shader.PropertyToID("_CookieCubeTextures");
         public static readonly int _EnvCubemapTextures = Shader.PropertyToID("_EnvCubemapTextures");
         public static readonly int _EnvSliceSize = Shader.PropertyToID("_EnvSliceSize");

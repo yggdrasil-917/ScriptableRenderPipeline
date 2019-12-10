@@ -257,7 +257,6 @@ namespace UnityEngine.Rendering.HighDefinition
         public bool IsCached(out Vector4 scaleOffset, Texture texture)
         {
             bool                cached = false;
-            RenderTexture       rt = texture as RenderTexture;
             int                 key = texture.GetInstanceID();
 
             if (m_AllocationCache.TryGetValue(key, out scaleOffset))

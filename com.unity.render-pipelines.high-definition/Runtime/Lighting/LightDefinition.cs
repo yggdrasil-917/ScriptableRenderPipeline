@@ -103,7 +103,8 @@ namespace UnityEngine.Rendering.HighDefinition
         public float   flareSize;               // Units: radians
 
         public Vector3 surfaceTint;
-        public int     surfaceTextureIndex;     // -1 if unused (TODO: 16 bit)
+
+        public Vector4 surfaceTextureScaleOffset;     // -1 if unused (TODO: 16 bit)
     };
 
     [GenerateHLSL(PackingRules.Exact, false)]

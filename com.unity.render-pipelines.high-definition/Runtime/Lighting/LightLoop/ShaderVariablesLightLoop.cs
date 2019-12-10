@@ -62,7 +62,6 @@ namespace UnityEngine.Rendering.HighDefinition
         public int _DebugSingleShadowIndex;
 
         public int _EnvSliceSize;
-        public uint _CookieSizePOT; // Cookie size = 1 << _CookieSizePOT
 
         // Uniform variables that defines if we shall be using the raytraced indirect diffuse
         public int _RaytracedIndirectDiffuse;

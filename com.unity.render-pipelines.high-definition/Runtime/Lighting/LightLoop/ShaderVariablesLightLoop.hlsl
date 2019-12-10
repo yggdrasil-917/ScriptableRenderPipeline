@@ -22,8 +22,6 @@
 
     // Used by directional and spot lights
     TEXTURE2D(_CookieAtlas);
-    // Used by area lights
-    TEXTURE2D_ARRAY(_AreaCookieTextures);
 
     // Used by point lights
     TEXTURECUBE_ARRAY_ABSTRACT(_CookieCubeTextures);

@@ -250,7 +250,7 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 reflectionProbeCache.Release();
                 reflectionPlanarProbeCache.Release();
-                lightCookieManager.ReleaseResources();
+                lightCookieManager.Release();
 
                 CoreUtils.Destroy(m_CubeToPanoMaterial);
             }
@@ -1109,12 +1109,11 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (additionalLightData.surfaceTexture == null)
             {
-                lightData.surfaceTextureIndex = -1;
+                lightData.surfaceTextureScaleOffset = Vector4.zero;
             }
             else
             {
-                // TODO: fix me 
-                // lightData.surfaceTextureIndex = m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, additionalLightData.surfaceTexture);
+                lightData.surfaceTextureScaleOffset = m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, additionalLightData.surfaceTexture);
             }
 
             lightData.shadowDimmer           = additionalLightData.shadowDimmer;
@@ -2350,8 +2349,8 @@ namespace UnityEngine.Rendering.HighDefinition
                     // Not necessary yet but call it for future modification with sphere influence volume
                     CoreUnsafeUtils.QuickSort(m_SortKeys, 0, sortCount - 1); // Call our own quicksort instead of Array.Sort(sortKeys, 0, sortCount) so we don't allocate memory (note the SortCount-1 that is different from original call).
 
-                    // TODO: Instead of clearing the atlas layout at each frame, we must do a defragmentation
-                    // when there is no more space in the atlas.
+                    // Because we don't support baking planar reflection probe, we can clear the atlas.
+                    // Every visible probe will be blitted again.
                     m_TextureCaches.reflectionPlanarProbeCache.ClearAtlasAllocator();
 
                     for (int sortIndex = 0; sortIndex < sortCount; ++sortIndex)

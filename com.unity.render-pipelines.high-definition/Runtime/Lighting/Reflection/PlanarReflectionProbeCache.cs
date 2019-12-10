@@ -239,10 +239,7 @@ namespace UnityEngine.Rendering.HighDefinition
             return needsUpdate;
         }
 
-        public Texture GetTexCache()
-        {
-            return m_TextureAtlas.AtlasTexture;
-        }
+        public Texture GetTexCache() => m_TextureAtlas.AtlasTexture;
 
 
         public void Clear(CommandBuffer cmd)
@@ -251,10 +248,7 @@ namespace UnityEngine.Rendering.HighDefinition
             m_TextureAtlas.ClearTarget(cmd);
         }
 
-        public void ClearAtlasAllocator()
-        {
-            m_TextureAtlas.ResetAllocator();
-        }
+        public void ClearAtlasAllocator() => m_TextureAtlas.ResetAllocator();
 
         internal static long GetApproxCacheSizeInByte(int nbElement, int atlasResolution, GraphicsFormat format)
             => PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(nbElement, atlasResolution, true, format);

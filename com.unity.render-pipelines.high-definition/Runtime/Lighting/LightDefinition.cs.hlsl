@@ -90,7 +90,7 @@ struct DirectionalLightData
     float3 flareTint;
     float flareSize;
     float3 surfaceTint;
-    int surfaceTextureIndex;
+    float4 surfaceTextureScaleOffset;
 };
 
 // Generated from UnityEngine.Rendering.HighDefinition.LightData

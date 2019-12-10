@@ -66,12 +66,9 @@ namespace UnityEngine.Rendering.HighDefinition
             m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
         }
 
-        internal void NewFrame()
-        {
-            m_CubeCookieTexArray.NewFrame();
-        }
+        internal void NewFrame() => m_CubeCookieTexArray.NewFrame();
 
-        public void ReleaseResources()
+        public void Release()
         {
             CoreUtils.Destroy(m_MaterialFilterAreaLights);
             CoreUtils.Destroy(m_CubeToPanoMaterial);
