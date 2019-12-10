@@ -34,9 +34,9 @@ namespace UnityEngine.Rendering.HighDefinition
             m_ConvertTextureMPB = new MaterialPropertyBlock();
 
             // BC6H requires CPP feature not yet available
-            probeFormat = GraphicsFormat.R16G16B16A16_UNorm;
+            probeFormat = GraphicsFormat.R16G16B16A16_SFloat;
 
-            Debug.Assert(probeFormat == GraphicsFormat.RGB_BC6H_UFloat || probeFormat == GraphicsFormat.R16G16B16A16_UNorm, "Reflection Probe Cache format for HDRP can only be BC6H or FP16.");
+            Debug.Assert(probeFormat == GraphicsFormat.RGB_BC6H_UFloat || probeFormat == GraphicsFormat.R16G16B16A16_SFloat, "Reflection Probe Cache format for HDRP can only be BC6H or FP16.");
 
             m_ProbeSize = atlasResolution;
             m_TextureAtlas = new PowerOfTwoTextureAtlas(atlasResolution, 0, probeFormat, useMipMap: isMipmaped, name: "PlanarReflectionProbe Atlas");
@@ -65,6 +65,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 m_ConvolutionTargetTexture.dimension = TextureDimension.Tex2D;
                 m_ConvolutionTargetTexture.useMipMap = true;
                 m_ConvolutionTargetTexture.autoGenerateMips = false;
+                m_ConvolutionTargetTexture.filterMode = FilterMode.Point;
                 m_ConvolutionTargetTexture.name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 0, RenderTextureFormat.ARGBHalf, "PlanarReflectionConvolution", mips: true);
                 m_ConvolutionTargetTexture.enableRandomWrite = true;
                 m_ConvolutionTargetTexture.Create();

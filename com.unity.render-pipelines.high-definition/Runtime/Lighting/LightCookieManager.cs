@@ -188,7 +188,10 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // TODO: check if the blitMips actually does something.
             if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias, blitMips: false))
+            {
+                Debug.LogWarning($"Can't fit {cookie} in the 2D Cookie Texture Atlas. To solve this issue, increase the size of the cookie atlas in the HDRP settings.");
                 return Vector4.zero;
+            }
 
             return scaleBias;
         }
