@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for vertex skinning when you use the DOTS animation package.
 - You can now use the right-click context menu to set the precision on multiple selected nodes.
 - Updated the zoom level to let you zoom in further.
-- Blackboard Properties now have a duplication menu option, order is now properly maintained during duplication, and they are now inserted below the current selection.
+- Blackboard properties now have a __Duplicate__ menu option. When you duplicate properties, Shader Graph maintains the order, and inserts duplicates below the current selection.
 
 ### Fixed
 - Edges no longer produce errors when you save a Shader Graph.
@@ -30,9 +30,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed an error where the UV channel drop-down menu on nodes had clipped text. [1188710](https://issuetracker.unity3d.com/issues/shader-graph-all-uv-dropdown-value-is-clipped-under-shader-graph)
 - Sticky Notes can now be grouped properly.
 - Fixed an issue where nodes couldn't be copied from a group.
-- Fixed a bug where duplicating multiple Blackboard Properties and/or Keywords at once often would often break Shader Graph, causing potential data loss.
-- Fixed a bug where blackboard properties could not be reordered.
-- Exposed status for Shader Properties & Keywords is now properly duplicated.
+- Fixed a bug that occurred when you duplicated multiple Blackboard properties or keywords simultaneously, where Shader Graph stopped working, potentially causing data loss.
+- Fixed a bug where you couldn't reorder Blackboard properties.
+- Shader Graph now properly duplicates the __Exposed__ status for Shader properties and keywords.
 
 ## [7.1.1] - 2019-09-05
 ### Added
