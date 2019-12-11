@@ -28,16 +28,19 @@ namespace UnityEditor.ShaderGraph.Drawing
         GraphObject m_GraphObject;
 
         [NonSerialized]
-        bool m_HasError;
-
-        [NonSerialized]
         HashSet<string> m_ChangedFileDependencies = new HashSet<string>();
 
         ColorSpace m_ColorSpace;
         RenderPipelineAsset m_RenderPipelineAsset;
-        bool m_FrameAllAfterLayout;
 
+        [NonSerialized]
+        bool m_FrameAllAfterLayout;
+        [NonSerialized]
+        bool m_HasError;
+        [NonSerialized]
         bool m_ProTheme;
+        [NonSerialized]
+        bool m_Deleted;
 
         GraphEditorView m_GraphEditorView;
 
@@ -112,10 +115,23 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
+        void DisplayDeletedFromDiskDialog()
+        {
+            Close();
+            if (!EditorUtility.DisplayDialog("\"" + assetName + "\" Graph Asset Deleted!", AssetDatabase.GUIDToAssetPath(selectedGuid) + "\nWhat do you wish to do?",
+                "Close Window", "Save As"))
+            {
+                SaveAs();
+            }
+        }
+
         void Update()
         {
             if (m_HasError)
                 return;
+
+            if (focusedWindow == this && m_Deleted)
+                DisplayDeletedFromDiskDialog();
 
             if (PlayerSettings.colorSpace != m_ColorSpace)
             {
@@ -268,6 +284,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PromptChangedOnDisk = true;
             }
             UpdateTitle(isDirty);
+        }
+
+        public void AssetWasDeleted()
+        {
+            m_Deleted = true;
         }
 
         void UpdateTitle()
