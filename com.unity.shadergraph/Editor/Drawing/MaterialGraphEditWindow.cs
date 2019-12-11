@@ -117,11 +117,21 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void DisplayDeletedFromDiskDialog()
         {
-            Close();
+            bool shouldClose = true; // Close unless if the same file was replaced
+
             if (!EditorUtility.DisplayDialog("\"" + assetName + "\" Graph Asset Deleted!", AssetDatabase.GUIDToAssetPath(selectedGuid) + "\nWhat do you wish to do?",
                 "Close Window", "Save As"))
             {
-                SaveAs();
+                shouldClose = !SaveAsImplementation();
+            }
+
+            if (shouldClose)
+            {
+                Close();
+            }
+            else
+            {
+                m_Deleted = false; // Was restored
             }
         }
 
@@ -268,6 +278,9 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         bool IsDirty()
         {
+            if (m_Deleted)
+                return false; // Not dirty; it's gone.
+
             var currentJson = EditorJsonUtility.ToJson(graphObject.graph, true);
             var fileJson = File.ReadAllText(AssetDatabase.GUIDToAssetPath(selectedGuid));
             return !string.Equals(currentJson, fileJson, StringComparison.Ordinal);
@@ -379,11 +392,17 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void SaveAs()
         {
+            SaveAsImplementation();
+        }
+
+        // Returns true if the same file as replaced, false if a new file was created or an error occured
+        bool SaveAsImplementation()
+        {
             if (selectedGuid != null && graphObject != null)
             {
                 var path = AssetDatabase.GUIDToAssetPath(selectedGuid);
                 if (string.IsNullOrEmpty(path) || graphObject == null)
-                    return;
+                    return false;
 
                 var extension = graphObject.graph.isSubGraph ? ShaderSubGraphImporter.Extension : ShaderGraphImporter.Extension;
                 var newPath = EditorUtility.SaveFilePanel("Save Graph As", path, Path.GetFileNameWithoutExtension(path), extension);
@@ -397,7 +416,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                         if (success)
                         {
                             ShaderGraphImporterEditor.ShowGraphEditWindow(newPath);
-                            if (GraphData.onSaveGraph != null)
+                            if (GraphData.onSaveGraph != null && !m_Deleted)
                             {
                                 var shader = AssetDatabase.LoadAssetAtPath<Shader>(newPath);
                                 // Retrieve graph context, note that if we're here the output node will always be a master node
@@ -405,14 +424,19 @@ namespace UnityEditor.ShaderGraph.Drawing
                             }
                         }
                     }
+
+                    graphObject.isDirty = false;
+                    return false;
                 }
                 else
                 {
                     UpdateAsset();
+                    graphObject.isDirty = false;
+                    return true;
                 }
-
-                graphObject.isDirty = false;
             }
+
+            return false;
         }
 
         public void ToSubGraph()
