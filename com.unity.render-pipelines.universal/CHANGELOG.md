@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed camera inverse view-projection matrix in XR mode, depth-copy and color-copy passes.
 - Fixed an issue that caused errors if you disabled the VR Module when building a project.
 - Fixed an issue with the null check when `UniversalRenderPipelineLightEditor.cs` tries to access `SceneView.lastActiveSceneView`.
+- Fixed incorrect use of ENABLE_VR with ENABLE_XR (and ENABLE_VR_MODULE with ENABLE_XR_MODULE).
 
 ## [7.1.1] - 2019-09-05
 ### Upgrade Guide

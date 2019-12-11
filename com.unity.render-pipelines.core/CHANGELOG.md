@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fix LookDev minimal window size.
 - Fix object rotation at instentiation to keep the one in prefab or used in hierarchy.
 - Fixed shader compile errors when trying to use tessellation shaders with PlayStation VR on PS4.
+- Fixed incorrect use of ENABLE_VR with ENABLE_XR (and ENABLE_VR_MODULE with ENABLE_XR_MODULE).
 
 ## [7.1.1] - 2019-09-05
 
