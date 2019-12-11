@@ -35,7 +35,7 @@ all_project_ci_{{ editor.version }}:
   name: _ABV for SRP repository - {{ editor.version }}
   agent:
     type: Unity::VM
-    image: cds-ops/ubuntu-18.04-agent:latest
+    image: cds-ops/ubuntu-18.04-agent:stable
     flavor: b1.small
   {% if editor.version == 'CUSTOM-REVISION' %}
   variables:
@@ -48,23 +48,19 @@ all_project_ci_{{ editor.version }}:
     - path: .yamato/upm-ci-{{ project.name | downcase }}.yml#All_{{ project.name }}_{{ editor.version }}
       rerun: always
   {% endfor %}
-
-  artifacts:
-    logs:
-      paths:
-        - "**/test-results/**"
+  {% if editor.version == "fast-trunk" %}
+  triggers:
+    pull_requests:
+      - targets:
+          only:
+            - "master"
+  {% endif %}
 {% endfor %}
 
 
 # a separate job so that only trunk is run nightly, not fast-trunk
 all_project_ci_nightly:
   name: _Nightly ABV against trunk
-  agent:
-    type: Unity::VM
-    image: cds-ops/ubuntu-18.04-agent:latest
-    flavor: b1.small
-  commands:
-    - dir
   dependencies:
   {% for project in projects %}
     - path: .yamato/upm-ci-{{ project.name | downcase }}.yml#All_{{ project.name }}_trunk
@@ -79,11 +75,7 @@ all_project_ci_nightly:
   triggers:
     recurring:
       - branch: master
-        frequency: daily
-  artifacts:
-    logs:
-      paths:
-        - "**/test-results/**"       
+        frequency: daily     
 
 {% for testplatform in testplatforms %} 
 {% for editor in editors %}
@@ -125,7 +117,7 @@ all_smoke_tests_{{ editor.version }}:
   name: All Smoke Tests - {{ editor.version }}
   agent:
     type: Unity::VM
-    image: cds-ops/ubuntu-18.04-agent:latest
+    image: cds-ops/ubuntu-18.04-agent:stable
     flavor: b1.small
   {% if editor.version == 'CUSTOM-REVISION' %}
   variables:
@@ -138,10 +130,6 @@ all_smoke_tests_{{ editor.version }}:
   - .yamato/upm-ci-abv.yml#smoke_test_{{ testplatform.name }}_{{ editor.version }}
   {% endfor %}
   {% endfor %}
-  artifacts:
-    logs:
-      paths:
-        - "**/test-results/**"
         
 {% for editor in editors %}
 trunk_verification_{{ editor.version }}:
@@ -185,8 +173,4 @@ trunk_verification_{{ editor.version }}:
     {% endif %}
     {% endfor %}
     {% endfor %}
-  artifacts:
-    logs:
-      paths:
-        - "**/test-results/**"
-{% endfor %}    
+    {% endfor %}
