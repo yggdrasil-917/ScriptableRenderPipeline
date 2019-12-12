@@ -177,7 +177,7 @@ void SHADE_OPAQUE_ENTRY(uint3 dispatchThreadId : SV_DispatchThreadID, uint2 grou
     }
 
     // This is required for camera stacking: Since the depth is preserved between layers, we might have a valid depth but invalid normal
-    // Note: I have verified with renderdoc that this is not causing any extra Normal buffer access
+    // Note: Renderdoc does not show any extra fetch for thic check, since the same value is also used/fetched later
     if (all(FetchRawNormalBuffer(posInput.positionSS) == UNITY_INVALID_NORMALBUFFER_VALUE))
     {
         return;
