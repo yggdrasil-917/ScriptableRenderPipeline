@@ -126,13 +126,9 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
 
             if (shouldClose)
-            {
                 Close();
-            }
             else
-            {
                 m_Deleted = false; // Was restored
-            }
         }
 
         void Update()
