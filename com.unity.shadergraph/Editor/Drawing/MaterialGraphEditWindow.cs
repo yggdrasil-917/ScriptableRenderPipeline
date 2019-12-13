@@ -38,7 +38,8 @@ namespace UnityEditor.ShaderGraph.Drawing
         bool m_FrameAllAfterLayout;
 
         bool m_ProTheme;
-        string m_PrevPath = Application.dataPath;
+
+        string m_PrevPath;
 
         MessageManager m_MessageManager;
         MessageManager messageManager
@@ -59,6 +60,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
 
                 m_GraphEditorView = value;
+
                 if (m_GraphEditorView != null)
                 {
                     m_GraphEditorView.saveRequested += UpdateAsset;
@@ -781,6 +783,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                 // This is adding the icon at the front of the tab
                 titleContent = EditorGUIUtility.TrTextContentWithIcon(selectedGuid, icon);
                 UpdateTitle();
+
+                if (String.IsNullOrEmpty(m_PrevPath))
+                    m_PrevPath = Application.dataPath;
 
                 Repaint();
             }
