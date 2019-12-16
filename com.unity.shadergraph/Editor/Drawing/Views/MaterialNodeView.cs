@@ -99,7 +99,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                     collapsePreviewButton.Add(new VisualElement { name = "icon" });
                     collapsePreviewButton.AddManipulator(new Clickable(() =>
                         {
-                            node.owner.owner.RegisterCompleteObjectUndo("Collapse Preview");
                             SetPreviewExpandedStateOnSelection(false);
                         }));
                     m_PreviewImage.Add(collapsePreviewButton);
@@ -123,14 +122,13 @@ namespace UnityEditor.ShaderGraph.Drawing
                     expandPreviewButton.Add(new VisualElement { name = "icon" });
                     expandPreviewButton.AddManipulator(new Clickable(() =>
                         {
-                            node.owner.owner.RegisterCompleteObjectUndo("Expand Preview");
                             SetPreviewExpandedStateOnSelection(true);
                         }));
                     m_PreviewFiller.Add(expandPreviewButton);
                 }
                 contents.Add(m_PreviewFiller);
 
-                SetPreviewExpandedStateOnSelection(node.previewExpanded);
+                UpdatePreviewExpandedState(node.previewExpanded);
             }
 
             // Add port input container, which acts as a pixel cache for all port inputs
@@ -423,7 +421,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 m_NodeSettingsView.Add(m_Settings);
                 m_NodeSettingsView.visible = true;
-                SetSelfSelected();
                 m_SettingsButton.AddToClassList("clicked");
                 RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
                 OnGeometryChanged(null);
@@ -431,48 +428,40 @@ namespace UnityEditor.ShaderGraph.Drawing
             else
             {
                 m_Settings.RemoveFromHierarchy();
-                SetSelfSelected();
                 m_NodeSettingsView.visible = false;
                 m_SettingsButton.RemoveFromClassList("clicked");
                 UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             }
         }
 
-
-        private void SetSelfSelected()
-        {
-            m_GraphView.ClearSelection();
-            m_GraphView.AddToSelection(this);
-        }
-
         void SetNodeExpandedStateOnSelection(MouseUpEvent evt)
         {
-            if (!selected)
-                SetSelfSelected();
+            MaterialGraphView graphView = m_GraphView as MaterialGraphView;
+
+            // If selected, expand/collapse the other applicable nodes that are also selected
+            if (selected)
+            {
+                graphView.SetNodeExpandedOnSelection(expanded);
+            }
             else
             {
-                if (m_GraphView is MaterialGraphView)
-                {
-                    var matGraphView = m_GraphView as MaterialGraphView;
-                    matGraphView.SetNodeExpandedOnSelection(expanded);
-                }
+                graphView.RecordNodeExpandUndo(expanded);
             }
         }
 
         void SetPreviewExpandedStateOnSelection(bool state)
         {
-            if (!selected)
+            MaterialGraphView graphView = m_GraphView as MaterialGraphView;
+
+            // If selected, expand/collapse the other applicable nodes that are also selected
+            if (selected)
             {
-                SetSelfSelected();
-                UpdatePreviewExpandedState(state);
+                graphView.SetPreviewExpandedOnSelection(state);
             }
             else
             {
-                if(m_GraphView is MaterialGraphView)
-                {
-                    var matGraphView = m_GraphView as MaterialGraphView;
-                    matGraphView.SetPreviewExpandedOnSelection(state);
-                }
+                graphView.RecordPreviewExpandUndo(state);
+                node.previewExpanded = state;
             }
         }
 

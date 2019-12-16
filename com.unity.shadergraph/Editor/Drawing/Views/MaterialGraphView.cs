@@ -376,17 +376,21 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void SetNodeExpandedOnSelection(bool state)
         {
-            graph.owner.RegisterCompleteObjectUndo("Toggle Expansion");
             foreach (MaterialNodeView selectedNode in selection.Where(x => x is MaterialNodeView).Select(x => x as MaterialNodeView))
             {
-                if(selectedNode.CanToggleExpanded())
+                if (selectedNode.CanToggleExpanded() && selectedNode.expanded != state)
                     selectedNode.expanded = state;
             }
+
+            // TODO: need to replace Node minimize manipulator in GV (requires trunk change), for now (for consistency's sake)
+            // we record after so that all the nodes are at the same state after the undo.
+            RecordNodeExpandUndo(state);
         }
 
         public void SetPreviewExpandedOnSelection(bool state)
         {
-            graph.owner.RegisterCompleteObjectUndo("Toggle Preview Visibility");
+            RecordPreviewExpandUndo(state);
+
             foreach (MaterialNodeView selectedNode in selection.Where(x => x is MaterialNodeView).Select(x => x as MaterialNodeView))
             {
                 selectedNode.node.previewExpanded = state;
@@ -417,7 +421,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void CollapsePreviews(DropdownMenuAction action)
         {
-            graph.owner.RegisterCompleteObjectUndo("Collapse Previews");
+            RecordPreviewExpandUndo(false);
+
             foreach (AbstractMaterialNode node in graph.GetNodes<AbstractMaterialNode>())
             {
                 node.previewExpanded = false;
@@ -426,12 +431,24 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void ExpandPreviews(DropdownMenuAction action)
         {
-            graph.owner.RegisterCompleteObjectUndo("Expand Previews");
+            RecordPreviewExpandUndo(true);
+
             foreach (AbstractMaterialNode node in graph.GetNodes<AbstractMaterialNode>())
             {
                 node.previewExpanded = true;
             }
         }
+
+        internal void RecordNodeExpandUndo(bool state)
+        {
+            graph.owner.RegisterCompleteObjectUndo(state ? "Expand Nodes" : "Collapse Nodes");
+        }
+
+        internal void RecordPreviewExpandUndo(bool state)
+        {
+            graph.owner.RegisterCompleteObjectUndo(state ? "Expand Previews" : "Collapse Previews");
+        }
+
 
         void SeeDocumentation(DropdownMenuAction action)
         {
