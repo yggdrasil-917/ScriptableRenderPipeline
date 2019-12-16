@@ -36,6 +36,29 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             scope = KeywordScope.Local,
         };
 
+        public static KeywordDescriptor SpeedTreeUpAxis = new KeywordDescriptor()
+        {
+            displayName = "SpeedTree Up Axis",
+            referenceName = "SPEEDTREE_",
+            type = KeywordType.Enum,
+            definition = KeywordDefinition.ShaderFeature,
+            scope = KeywordScope.Local,
+            entries = new KeywordEntry[]
+            {
+                new KeywordEntry() { displayName = "Y up", referenceName="Y_UP" },
+                new KeywordEntry() { displayName = "Z up", referenceName="Z_UP" },
+            }
+        };
+
+        public static PragmaDescriptor EnableWind = new PragmaDescriptor()
+        {
+            value = "shader_feature_local ENABLE_WIND"
+        };
+        public static PragmaDescriptor EnableBillboard = new PragmaDescriptor()
+        {
+            value = "shader_feature_local EFFECT_BILLBOARD"
+        };
+
         public bool IsValid(IMasterNode masterNode)
         {
             return (masterNode is PBRMasterNode ||
@@ -59,6 +82,9 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             {
                 p.descriptor.keywords.Add(SpeedTreeVersion);
                 p.descriptor.keywords.Add(LodFadePercentage);
+                p.descriptor.defines.Add(SpeedTreeUpAxis, 0);
+                p.descriptor.pragmas.Add(EnableWind);
+                p.descriptor.pragmas.Add(EnableBillboard);
             }
 
             return modDescriptor;
@@ -72,20 +98,20 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             switch (context.masterNode)
             {
                 case PBRMasterNode pbrMasterNode:
-                    context.SetupSubShader(HDSubShaders.PBR);
+                    context.SetupSubShader(UpdateSubShader(ref HDSubShaders.PBR));
                     break;
                 case UnlitMasterNode unlitMasterNode:
-                    context.SetupSubShader(HDSubShaders.Unlit);
+                    context.SetupSubShader(UpdateSubShader(ref HDSubShaders.Unlit));
                     break;
                 case HDUnlitMasterNode hdUnlitMasterNode:
-                    context.SetupSubShader(HDSubShaders.HDUnlit);
+                    context.SetupSubShader(UpdateSubShader(ref HDSubShaders.HDUnlit));
                     break;
                 case HDLitMasterNode hdLitMasterNode:
                 default:
                     context.SetupSubShader(UpdateSubShader(ref HDSubShaders.HDLit));
                     break;
                 case FabricMasterNode fabricMasterNode:
-                    context.SetupSubShader(HDSubShaders.Fabric);
+                    context.SetupSubShader(UpdateSubShader(ref HDSubShaders.Fabric));
                     break;
             }
         }
