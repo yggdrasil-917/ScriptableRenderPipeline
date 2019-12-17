@@ -326,8 +326,12 @@ namespace UnityEngine.Rendering.Universal
 
             // If shadow is disabled, disable shadow caster culling
             if (Mathf.Approximately(cameraData.maxShadowDistance, 0.0f))
+            {
                 cullingParameters.cullingOptions &= ~CullingOptions.ShadowCasters;
+            }
 
+            cullingParameters.lightLimits = LightLimits.LimitAdditionalLights;
+            cullingParameters.lightMaximumAdditionalLights = UniversalRenderPipeline.maxVisibleAdditionalLights;
             cullingParameters.shadowDistance = cameraData.maxShadowDistance;
         }
 
