@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added new parameters to the Physically Based Sky
 - Added Reflections to the DXR Wizard
 - Added a check in the custom post process template to throw an error if the default shader is not found.
+- Added the possibility to have ray traced colored and semi-transparent shadows on directional lights.
 
 ### Fixed
 - Sorting, undo, labels, layout in the Lighting Explorer.
@@ -254,6 +255,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed custom post processes re-ordering not saved.
 - Fixed NPE when using scalable settings
 - Fixed an issue where PBR sky precomputation was reset incorrectly in some cases causing bad performance.
+- Fixed a bug due to depth history begin overriden too soon
+- Fixed CustomPassSampleCameraColor scale issue when called from Before Transparent injection point.
+- Fixed corruption of AO in baked probes.
+- Fixed issue with upgrade of projects that still had Very High as shadow filtering quality.
 
 ### Changed
 - Color buffer pyramid is not allocated anymore if neither refraction nor distortion are enabled
@@ -294,6 +299,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Change how method for specular occlusions is decided on inspector shader (Lit, LitTesselation, LayeredLit, LayeredLitTessellation)
 - Unlocked SSS, SSR, Motion Vectors and Distortion frame settings for reflections probes.
 - Hide unused LOD settings in Quality Settings legacy window.
+- Reduced the constrained distance for temporal reprojection of ray tracing denoising
+- Removed shadow near plane from the Directional Light Shadow UI.
+- Improved the performances of custom pass culling.
 
 ## [7.1.1] - 2019-09-05
 

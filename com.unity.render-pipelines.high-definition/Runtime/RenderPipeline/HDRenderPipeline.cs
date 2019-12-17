@@ -232,7 +232,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         internal int GetMaxScreenSpaceShadows()
         {
-            return currentPlatformRenderPipelineSettings.hdShadowInitParams.supportScreenSpaceShadows ? currentPlatformRenderPipelineSettings.hdShadowInitParams.maxScreenSpaceShadows : 0;
+            return currentPlatformRenderPipelineSettings.hdShadowInitParams.supportScreenSpaceShadows ? currentPlatformRenderPipelineSettings.hdShadowInitParams.maxScreenSpaceShadowSlots : 0;
         }
 
         readonly SkyManager m_SkyManager = new SkyManager();
@@ -1006,7 +1006,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     // TODO: reading the depth buffer with a compute shader will cause it to decompress in place.
                     // On console, to preserve the depth test performance, we must NOT decompress the 'm_CameraDepthStencilBuffer' in place.
                     // We should call decompressDepthSurfaceToCopy() and decompress it to 'm_CameraDepthBufferMipChain'.
-                    m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetDepthTexture(), new Rendering.RectInt(0, 0, hdCamera.actualWidth, hdCamera.actualHeight));
+                    m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetDepthTexture(), new RectInt(0, 0, hdCamera.actualWidth, hdCamera.actualHeight));
                     // Depth texture is now ready, bind it.
                     cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthTexture());
                 }
@@ -1226,7 +1226,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     // We selecting a camera in the editor, we have a preview that is drawn.
                     // For legacy reasons, Unity will render all preview cameras when rendering the GameView
                     // Actually, we don't need this here because we call explicitly Camera.Render when we
-                    // need a preview rendering.
+                    // need a preview
                     //
                     // This is an issue, because at some point, you end up with 2 cameras to render:
                     // - Main Camera (game view)
@@ -1971,9 +1971,6 @@ namespace UnityEngine.Rendering.HighDefinition
             // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
             GenerateDepthPyramid(hdCamera, cmd, FullScreenDebugMode.DepthPyramid);
 
-            // Send all the geometry graphics buffer to client systems if required (must be done after the pyramid and before the transparent depth pre-pass)
-            SendGeometryGraphicsBuffers(cmd, hdCamera);
-
             // Depth texture is now ready, bind it (Depth buffer could have been bind before if DBuffer is enable)
             cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthTexture());
 
@@ -2079,9 +2076,6 @@ namespace UnityEngine.Rendering.HighDefinition
                         => m_AmbientOcclusionSystem.Dispatch(c, a.hdCamera, a.frameCount);
                 }
 
-                if (!hdCamera.frameSettings.SSAORunsAsync())
-                    m_AmbientOcclusionSystem.Render(cmd, hdCamera, renderContext, m_FrameCount);
-
                 using (new ProfilingSample(cmd, "Render shadow maps", CustomSamplerId.RenderShadowMaps.GetSampler()))
                 {
                     // This call overwrites camera properties passed to the shader system.
@@ -2134,6 +2128,9 @@ namespace UnityEngine.Rendering.HighDefinition
                         BuildGPULightLists(hdCamera, cmd);
                     }
                 }
+
+                if (!hdCamera.frameSettings.SSAORunsAsync())
+                    m_AmbientOcclusionSystem.Render(cmd, hdCamera, renderContext, m_FrameCount);
 
                 // Run the contact shadows here as they the light list
                 using (new ProfilingSample(cmd, "Dispatch Contact Shadows", CustomSamplerId.ContactShadows.GetSampler()))
@@ -2198,6 +2195,9 @@ namespace UnityEngine.Rendering.HighDefinition
                 RenderForwardEmissive(cullingResults, hdCamera, renderContext, cmd);
 
                 RenderSky(hdCamera, cmd);
+                
+                // Send all the geometry graphics buffer to client systems if required (must be done after the pyramid and before the transparent depth pre-pass)
+                SendGeometryGraphicsBuffers(cmd, hdCamera);
 
                 m_PostProcessSystem.DoUserAfterOpaqueAndSky(cmd, hdCamera, m_CameraColorBuffer);
 
