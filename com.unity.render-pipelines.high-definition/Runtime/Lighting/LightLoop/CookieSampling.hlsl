@@ -2,17 +2,18 @@
 // Cookie sampling functions
 // ----------------------------------------------------------------------------
 
+#define COOKIE_ATLAS_SIZE _CookieAtlasData.x
 #define COOKIE_ATLAS_RCP_PADDING _CookieAtlasData.y
 #define COOKIE_ATLAS_LAST_VALID_MIP _CookieAtlasData.z
 
 // Adjust UVs using the LOD padding size
-float2 RemapUVWithPadding(float2 coord, float2 size, float rcpPaddingWidth, uint lod)
+float2 RemapUVWithPadding(float2 coord, float2 size, float rcpPaddingWidth, float lod)
 {
     float2 scale = rcp(size + rcpPaddingWidth) * size;
     float2 offset = 0.5 * (1.0 - scale);
 
     // Avoid edge bleeding for texture when sampling with lod by clamping uvs:
-    float2 mipClamp = rcpPaddingWidth * (1 << lod);
+    float2 mipClamp = pow(lod, 2) / (size * COOKIE_ATLAS_SIZE);
     return clamp(coord * scale + offset, mipClamp, 1 - mipClamp);
 }
 
@@ -23,7 +24,7 @@ float3 SampleCookie2D(float2 coord, float4 scaleOffset, float lod = 0) // TODO: 
     float2 offset       = scaleOffset.zw;
 
     // Remap the uv to take in account the padding
-    coord = RemapUVWithPadding(coord, scale, COOKIE_ATLAS_RCP_PADDING, floor(lod - COOKIE_ATLAS_LAST_VALID_MIP));
+    coord = RemapUVWithPadding(coord, scale, COOKIE_ATLAS_RCP_PADDING, max(0, lod - COOKIE_ATLAS_LAST_VALID_MIP));
 
     // Apply atlas scale and offset
     float2 atlasCoords = coord * scale + offset;

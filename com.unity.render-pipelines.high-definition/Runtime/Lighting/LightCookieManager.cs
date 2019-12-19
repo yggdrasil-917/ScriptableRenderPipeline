@@ -237,7 +237,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             float padding = Mathf.Pow(2.0f, m_CookieAtlas.mipPadding) * 2.0f;
             return new Vector4(
-                Mathf.Log(m_CookieAtlas.AtlasTexture.rt.width, 2),
+                m_CookieAtlas.AtlasTexture.rt.width,
                 padding / (float)m_CookieAtlas.AtlasTexture.rt.width,
                 cookieAtlasLastValidMip,
                 0
