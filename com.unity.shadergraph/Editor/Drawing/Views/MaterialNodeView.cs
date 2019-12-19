@@ -38,9 +38,9 @@ namespace UnityEditor.ShaderGraph.Drawing
         VisualElement m_Settings;
         VisualElement m_NodeSettingsView;
 
-        GraphView m_GraphView;
+        MaterialGraphView m_GraphView;
 
-        public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener, GraphView graphView)
+        public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener, MaterialGraphView graphView)
         {
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/MaterialNodeView"));
             styleSheets.Add(Resources.Load<StyleSheet>($"Styles/ColorMode"));
@@ -74,9 +74,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
             if (m_ControlItems.childCount > 0)
                 contents.Add(controlsContainer);
-
-            // Node Base class toggles the 'expanded' variable already, this is on top of that call
-            m_CollapseButton.RegisterCallback<MouseUpEvent>(SetNodeExpandedStateOnSelection);
 
             if (node.hasPreview)
             {
@@ -434,38 +431,34 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        void SetNodeExpandedStateOnSelection(MouseUpEvent evt)
+        // Record redo before collapsing
+        protected override void ToggleCollapse()
         {
-            MaterialGraphView graphView = m_GraphView as MaterialGraphView;
+            m_GraphView.RecordNodeExpandUndo(expanded);
+            expanded = !expanded;
 
             // If selected, expand/collapse the other applicable nodes that are also selected
             if (selected)
             {
-                graphView.SetNodeExpandedOnSelection(expanded);
-            }
-            else
-            {
-                graphView.RecordNodeExpandUndo(expanded);
+                m_GraphView.SetNodeExpandedOnSelection(expanded, false);
             }
         }
 
         void SetPreviewExpandedStateOnSelection(bool state)
         {
-            MaterialGraphView graphView = m_GraphView as MaterialGraphView;
-
             // If selected, expand/collapse the other applicable nodes that are also selected
             if (selected)
             {
-                graphView.SetPreviewExpandedOnSelection(state);
+                m_GraphView.SetPreviewExpandedOnSelection(state);
             }
             else
             {
-                graphView.RecordPreviewExpandUndo(state);
+                m_GraphView.RecordPreviewExpandUndo(state);
                 node.previewExpanded = state;
             }
         }
 
-        public bool CanToggleExpanded()
+        public bool CanToggleNodeExpanded()
         {
             return m_CollapseButton.enabledInHierarchy;
         }
@@ -696,11 +689,11 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnMouseHover(EventBase evt)
         {
-            var graphView = GetFirstAncestorOfType<GraphEditorView>();
-            if (graphView == null)
+            var graphEditorView = GetFirstAncestorOfType<GraphEditorView>();
+            if (graphEditorView == null)
                 return;
 
-            var blackboardProvider = graphView.blackboardProvider;
+            var blackboardProvider = graphEditorView.blackboardProvider;
             if (blackboardProvider == null)
                 return;
 
