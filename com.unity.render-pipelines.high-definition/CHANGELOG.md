@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [8.0.0] - 2019-11-18
+## [Unreleased]
 
 ### Added
 - Ray tracing support for VR single-pass
@@ -218,6 +218,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed init of debug for FrameSettingsHistory on SceneView camera
 - Added a fix script to handle the warning 'referenced script in (GameObject 'SceneIDMap') is missing'
 - Fix Wizard load when none selected for RenderPipelineAsset
+- Fixed TerrainLitGUI when per-pixel normal property is not present.
 
 ### Changed
 - Color buffer pyramid is not allocated anymore if neither refraction nor distortion are enabled
