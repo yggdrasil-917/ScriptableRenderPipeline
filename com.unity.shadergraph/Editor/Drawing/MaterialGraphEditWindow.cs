@@ -119,8 +119,8 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             bool shouldClose = true; // Close unless if the same file was replaced
 
-            if (!EditorUtility.DisplayDialog("\"" + assetName + "\" Graph Asset Deleted!", AssetDatabase.GUIDToAssetPath(selectedGuid) + "\nWhat do you wish to do?",
-                "Close Window", "Save As"))
+            if (EditorUtility.DisplayDialog("\"" + assetName + "\" Graph Asset Missing!", AssetDatabase.GUIDToAssetPath(selectedGuid)
+                    + " has been deleted or moved outside of Unity.\n\nWhat do you wish to do?", "Save As", "Close Window"))
             {
                 shouldClose = !SaveAsImplementation();
             }
