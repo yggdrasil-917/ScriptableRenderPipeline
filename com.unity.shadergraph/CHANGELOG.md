@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for vertex skinning when you use the DOTS animation package.
 - You can now use the right-click context menu to set the precision on multiple selected nodes.
 - Updated the zoom level to let you zoom in further.
-- Sub Graphs remember the path to the last created Sub Graph (within a single Unity session), to minimize folder navigation.
+- Converting nodes to Sub Graph now opens up in the directory of the original graph (that contained the nodes), if the path of the new Sub Graph is outside of this directory it will also remember that path to reduce folder navigation for next time.
 
 ### Fixed
 - Edges no longer produce errors when you save a Shader Graph.

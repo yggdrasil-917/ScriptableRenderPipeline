@@ -39,7 +39,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         bool m_ProTheme;
 
-        string m_PrevPath;
+        string m_PrevSubGraphPath;
 
         MessageManager m_MessageManager;
         MessageManager messageManager
@@ -349,7 +349,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     if (shader != null)
                     {
                         GraphData.onSaveGraph(shader, (graphObject.graph.outputNode as MasterNode).saveContext);
-                    }                    
+                    }
                 }
             }
 
@@ -402,7 +402,17 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             var graphView = graphEditorView.graphView;
 
-            var path = EditorUtility.SaveFilePanelInProject("Save Sub Graph", "New Shader Sub Graph", ShaderSubGraphImporter.Extension, "", m_PrevPath);
+            string path;
+            if (!String.IsNullOrEmpty(m_PrevSubGraphPath))
+            {
+                path = m_PrevSubGraphPath;
+            }
+            else
+            {
+                path = Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(selectedGuid));
+            }
+
+            path = EditorUtility.SaveFilePanelInProject("Save Sub Graph", "New Shader Sub Graph", ShaderSubGraphImporter.Extension, "", path);
             path = path.Replace(Application.dataPath, "Assets");
             if (path.Length == 0)
                 return;
@@ -676,10 +686,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
             }
 
-            if(FileUtilities.WriteShaderGraphToDisk(path, subGraph))
+            if (FileUtilities.WriteShaderGraphToDisk(path, subGraph))
                 AssetDatabase.ImportAsset(path);
 
-            m_PrevPath = path; // Store path for next time
+            // Store path for next time
+            m_PrevSubGraphPath = Path.GetDirectoryName(path);
 
             var loadedSubGraph = AssetDatabase.LoadAssetAtPath(path, typeof(SubGraphAsset)) as SubGraphAsset;
             if (loadedSubGraph == null)
@@ -783,9 +794,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                 // This is adding the icon at the front of the tab
                 titleContent = EditorGUIUtility.TrTextContentWithIcon(selectedGuid, icon);
                 UpdateTitle();
-
-                if (String.IsNullOrEmpty(m_PrevPath))
-                    m_PrevPath = Application.dataPath;
 
                 Repaint();
             }
