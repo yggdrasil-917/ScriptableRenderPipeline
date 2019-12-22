@@ -431,16 +431,15 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        // Record redo before collapsing
         protected override void ToggleCollapse()
         {
-            m_GraphView.RecordNodeExpandUndo(expanded);
+            node.owner.owner.RegisterCompleteObjectUndo(!expanded ? "Expand Nodes" : "Collapse Nodes");
             expanded = !expanded;
 
             // If selected, expand/collapse the other applicable nodes that are also selected
             if (selected)
             {
-                m_GraphView.SetNodeExpandedOnSelection(expanded, false);
+                m_GraphView.SetNodeExpandedForSelectedNodes(expanded, false);
             }
         }
 
@@ -449,11 +448,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             // If selected, expand/collapse the other applicable nodes that are also selected
             if (selected)
             {
-                m_GraphView.SetPreviewExpandedOnSelection(state);
+                m_GraphView.SetPreviewExpandedForSelectedNodes(state);
             }
             else
             {
-                m_GraphView.RecordPreviewExpandUndo(state);
+                node.owner.owner.RegisterCompleteObjectUndo(state ? "Expand Previews" : "Collapse Previews");
                 node.previewExpanded = state;
             }
         }
