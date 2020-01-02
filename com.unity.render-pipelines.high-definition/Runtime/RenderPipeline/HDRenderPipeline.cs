@@ -815,6 +815,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
             CleanupLightLoop();
 
+            HDProbeSystem.Cleanup();
+
             // For debugging
             MousePositionDebug.instance.Cleanup();
 
@@ -1171,13 +1173,11 @@ namespace UnityEngine.Rendering.HighDefinition
                     HDCamera.CleanUnused();
 
                     if (newTime > m_Time)
+                    {
                         m_FrameCount++;
-                    else
-                        m_FrameCount = 0;
-
-                    // Make sure (m_Time > m_LastTime).
-                    m_LastTime = (newTime > m_Time) ? m_Time : 0;
-                    m_Time     = newTime;
+                        m_LastTime = m_Time;
+                        m_Time = newTime;
+                    }
                 }
             }
 
@@ -2085,9 +2085,6 @@ namespace UnityEngine.Rendering.HighDefinition
                         => m_AmbientOcclusionSystem.Dispatch(c, a.hdCamera, a.frameCount);
                 }
 
-                if (!hdCamera.frameSettings.SSAORunsAsync())
-                    m_AmbientOcclusionSystem.Render(cmd, hdCamera, renderContext, m_FrameCount);
-
                 using (new ProfilingSample(cmd, "Render shadow maps", CustomSamplerId.RenderShadowMaps.GetSampler()))
                 {
                     // This call overwrites camera properties passed to the shader system.
@@ -2140,6 +2137,9 @@ namespace UnityEngine.Rendering.HighDefinition
                         BuildGPULightLists(hdCamera, cmd);
                     }
                 }
+
+                if (!hdCamera.frameSettings.SSAORunsAsync())
+                    m_AmbientOcclusionSystem.Render(cmd, hdCamera, renderContext, m_FrameCount);
 
                 // Run the contact shadows here as they the light list
                 using (new ProfilingSample(cmd, "Dispatch Contact Shadows", CustomSamplerId.ContactShadows.GetSampler()))
@@ -2204,7 +2204,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 RenderForwardEmissive(cullingResults, hdCamera, renderContext, cmd);
 
                 RenderSky(hdCamera, cmd);
-                
+
                 // Send all the geometry graphics buffer to client systems if required (must be done after the pyramid and before the transparent depth pre-pass)
                 SendGeometryGraphicsBuffers(cmd, hdCamera);
 
