@@ -221,7 +221,7 @@ MonoBehaviour:
     supportRayTracing: 0
     supportedRaytracingTier: 2
     lightLoopSettings:
-      cookieAtlasSize: 2048
+      cookieAtlasSize: 4096
       cookieAtlasFormat: 74
       pointCookieSize: 512
       cubeCookieTexArraySize: 16
