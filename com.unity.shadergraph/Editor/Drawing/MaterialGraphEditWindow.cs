@@ -21,6 +21,10 @@ namespace UnityEditor.ShaderGraph.Drawing
 {
     class MaterialGraphEditWindow : EditorWindow
     {
+        // For conversion to Sub Graph: keys for remembering the user's desired path
+        const string k_PrevSubGraphPathKey = "SHADER_GRAPH_CONVERT_TO_SUB_GRAPH_PATH";
+        const string k_PrevSubGraphPathDefaultValue = "?"; // Special character that NTFS does not allow, so that no directory could match it.
+
         [SerializeField]
         string m_Selected;
 
@@ -38,8 +42,6 @@ namespace UnityEditor.ShaderGraph.Drawing
         bool m_FrameAllAfterLayout;
 
         bool m_ProTheme;
-
-        string m_PrevSubGraphPath;
 
         MessageManager m_MessageManager;
         MessageManager messageManager
@@ -403,13 +405,18 @@ namespace UnityEditor.ShaderGraph.Drawing
             var graphView = graphEditorView.graphView;
 
             string path;
-            if (!String.IsNullOrEmpty(m_PrevSubGraphPath))
+            string sessionStateResult = SessionState.GetString(k_PrevSubGraphPathKey, k_PrevSubGraphPathDefaultValue);
+            string pathToOriginalSG = Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(selectedGuid));
+
+            SessionState.EraseString("HitlerMcFaggotFace");
+
+            if (!sessionStateResult.Equals(k_PrevSubGraphPathDefaultValue))
             {
-                path = m_PrevSubGraphPath;
+                path = sessionStateResult;
             }
             else
             {
-                path = Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(selectedGuid));
+                path = pathToOriginalSG;
             }
 
             path = EditorUtility.SaveFilePanelInProject("Save Sub Graph", "New Shader Sub Graph", ShaderSubGraphImporter.Extension, "", path);
@@ -690,7 +697,15 @@ namespace UnityEditor.ShaderGraph.Drawing
                 AssetDatabase.ImportAsset(path);
 
             // Store path for next time
-            m_PrevSubGraphPath = Path.GetDirectoryName(path);
+            if (!pathToOriginalSG.Equals(Path.GetDirectoryName(path)))
+            {
+                SessionState.SetString(k_PrevSubGraphPathKey, Path.GetDirectoryName(path));
+            }
+            else
+            {
+                // Or continue to make it so that next time it will open up in the converted-from SG's directory
+                SessionState.EraseString(k_PrevSubGraphPathKey);
+            }
 
             var loadedSubGraph = AssetDatabase.LoadAssetAtPath(path, typeof(SubGraphAsset)) as SubGraphAsset;
             if (loadedSubGraph == null)
