@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEditor.ShaderGraph;
 using UnityEditor.ShaderGraph.Internal;
+using UnityEditor.ShaderGraph.Drawing.Controls;
 
 namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 {
@@ -13,10 +14,13 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
         public string passTemplatePath => string.Empty;
         public string sharedTemplateDirectory => $"{HDUtils.GetHDRenderPipelinePath()}Editor/ShaderGraph/Templates";
 
+        public static FieldDescriptor SpeedTreeV7Field = new FieldDescriptor("SpeedTree", "Version 7", "SPEEDTREE_V7");
+        public static FieldDescriptor SpeedTreeV8Field = new FieldDescriptor("SpeedTree", "Version 8", "SPEEDTREE_V8");
+
         public static KeywordDescriptor SpeedTreeVersion = new KeywordDescriptor()
         {
             displayName = "SpeedTree Asset Version",
-            referenceName = "SPEEDTREE_",
+            referenceName = "SPEEDTREE",
             type = KeywordType.Enum,
             definition = KeywordDefinition.ShaderFeature,
             scope = KeywordScope.Local,
@@ -39,7 +43,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
         public static KeywordDescriptor SpeedTreeUpAxis = new KeywordDescriptor()
         {
             displayName = "SpeedTree Up Axis",
-            referenceName = "SPEEDTREE_",
+            referenceName = "SPEEDTREE",
             type = KeywordType.Enum,
             definition = KeywordDefinition.ShaderFeature,
             scope = KeywordScope.Local,
@@ -47,6 +51,41 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             {
                 new KeywordEntry() { displayName = "Y up", referenceName="Y_UP" },
                 new KeywordEntry() { displayName = "Z up", referenceName="Z_UP" },
+            }
+        };
+
+        public static KeywordDescriptor SpeedTree7GeomType = new KeywordDescriptor()
+        {
+            displayName = "Tree Geom Type",
+            referenceName = "GEOM_TYPE",
+            type = KeywordType.Enum,
+            definition = KeywordDefinition.ShaderFeature,
+            scope = KeywordScope.Local,
+            entries = new KeywordEntry[]
+            {
+                new KeywordEntry() { displayName = "Branch", referenceName="BRANCH" },
+                new KeywordEntry() { displayName = "Branch Detail", referenceName="BRANCH_DETAIL" },
+                new KeywordEntry() { displayName = "Frond", referenceName="FROND" },
+                new KeywordEntry() { displayName = "Leaf", referenceName="LEAF" },
+                new KeywordEntry() { displayName = "Mesh", referenceName="MESH" },
+            }
+        };
+
+        public static KeywordDescriptor SpeedTree8WindQuality = new KeywordDescriptor()
+        {
+            displayName = "Wind Quality",
+            referenceName = "WINDQUALITY",
+            type = KeywordType.Enum,
+            definition = KeywordDefinition.ShaderFeature,
+            scope = KeywordScope.Local,
+            entries = new KeywordEntry[]
+            {
+                new KeywordEntry() { displayName = "None", referenceName="NONE" },
+                new KeywordEntry() { displayName = "Fastest", referenceName="FASTEST" },
+                new KeywordEntry() { displayName = "Fast", referenceName="FAST" },
+                new KeywordEntry() { displayName = "Better", referenceName="BETTER" },
+                new KeywordEntry() { displayName = "Best", referenceName="BEST" },
+                new KeywordEntry() { displayName = "Palm", referenceName="PALM" },
             }
         };
 
@@ -85,6 +124,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 p.descriptor.defines.Add(SpeedTreeUpAxis, 0);
                 p.descriptor.pragmas.Add(EnableWind);
                 p.descriptor.pragmas.Add(EnableBillboard);
+
+                p.descriptor.keywords.Add(SpeedTree7GeomType, new FieldCondition(SpeedTreeV7Field, true));
+                p.descriptor.keywords.Add(SpeedTree8WindQuality, new FieldCondition(SpeedTreeV8Field, true));
+
+                p.descriptor.includes.Add("Packages/com.unity.render-pipelines.core/ShaderLibrary/SpeedTree/SpeedTreeCommon.hlsl", IncludeLocation.Pregraph);
             }
 
             return modDescriptor;
@@ -105,13 +149,15 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                     break;
                 case HDUnlitMasterNode hdUnlitMasterNode:
                     context.SetupSubShader(UpdateSubShader(ref HDSubShaders.HDUnlit));
+                    hdUnlitMasterNode.alphaTest = new ToggleData(true);
                     break;
                 case HDLitMasterNode hdLitMasterNode:
-                default:
                     context.SetupSubShader(UpdateSubShader(ref HDSubShaders.HDLit));
+                    hdLitMasterNode.alphaTest = new ToggleData(true);
                     break;
                 case FabricMasterNode fabricMasterNode:
                     context.SetupSubShader(UpdateSubShader(ref HDSubShaders.Fabric));
+                    fabricMasterNode.alphaTest = new ToggleData(true);
                     break;
             }
         }
