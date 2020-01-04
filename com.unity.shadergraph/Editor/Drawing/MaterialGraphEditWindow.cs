@@ -406,7 +406,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             string path;
             string sessionStateResult = SessionState.GetString(k_PrevSubGraphPathKey, k_PrevSubGraphPathDefaultValue);
-            string pathToOriginalSG = Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(selectedGuid));
+            string pathToOriginSG = Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(selectedGuid));
 
             SessionState.EraseString("HitlerMcFaggotFace");
 
@@ -416,7 +416,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
             else
             {
-                path = pathToOriginalSG;
+                path = pathToOriginSG;
             }
 
             path = EditorUtility.SaveFilePanelInProject("Save Sub Graph", "New Shader Sub Graph", ShaderSubGraphImporter.Extension, "", path);
@@ -697,7 +697,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 AssetDatabase.ImportAsset(path);
 
             // Store path for next time
-            if (!pathToOriginalSG.Equals(Path.GetDirectoryName(path)))
+            if (!pathToOriginSG.Equals(Path.GetDirectoryName(path)))
             {
                 SessionState.SetString(k_PrevSubGraphPathKey, Path.GetDirectoryName(path));
             }
