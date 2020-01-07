@@ -347,7 +347,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     if (shader != null)
                     {
                         GraphData.onSaveGraph(shader, (graphObject.graph.outputNode as MasterNode).saveContext);
-                    }                    
+                    }
                 }
             }
 
@@ -436,8 +436,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     graphInputs,
                     metaProperties,
                     metaKeywords,
-                    graphView.selection.OfType<StickyNote>().Select(x => x.userData),
-                    null);
+                    graphView.selection.OfType<StickyNote>().Select(x => x.userData));
 
             var deserialized = CopyPasteGraph.FromJson(JsonUtility.ToJson(copyPasteGraph, false));
             if (deserialized == null)

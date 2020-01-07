@@ -58,7 +58,7 @@ namespace UnityEditor.Graphing.Util
         public CopyPasteGraph() {}
 
         public CopyPasteGraph(string sourceGraphGuid, IEnumerable<GroupData> groups, IEnumerable<AbstractMaterialNode> nodes, IEnumerable<IEdge> edges, IEnumerable<ShaderInput> inputs,
-            IEnumerable<AbstractShaderProperty> metaProperties, IEnumerable<ShaderKeyword> metaKeywords, IEnumerable<StickyNoteData> notes, GraphData graphData)
+            IEnumerable<AbstractShaderProperty> metaProperties, IEnumerable<ShaderKeyword> metaKeywords, IEnumerable<StickyNoteData> notes)
         {
             m_SourceGraphGuid = sourceGraphGuid;
 
@@ -99,12 +99,6 @@ namespace UnityEditor.Graphing.Util
             {
                 foreach (var input in inputs)
                     AddInput(input);
-
-                // Sort based on input graph data's order
-                if (graphData != null)
-                {
-                    m_Inputs.Sort((x, y) => graphData.GetGraphInputIndex(x) > graphData.GetGraphInputIndex(y) ? 1 : -1);
-                }
             }
 
             if (metaProperties != null)

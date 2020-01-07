@@ -16,6 +16,10 @@ namespace UnityEditor.ShaderGraph.Drawing
         readonly Dictionary<Guid, BlackboardRow> m_InputRows;
         readonly BlackboardSection m_PropertySection;
         readonly BlackboardSection m_KeywordSection;
+
+        public const int k_PropertySectionIndex = 0;
+        public const int k_KeywordSectionIndex = 1;
+
         public Blackboard blackboard { get; private set; }
         Label m_PathLabel;
         TextField m_PathLabelTextField;
@@ -225,7 +229,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             gm.AddSeparator($"Keyword/");
             foreach (var builtinKeywordDescriptor in KeywordUtil.GetBuiltinKeywordDescriptors())
             {
-                var keyword = ShaderKeyword.Create(builtinKeywordDescriptor);
+                var keyword = ShaderKeyword.CreateBuiltInKeyword(builtinKeywordDescriptor);
                 AddBuiltinKeyword(gm, keyword);
             }
         }
@@ -328,7 +332,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                 case ShaderKeyword keyword:
                 {
                     var icon = (m_Graph.isSubGraph || (keyword.isExposable && keyword.generatePropertyBlock)) ? exposedIcon : null;
-                    var typeText = KeywordUtil.IsBuiltinKeyword(keyword) ? "Built-in Keyword" : keyword.keywordType.ToString();
+
+                    string typeText = keyword.keywordType.ToString()  + " Keyword";
+                    typeText = keyword.isBuiltIn ? "Built-in " + typeText : typeText;
+
                     field = new BlackboardField(icon, keyword.displayName, typeText) { userData = keyword };
                     var keywordView = new BlackboardFieldKeywordView(field, m_Graph, keyword);
                     row = new BlackboardRow(field, keywordView);

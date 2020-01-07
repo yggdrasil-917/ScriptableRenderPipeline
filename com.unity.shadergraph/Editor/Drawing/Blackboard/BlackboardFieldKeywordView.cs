@@ -43,7 +43,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_Keyword.keywordDefinition = (KeywordDefinition)evt.newValue;
                 Rebuild();
             });
-            AddRow("Definition", keywordDefinitionField, m_Keyword.isEditable);
+            AddRow("Definition", keywordDefinitionField, !m_Keyword.isBuiltIn);
 
             // KeywordScope
             if(m_Keyword.keywordDefinition != KeywordDefinition.Predefined)
@@ -56,7 +56,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                         return;
                     m_Keyword.keywordScope = (KeywordScope)evt.newValue;
                 });
-                AddRow("Scope", keywordScopeField, m_Keyword.isEditable);
+                AddRow("Scope", keywordScopeField, !m_Keyword.isBuiltIn);
             }
 
             switch(m_Keyword.keywordType)
@@ -102,7 +102,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             // Entries
             m_Container = new IMGUIContainer(() => OnGUIHandler ()) { name = "ListContainer" };
-            AddRow("Entries", m_Container, keyword.isEditable);
+            AddRow("Entries", m_Container, !keyword.isBuiltIn);
         }
 
         public ShaderKeyword keyword => m_Keyword;

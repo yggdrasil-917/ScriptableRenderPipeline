@@ -39,12 +39,6 @@ namespace UnityEditor.ShaderGraph
             .Select(method =>
                 (KeywordDescriptor) method.Invoke(null, new object[0] { }));
 
-        public static bool IsBuiltinKeyword(ShaderKeyword shaderKeyword)
-        {
-            // Only built in keywords are set to uneditable
-            return !shaderKeyword.isEditable;
-        }
-
         public static ConcreteSlotValueType ToConcreteSlotValueType(this KeywordType keywordType)
         {
             switch(keywordType)
