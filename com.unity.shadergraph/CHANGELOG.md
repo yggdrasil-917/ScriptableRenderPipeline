@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed an error where the UV channel drop-down menu on nodes had clipped text. [1188710](https://issuetracker.unity3d.com/issues/shader-graph-all-uv-dropdown-value-is-clipped-under-shader-graph)
 - Sticky Notes can now be grouped properly.
 - Fixed an issue where nodes couldn't be copied from a group.
-- Fixed a bug where the Save Graph As dialog for a Shader or Sub Graph sometimes appeared in the wrong Project when you had multiple Unity Projects open simultaneously.
+- Fixed a bug where the __Save Graph As__ dialog for a Shader or Sub Graph sometimes appeared in the wrong Project when you had multiple Unity Projects open simultaneously.
 
 ## [7.1.1] - 2019-09-05
 ### Added
