@@ -3578,19 +3578,6 @@ namespace UnityEngine.Rendering.HighDefinition
 #endif
         }
 
-        static void UpdateStencilBufferForSSRExclusion(CommandBuffer cmd, RTHandle depthStencilBuffer, RTHandle stencilCopyBuffer, Material copyStencilMaterial)
-        {
-            CoreUtils.SetRenderTarget(cmd, depthStencilBuffer);
-            cmd.SetRandomWriteTarget(1, stencilCopyBuffer);
-
-            copyStencilMaterial.SetInt(HDShaderIDs._StencilRef, (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR);
-            copyStencilMaterial.SetInt(HDShaderIDs._StencilMask, (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR);
-
-            // Pass 4 performs an OR between the already present content of the copy and the stencil ref, if stencil test passes.
-            CoreUtils.DrawFullScreen(cmd, copyStencilMaterial, null, 4);
-            cmd.ClearRandomWriteTargets();
-        }
-
         struct LightLoopDebugOverlayParameters
         {
             public Material                 debugViewTilesMaterial;
