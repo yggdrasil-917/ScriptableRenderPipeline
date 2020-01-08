@@ -261,4 +261,16 @@ namespace UnityEngine.Rendering.Universal
         // Pure URP uses URP managed camera buffers
         internal static bool isPureURP = true;
     }
+
+    internal enum URPProfileId
+    {
+        StopNaNs,
+        SMAA,
+        GaussianDepthOfField,
+        BokehDepthOfField,
+        MotionBlur,
+        PaniniProjection,
+        UberPostProcess,
+        Bloom,
+    }
 }
