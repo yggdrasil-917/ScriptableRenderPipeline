@@ -45,7 +45,6 @@ namespace UnityEditor.ShaderGraph
 
         static void DisplayDeletionDialog(string[] deletedAssets)
         {
-            // This will change the title of the window.
             MaterialGraphEditWindow[] windows = Resources.FindObjectsOfTypeAll<MaterialGraphEditWindow>();
             foreach (var matGraphEditWindow in windows)
             {
