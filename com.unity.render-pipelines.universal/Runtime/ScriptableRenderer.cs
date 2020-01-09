@@ -295,10 +295,18 @@ namespace UnityEngine.Rendering.Universal
             // TODO: We need to expose all work done in SetupCameraProperties above to c# land. This not only
             // avoids resetting values but also guarantee values are correct for all systems.
             // Known Issue: billboard will not work with camera stacking when using viewport with aspect ratio different from default aspect.
-            if (cameraData.renderType == CameraRenderType.Overlay)
-            {
-                cmd.SetViewProjectionMatrices(cameraData.viewMatrix, cameraData.projectionMatrix);
-            }
+           if (cameraData.renderType == CameraRenderType.Overlay)
+           {
+               if (URPCameraMode.isPureURP)
+               {
+                   Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(cameraData.projectionMatrix, true);
+                   RenderingUtils.SetViewProjectionMatrices(cmd, cameraData.viewMatrix, projMatrix, false);
+               }
+               else
+               {
+                   cmd.SetViewProjectionMatrices(cameraData.viewMatrix, cameraData.projectionMatrix);
+               }
+           }
 
             // Override time values from when `SetupCameraProperties` were called.
             // They might be a frame behind.

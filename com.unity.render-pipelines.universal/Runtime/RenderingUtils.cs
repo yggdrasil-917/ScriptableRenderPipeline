@@ -168,7 +168,7 @@ namespace UnityEngine.Rendering.Universal
         /// <param name="projMatrix">Desired projection matrix to set to.</param>
         /// <param name="setVPOnly">Set only VP matrix if true, set V,P,IV,VP,IVP matrices otherwise.</param>
         /// <returns>Void</c></returns>
-        internal static void SetViewProjectionMatrices(CommandBuffer cmd, Matrix4x4 viewMatrix, Matrix4x4 projMatrix, bool setVPOnly)
+        internal static void SetViewProjectionMatrices(CommandBuffer cmd, Matrix4x4 viewMatrix, Matrix4x4 projMatrix, bool setVPOnly = false)
         {
             Matrix4x4 viewProjMatrix = projMatrix * viewMatrix;
 
