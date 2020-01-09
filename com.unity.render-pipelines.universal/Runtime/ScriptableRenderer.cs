@@ -299,7 +299,7 @@ namespace UnityEngine.Rendering.Universal
            {
                if (URPCameraMode.isPureURP)
                {
-                   Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(cameraData.projectionMatrix, true);
+                   Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(cameraData.projectionMatrix, false);
                    RenderingUtils.SetViewProjectionMatrices(cmd, cameraData.viewMatrix, projMatrix, false);
                }
                else
