@@ -106,7 +106,6 @@ namespace UnityEngine.Experimental.Rendering.Universal
                         viewMatrix.SetColumn(3, cameraTranslation + m_CameraSettings.offset);
                     }
 
-                    ref CameraData cameraData = ref renderingData.cameraData;
                     bool isRenderToCameraTarget = colorAttachment == RenderTargetHandle.CameraTarget.id;
                     bool isCameraTargetIntermediateTexture = cameraData.camera.targetTexture != null || cameraData.camera.cameraType == CameraType.SceneView || cameraData.camera.cameraType == CameraType.Preview;
                     bool isRenderToTexture = !isRenderToCameraTarget || isCameraTargetIntermediateTexture;
@@ -140,7 +139,6 @@ namespace UnityEngine.Experimental.Rendering.Universal
                     {
                         cmd.Clear();
                         {
-                            ref CameraData cameraData = ref renderingData.cameraData;
                             bool isRenderToCameraTarget = colorAttachment == RenderTargetHandle.CameraTarget.id;
                             bool isCameraTargetIntermediateTexture = cameraData.camera.targetTexture != null || cameraData.camera.cameraType == CameraType.SceneView || cameraData.camera.cameraType == CameraType.Preview;
                             bool isRenderToTexture = !isRenderToCameraTarget || isCameraTargetIntermediateTexture;
