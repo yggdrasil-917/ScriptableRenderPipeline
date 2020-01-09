@@ -43,7 +43,7 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 11
+  serializedVersion: 12
   m_GIWorkflowMode: 1
   m_GISettings:
     serializedVersion: 2
@@ -97,9 +97,10 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000004, guid: cde702c7d66d1794987fc17a218f7bee,
+  m_LightingDataAsset: {fileID: 112000002, guid: cde702c7d66d1794987fc17a218f7bee,
     type: 2}
-  m_UseShadowmask: 0
+  m_LightingSettings: {fileID: 4890085278179872738, guid: 6e664127a575cf04590d2672a9431a60,
+    type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
