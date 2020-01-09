@@ -1,5 +1,11 @@
 Shader "Hidden/HDRP/TemporalAntialiasing"
 {
+    Properties
+    {
+        [HideInInspector] _StencilRef("_StencilRef", Int) = 16
+        [HideInInspector] _StencilMask("_StencilMask", Int) = 16
+    }
+
     HLSLINCLUDE
 
         #pragma target 4.5
@@ -156,8 +162,8 @@ Shader "Hidden/HDRP/TemporalAntialiasing"
         {
             Stencil
             {
-                ReadMask 16     // ExcludeFromTAA
-                Ref 16          // ExcludeFromTAA
+                ReadMask[_StencilMask]    
+                Ref     [_StencilRef]
                 Comp Equal
                 Pass Keep
             }
