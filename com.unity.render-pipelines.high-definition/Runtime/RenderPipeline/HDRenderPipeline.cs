@@ -1962,7 +1962,8 @@ namespace UnityEngine.Rendering.HighDefinition
             // Now that all depths have been rendered, resolve the depth buffer
             m_SharedRTManager.ResolveSharedRT(cmd, hdCamera);
 
-            RenderDecals(hdCamera, cmd, renderContext, cullingResults);
+            RenderDBuffer(hdCamera, cmd, renderContext, cullingResults);
+            DecalNormalPatch(hdCamera, cmd, renderContext);
 
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
 
@@ -2996,7 +2997,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        void RenderDecals(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext, CullingResults cullingResults)
+        void RenderDBuffer(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext, CullingResults cullingResults)
         {
             if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals))
             {
@@ -3026,8 +3027,12 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 m_DbufferManager.BindBufferAsTextures(cmd);
             }
+        }
 
-            if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported
+        void DecalNormalPatch(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext)
+        {
+            if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals)&&
+                !hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported
             {
                 using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DBufferNormal)))
                 {

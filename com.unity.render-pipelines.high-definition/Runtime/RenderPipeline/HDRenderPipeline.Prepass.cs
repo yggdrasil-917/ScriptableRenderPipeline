@@ -145,9 +145,11 @@ namespace UnityEngine.Rendering.HighDefinition
                 // At this point in forward all objects have been rendered to the prepass (depth/normal/motion vectors) so we can resolve them
                 ResolvePrepassBuffers(renderGraph, hdCamera, ref result);
 
-                RenderDecals(renderGraph, hdCamera, ref result, cullingResults);
+                RenderDBuffer(renderGraph, hdCamera, ref result, cullingResults);
 
                 RenderGBuffer(renderGraph, sssBuffer, ref result, cullingResults, hdCamera);
+
+                DecalNormalPatch(renderGraph, hdCamera, ref result);
 
                 // TODO RENDERGRAPH
                 //// After Depth and Normals/roughness including decals
@@ -567,7 +569,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         }
 
-        void RenderDecals(RenderGraph renderGraph, HDCamera hdCamera, ref PrepassOutput output, CullingResults cullingResults)
+        void RenderDBuffer(RenderGraph renderGraph, HDCamera hdCamera, ref PrepassOutput output, CullingResults cullingResults)
         {
             bool use4RTs = m_Asset.currentPlatformRenderPipelineSettings.decalSettings.perChannelMask;
 
@@ -618,7 +620,9 @@ namespace UnityEngine.Rendering.HighDefinition
                                     context.cmd);
                 });
             }
-
+        }
+        void DecalNormalPatch(RenderGraph renderGraph, HDCamera hdCamera, ref PrepassOutput output)
+        {
             if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported
             {
                 using (var builder = renderGraph.AddRenderPass<DBufferNormalPatchData>("DBuffer Normal (forward)", out var passData, ProfilingSampler.Get(HDProfileId.DBufferNormal)))
