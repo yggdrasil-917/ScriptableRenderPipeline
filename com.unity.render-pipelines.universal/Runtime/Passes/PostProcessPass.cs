@@ -302,7 +302,7 @@ namespace UnityEngine.Rendering.Universal.Internal
 
                 using (new ProfilingScope(cmd, ProfilingSampler.Get(markerName)))
                 {
-                    DoDepthOfField(cameraData.camera, cmd, GetSource(), GetDestination());
+                    DoDepthOfField(cameraData.camera, cmd, GetSource(), GetDestination(), cameraData.pixelRect);
                     Swap();
                 }
             }
@@ -349,9 +349,9 @@ namespace UnityEngine.Rendering.Universal.Internal
                 SetupColorGrading(cmd, ref renderingData, m_Materials.uber);
 
                 // Only apply dithering & grain if there isn't a final pass.
-                SetupGrain(cameraData.camera, m_Materials.uber);
-                SetupDithering(ref cameraData, m_Materials.uber);
-
+                SetupGrain(cameraData, m_Materials.uber);
+                SetupDithering(cameraData, m_Materials.uber);
+				
                 if (Display.main.requiresSrgbBlitToBackbuffer && m_EnableSRGBConversionIfNeeded)
                     m_Materials.uber.EnableKeyword(ShaderKeywordStrings.LinearToSRGBConversion);
 
@@ -362,7 +362,11 @@ namespace UnityEngine.Rendering.Universal.Internal
                 if (m_Destination == RenderTargetHandle.CameraTarget && !cameraData.isDefaultViewport)
                     colorLoadAction = RenderBufferLoadAction.Load;
 
-                cmd.SetRenderTarget(m_Destination.Identifier(), colorLoadAction, RenderBufferStoreAction.Store, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.DontCare);
+                // Note: We rendering to "camera target" we need to get the cameraData.targetTexture as this will get the targetTexture of the camera stack.
+                // Overlay cameras need to output to the target described in the base camera while doing camera stack.
+                RenderTargetIdentifier cameraTarget = (cameraData.targetTexture != null) ? new RenderTargetIdentifier(cameraData.targetTexture) : BuiltinRenderTextureType.CameraTarget;
+                cameraTarget = (m_Destination == RenderTargetHandle.CameraTarget) ? cameraTarget : m_Destination.Identifier();
+                cmd.SetRenderTarget(cameraTarget, colorLoadAction, RenderBufferStoreAction.Store, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.DontCare);
 
                 if (URPCameraMode.isPureURP)
                 {
@@ -377,7 +381,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                     }
 
                     if(m_Destination == RenderTargetHandle.CameraTarget)
-                        cmd.SetViewport(cameraData.camera.pixelRect);
+                        cmd.SetViewport(cameraData.pixelRect);
 
                     cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, m_Materials.uber);
                     RenderingUtils.SetViewProjectionMatrices(cmd, cameraData.camera.worldToCameraMatrix, GL.GetGPUProjectionMatrix(cameraData.camera.projectionMatrix, isRenderToTexture), true);
@@ -392,7 +396,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                     {
                         cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
                         if (m_Destination == RenderTargetHandle.CameraTarget)
-                            cmd.SetViewport(cameraData.camera.pixelRect);
+                            cmd.SetViewport(cameraData.pixelRect);
 
                         cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, m_Materials.uber);
                         cmd.SetViewProjectionMatrices(cameraData.camera.worldToCameraMatrix, cameraData.camera.projectionMatrix);
@@ -425,6 +429,7 @@ namespace UnityEngine.Rendering.Universal.Internal
         void DoSubpixelMorphologicalAntialiasing(ref CameraData cameraData, CommandBuffer cmd, int source, int destination)
         {
             var camera = cameraData.camera;
+            var pixelRect = cameraData.pixelRect;
             var material = m_Materials.subpixelMorphologicalAntialiasing;
             const int kStencilBit = 64;
 
@@ -468,7 +473,7 @@ namespace UnityEngine.Rendering.Universal.Internal
 
             if (URPCameraMode.isPureURP)
             {
-                cmd.SetViewport(camera.pixelRect);
+                cmd.SetViewport(pixelRect);
                 // Pass 1: Edge detection
                 cmd.SetRenderTarget(ShaderConstants._EdgeTexture, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store,
                     stencil, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
@@ -497,7 +502,7 @@ namespace UnityEngine.Rendering.Universal.Internal
             {
                 // Prepare for manual blit
                 cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
-                cmd.SetViewport(camera.pixelRect);
+                cmd.SetViewport(pixelRect);
 
                 // Pass 1: Edge detection
                 cmd.SetRenderTarget(new RenderTargetIdentifier(ShaderConstants._EdgeTexture, 0, CubemapFace.Unknown, -1),
@@ -531,15 +536,15 @@ namespace UnityEngine.Rendering.Universal.Internal
 
         // TODO: CoC reprojection once TAA gets in LW
         // TODO: Proper LDR/gamma support
-        void DoDepthOfField(Camera camera, CommandBuffer cmd, int source, int destination)
+        void DoDepthOfField(Camera camera, CommandBuffer cmd, int source, int destination, Rect pixelRect)
         {
             if (m_DepthOfField.mode.value == DepthOfFieldMode.Gaussian)
-                DoGaussianDepthOfField( camera, cmd, source, destination);
+                DoGaussianDepthOfField(camera, cmd, source, destination, pixelRect);
             else if (m_DepthOfField.mode.value == DepthOfFieldMode.Bokeh)
-                DoBokehDepthOfField(cmd, source, destination);
+                DoBokehDepthOfField(cmd, source, destination, pixelRect);
         }
 
-        void DoGaussianDepthOfField(Camera camera, CommandBuffer cmd, int source, int destination)
+        void DoGaussianDepthOfField(Camera camera, CommandBuffer cmd, int source, int destination, Rect pixelRect)
         {
             var material = m_Materials.gaussianDepthOfField;
             int wh = m_Descriptor.width / 2;
@@ -573,7 +578,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                 m_MRT2[0] = ShaderConstants._HalfCoCTexture;
                 m_MRT2[1] = ShaderConstants._PingTexture;
 
-                cmd.SetViewport(camera.pixelRect);
+                cmd.SetViewport(pixelRect);
                 cmd.SetGlobalTexture(ShaderConstants._ColorTexture, source);
                 cmd.SetGlobalTexture(ShaderConstants._FullCoCTexture, ShaderConstants._FullCoCTexture);
                 cmd.SetRenderTarget(m_MRT2, ShaderConstants._HalfCoCTexture, 0, CubemapFace.Unknown, -1);
@@ -605,7 +610,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                 m_MRT2[1] = ShaderConstants._PingTexture;
 
                 cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
-                cmd.SetViewport(camera.pixelRect);
+                cmd.SetViewport(pixelRect);
                 cmd.SetGlobalTexture(ShaderConstants._ColorTexture, source);
                 cmd.SetGlobalTexture(ShaderConstants._FullCoCTexture, ShaderConstants._FullCoCTexture);
                 cmd.SetRenderTarget(m_MRT2, ShaderConstants._HalfCoCTexture, 0, CubemapFace.Unknown, -1);
@@ -684,7 +689,7 @@ namespace UnityEngine.Rendering.Universal.Internal
             return Mathf.Min(0.05f, kRadiusInPixels / viewportHeight);
         }
 
-        void DoBokehDepthOfField(CommandBuffer cmd, int source, int destination)
+        void DoBokehDepthOfField(CommandBuffer cmd, int source, int destination, Rect pixelRect)
         {
             var material = m_Materials.bokehDepthOfField;
             int wh = m_Descriptor.width / 2;
@@ -1185,7 +1190,7 @@ namespace UnityEngine.Rendering.Universal.Internal
 
         #region Film Grain
 
-        void SetupGrain(Camera camera, Material material)
+        void SetupGrain(in CameraData cameraData, Material material)
         {
             if (!m_HasFinalPass && m_FilmGrain.IsActive())
             {
@@ -1193,7 +1198,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                 PostProcessUtils.ConfigureFilmGrain(
                     m_Data,
                     m_FilmGrain,
-                    camera,
+                    cameraData.pixelWidth, cameraData.pixelHeight,
                     material
                 );
             }
@@ -1203,7 +1208,7 @@ namespace UnityEngine.Rendering.Universal.Internal
 
         #region 8-bit Dithering
 
-        void SetupDithering(ref CameraData cameraData, Material material)
+        void SetupDithering(in CameraData cameraData, Material material)
         {
             if (!m_HasFinalPass && cameraData.isDitheringEnabled)
             {
@@ -1211,7 +1216,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                 m_DitheringTextureIndex = PostProcessUtils.ConfigureDithering(
                     m_Data,
                     m_DitheringTextureIndex,
-                    cameraData.camera,
+                    cameraData.pixelWidth, cameraData.pixelHeight,
                     material
                 );
             }
@@ -1231,8 +1236,8 @@ namespace UnityEngine.Rendering.Universal.Internal
             if (cameraData.antialiasing == AntialiasingMode.FastApproximateAntialiasing)
                 material.EnableKeyword(ShaderKeywordStrings.Fxaa);
 
-            SetupGrain(cameraData.camera, material);
-            SetupDithering(ref cameraData, material);
+            SetupGrain(cameraData, material);
+            SetupDithering(cameraData, material);
 
             if (Display.main.requiresSrgbBlitToBackbuffer && m_EnableSRGBConversionIfNeeded)
                 material.EnableKeyword(ShaderKeywordStrings.LinearToSRGBConversion);
@@ -1240,22 +1245,25 @@ namespace UnityEngine.Rendering.Universal.Internal
             cmd.SetGlobalTexture("_BlitTex", m_Source.Identifier());
 
             var colorLoadAction = cameraData.isDefaultViewport ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load;
-            cmd.SetRenderTarget(m_Destination.Identifier(), colorLoadAction, RenderBufferStoreAction.Store, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.DontCare);
 
-            if (URPCameraMode.isPureURP)
-            {
+
+            // Note: We need to get the cameraData.targetTexture as this will get the targetTexture of the camera stack.
+            // Overlay cameras need to output to the target described in the base camera while doing camera stack.
+            RenderTargetIdentifier cameraTarget = (cameraData.targetTexture != null) ? new RenderTargetIdentifier(cameraData.targetTexture) : BuiltinRenderTextureType.CameraTarget;
+            cmd.SetRenderTarget(cameraTarget, colorLoadAction, RenderBufferStoreAction.Store, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.DontCare);            if (URPCameraMode.isPureURP)            {
                 bool isRenderToCameraTarget = m_Destination == RenderTargetHandle.CameraTarget;
                 bool isCameraTargetIntermediateTexture = cameraData.camera.targetTexture != null || cameraData.camera.cameraType == CameraType.SceneView || cameraData.camera.cameraType == CameraType.Preview;
                 bool isRenderToTexture = !isRenderToCameraTarget || isCameraTargetIntermediateTexture;
                 Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(Matrix4x4.identity, isRenderToTexture);
                 Matrix4x4 viewMatrix = Matrix4x4.identity;
                 RenderingUtils.SetViewProjectionMatrices(cmd, viewMatrix, projMatrix, true);
-                cmd.SetViewport(cameraData.camera.pixelRect);
+                cmd.SetViewport(cameraData.pixelRect);
                 cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, material);
                 RenderingUtils.SetViewProjectionMatrices(cmd, cameraData.camera.worldToCameraMatrix, GL.GetGPUProjectionMatrix(cameraData.camera.projectionMatrix, isRenderToTexture), true);
             }
             else
             {
+                cmd.SetViewProjectionMatrices(cameraData.camera.worldToCameraMatrix, cameraData.camera.projectionMatrix);
                 if (cameraData.isStereoEnabled)
                 {
                     Blit(cmd, m_Source.Identifier(), BuiltinRenderTextureType.CurrentActive, material);
@@ -1263,7 +1271,7 @@ namespace UnityEngine.Rendering.Universal.Internal
                 else
                 {
                     cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
-                    cmd.SetViewport(cameraData.camera.pixelRect);
+                    cmd.SetViewport(cameraData.pixelRect);
                     cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, material);
                     cmd.SetViewProjectionMatrices(cameraData.camera.worldToCameraMatrix, cameraData.camera.projectionMatrix);
                 }
