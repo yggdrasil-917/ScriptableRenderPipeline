@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added SceneSelection pass for TerrainLit shader.
 - Deprecated the CinemachineUniversalPixelPerfect extension. Use the one from Cinemachine v2.4 instead.
 - Replaced PlayerSettings.virtualRealitySupported with XRGraphics.tryEnable.
+- Particle shaders now receive shadows
 
 ### Fixed
 - Fixed an issue where linear to sRGB conversion occurred twice on certain Android devices.
@@ -54,6 +55,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed an issue where particles had dark outlines when blended together [case 1199812](https://issuetracker.unity3d.com/issues/urp-soft-particles-create-dark-blending-artefacts-when-intersecting-with-scene-geometry)
 - Fixed an issue where the default TerrainLit Material was outdated, which caused the default Terrain to use per-vertex normals instead of per-pixel normals.
 - Fixed shader errors and warnings in the default Universal RP Terrain Shader. [case 1185948](https://issuetracker.unity3d.com/issues/urp-terrain-slash-lit-base-pass-shader-does-not-compile)
+- Fixed an issue with transparent objects not receiving shadows when using shadow cascades. [case 1116936](https://issuetracker.unity3d.com/issues/lwrp-cascaded-shadows-do-not-appear-on-alpha-blended-objects)
+
 
 ## [7.1.1] - 2019-09-05
 ### Upgrade Guide
