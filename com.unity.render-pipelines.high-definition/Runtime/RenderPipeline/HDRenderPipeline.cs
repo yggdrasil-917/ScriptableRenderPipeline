@@ -117,6 +117,8 @@ namespace UnityEngine.Rendering.HighDefinition
         Material m_CameraMotionVectorsMaterial;
         Material m_DecalNormalBufferMaterial;
 
+        Material m_ClearStencilBufferMaterial;
+
         // Debug material
         Material m_DebugViewMaterialGBuffer;
         Material m_DebugViewMaterialGBufferShadowMask;
@@ -387,6 +389,8 @@ namespace UnityEngine.Rendering.HighDefinition
             m_UpsampleTransparency = CoreUtils.CreateEngineMaterial(defaultResources.shaders.upsampleTransparentPS);
 
             m_ApplyDistortionMaterial = CoreUtils.CreateEngineMaterial(defaultResources.shaders.applyDistortionPS);
+
+            m_ClearStencilBufferMaterial = CoreUtils.CreateEngineMaterial(defaultResources.shaders.clearStencilBufferPS);
 
             InitializeDebugMaterials();
 
@@ -832,6 +836,7 @@ namespace UnityEngine.Rendering.HighDefinition
             CoreUtils.Destroy(m_ErrorMaterial);
             CoreUtils.Destroy(m_DownsampleDepthMaterial);
             CoreUtils.Destroy(m_UpsampleTransparency);
+            CoreUtils.Destroy(m_ClearStencilBufferMaterial);
 
             CleanupSubsurfaceScattering();
             m_SharedRTManager.Cleanup();
@@ -2190,6 +2195,9 @@ namespace UnityEngine.Rendering.HighDefinition
                 SendGeometryGraphicsBuffers(cmd, hdCamera);
 
                 m_PostProcessSystem.DoUserAfterOpaqueAndSky(cmd, hdCamera, m_CameraColorBuffer);
+
+                // No need for old stencil values here since from transparent on different features are tagged
+                ClearStencilBuffer(hdCamera, cmd);
 
                 RenderTransparentDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
@@ -4155,6 +4163,15 @@ namespace UnityEngine.Rendering.HighDefinition
                 RenderShadowsDebugOverlay(debugParams, atlases, cmd, ref x, ref y, overlaySize, m_SharedPropertyBlock);
 
                 DecalSystem.instance.RenderDebugOverlay(debugParams.hdCamera, cmd, debugParams.debugDisplaySettings, ref x, ref y, overlaySize, debugParams.hdCamera.actualWidth);
+            }
+        }
+
+        void ClearStencilBuffer(HDCamera hdCamera, CommandBuffer cmd)
+        {
+            using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.ClearStencil)))
+            {
+                m_ClearStencilBufferMaterial.SetInt(HDShaderIDs._StencilMask, (int)StencilUsage.HDRPReservedBits);
+                HDUtils.DrawFullScreen(cmd, m_ClearStencilBufferMaterial, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer());
             }
         }
 

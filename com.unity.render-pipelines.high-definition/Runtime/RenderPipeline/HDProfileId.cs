@@ -55,6 +55,7 @@ namespace UnityEngine.Rendering.HighDefinition
         DisplayLightVolume,
         ClearBuffers,
         ClearDepthStencil,
+        ClearStencil,
         ClearSssLightingBuffer,
         ClearSSSFilteringTarget,
         ClearAndCopyStencilTexture,
