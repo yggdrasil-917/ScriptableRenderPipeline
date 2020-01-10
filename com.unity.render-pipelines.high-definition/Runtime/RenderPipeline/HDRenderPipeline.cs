@@ -1139,16 +1139,16 @@ namespace UnityEngine.Rendering.HighDefinition
             // or go in detail if debug is activated. Done once for all renderer.
             m_FrameSettingsHistoryEnabled = FrameSettingsHistory.enabled;
 
-            m_LastTime = m_Time;
-            m_Time     = Time.time;                     // Does NOT take the 'animateMaterials' setting into account.
-            m_LastTime = Mathf.Min(m_Time, m_LastTime); // Guard against broken Unity behavior. Should not be necessary.
-
             int  newCount = Time.frameCount;
             bool newFrame = newCount != m_FrameCount;
             m_FrameCount  = newCount;
 
             if (newFrame)
             {
+                m_LastTime = m_Time;                        // Only update time once per frame.
+                m_Time     = Time.time;                     // Does NOT take the 'animateMaterials' setting into account.
+                m_LastTime = Mathf.Min(m_Time, m_LastTime); // Guard against broken Unity behavior. Should not be necessary.
+
                 m_ProbeCameraCache.ClearCamerasUnusedFor(2, m_FrameCount);
                 HDCamera.CleanUnused();
             }
