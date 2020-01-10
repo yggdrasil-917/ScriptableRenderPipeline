@@ -222,8 +222,9 @@ namespace UnityEngine.Rendering.HighDefinition
         int m_FrameCount;
         float m_LastTime, m_Time; // Do NOT take the 'animateMaterials' setting into account.
 
-        public float GetLastTime() { return m_LastTime; }
-        public float GetTime()     { return m_Time;     }
+        public int   GetFrameCount() { return m_FrameCount; }
+        public float GetLastTime()   { return m_LastTime;   }
+        public float GetTime()       { return m_Time;       }
 
         GraphicsFormat GetColorBufferFormat()
             => (GraphicsFormat)m_Asset.currentPlatformRenderPipelineSettings.colorBufferFormat;
