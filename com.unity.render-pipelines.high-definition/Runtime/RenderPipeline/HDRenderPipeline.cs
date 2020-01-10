@@ -1961,6 +1961,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
 
+            DecalNormalPatch(hdCamera, cmd, renderContext);
+
             // We can now bind the normal buffer to be use by any effect
             m_SharedRTManager.BindNormalBuffer(cmd);
 
@@ -3016,14 +3018,23 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 m_DbufferManager.BindBufferAsTextures(cmd);
             }
+        }
 
-            if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported
+        void DecalNormalPatch(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext)
+        {
+            if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals) &&
+                !hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported
             {
                 using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DBufferNormal)))
                 {
-                    // We can call DBufferNormalPatch after RenderDBuffer as it only affect forward material and isn't affected by RenderGBuffer
-                    // This reduce lifetime of stencil bit
-                    DBufferNormalPatch(PrepareDBufferNormalPatchParameters(hdCamera), m_SharedRTManager.GetNormalBuffer(), m_SharedRTManager.GetDepthStencilBuffer(), cmd, renderContext);
+                    var parameters = PrepareDBufferNormalPatchParameters(hdCamera);
+                    parameters.decalNormalBufferMaterial.SetInt(HDShaderIDs._DecalNormalBufferStencilReadMask, parameters.stencilMask);
+                    parameters.decalNormalBufferMaterial.SetInt(HDShaderIDs._DecalNormalBufferStencilRef, parameters.stencilRef);
+
+                    CoreUtils.SetRenderTarget(cmd, m_SharedRTManager.GetDepthStencilBuffer());
+                    cmd.SetRandomWriteTarget(1, m_SharedRTManager.GetNormalBuffer());
+                    cmd.DrawProcedural(Matrix4x4.identity, parameters.decalNormalBufferMaterial, 0, MeshTopology.Triangles, 3, 1);
+                    cmd.ClearRandomWriteTargets(); 
                 }
             }
         }
@@ -3132,19 +3143,6 @@ namespace UnityEngine.Rendering.HighDefinition
             }
 
             return parameters;
-        }
-
-        // DBufferNormalPatch will patch the normal buffer with data from DBuffer for forward material.
-        // As forward material output normal during depth prepass, they aren't affected by decal, and thus we need to patch the normal buffer.
-        static void DBufferNormalPatch(in DBufferNormalPatchParameters parameters, RTHandle normalBuffer, RTHandle depthStencilBuffer, CommandBuffer cmd, ScriptableRenderContext renderContext)
-        {
-            parameters.decalNormalBufferMaterial.SetInt(HDShaderIDs._DecalNormalBufferStencilReadMask, parameters.stencilMask);
-            parameters.decalNormalBufferMaterial.SetInt(HDShaderIDs._DecalNormalBufferStencilRef, parameters.stencilRef);
-
-            CoreUtils.SetRenderTarget(cmd, depthStencilBuffer);
-            cmd.SetRandomWriteTarget(1, normalBuffer);
-            cmd.DrawProcedural(Matrix4x4.identity, parameters.decalNormalBufferMaterial, 0, MeshTopology.Triangles, 3, 1);
-            cmd.ClearRandomWriteTargets();
         }
 
         RendererListDesc PrepareForwardEmissiveRendererList(CullingResults cullResults, HDCamera hdCamera)

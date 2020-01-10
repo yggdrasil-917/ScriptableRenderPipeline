@@ -149,6 +149,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 RenderGBuffer(renderGraph, sssBuffer, ref result, cullingResults, hdCamera);
 
+                DecalNormalPatch(renderGraph, hdCamera, ref result);
+
                 // TODO RENDERGRAPH
                 //// After Depth and Normals/roughness including decals
                 //RenderCustomPass(renderContext, cmd, hdCamera, customPassCullingResults, CustomPassInjectionPoint.AfterOpaqueDepthAndNormal);
@@ -618,8 +620,12 @@ namespace UnityEngine.Rendering.HighDefinition
                                     context.cmd);
                 });
             }
+        }
 
-            if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported
+        void DecalNormalPatch(RenderGraph renderGraph, HDCamera hdCamera, ref PrepassOutput output)
+        {
+            if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals) &&
+                !hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)) // MSAA not supported
             {
                 using (var builder = renderGraph.AddRenderPass<DBufferNormalPatchData>("DBuffer Normal (forward)", out var passData, ProfilingSampler.Get(HDProfileId.DBufferNormal)))
                 {
@@ -632,12 +638,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     builder.SetRenderFunc(
                     (DBufferNormalPatchData data, RenderGraphContext context) =>
                     {
-                        // We can call DBufferNormalPatch after RenderDBuffer as it only affect forward material and isn't affected by RenderGBuffer
-                        // This reduce lifeteime of stencil bit
-                        DBufferNormalPatch( data.parameters,
-                                            context.resources.GetTexture(data.normalBuffer),
-                                            context.resources.GetTexture(data.depthStencilBuffer),
-                                            context.cmd, context.renderContext);
+                        DecalNormalPatch(hdCamera, context.cmd, context.renderContext);
                     });
                 }
             }
