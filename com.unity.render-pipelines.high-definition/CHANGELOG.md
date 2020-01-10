@@ -301,6 +301,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed shader warning in AO code.
 - Fixed a warning in simpledenoiser.compute
 - Fixed tube and rectangle light culling to use their shape instead of their range as a bounding box.
+- Fix various issues with time and animated materials (case 1210068).
 
 ### Changed
 - Color buffer pyramid is not allocated anymore if neither refraction nor distortion are enabled
