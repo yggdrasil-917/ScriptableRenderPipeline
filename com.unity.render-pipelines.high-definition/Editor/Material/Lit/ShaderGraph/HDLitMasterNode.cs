@@ -827,22 +827,25 @@ namespace UnityEditor.Rendering.HighDefinition
                 AddSlot(new ColorRGBMaterialSlot(AlbedoSlotId, AlbedoDisplaySlotName, AlbedoSlotName, SlotType.Input, Color.grey.gamma, ColorMode.Default, ShaderStageCapability.Fragment));
                 validSlots.Add(AlbedoSlotId);
             }
-            if (MaterialTypeUsesSlotMask(SlotMask.Normal) && m_NormalDropOffSpace == NormalDropOffSpace.Tangent)
+            if (MaterialTypeUsesSlotMask(SlotMask.Normal))
             {
                 RemoveSlot(NormalSlotId);
-                AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, CoordinateSpace.Tangent, ShaderStageCapability.Fragment));
-                validSlots.Add(NormalSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.Normal) && m_NormalDropOffSpace == NormalDropOffSpace.Object)
-            {
-                RemoveSlot(NormalSlotId);
-                AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, CoordinateSpace.Object, ShaderStageCapability.Fragment));
-                validSlots.Add(NormalSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.Normal) && m_NormalDropOffSpace == NormalDropOffSpace.World)
-            {
-                RemoveSlot(NormalSlotId);
-                AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, CoordinateSpace.World, ShaderStageCapability.Fragment));
+                
+                var coordSpace = CoordinateSpace.Tangent;
+                switch (m_NormalDropOffSpace)
+                {
+                    case NormalDropOffSpace.Tangent:
+                        coordSpace = CoordinateSpace.Tangent;
+                        break;
+                    case NormalDropOffSpace.World:
+                        coordSpace = CoordinateSpace.World;
+                        break;
+                    case NormalDropOffSpace.Object:
+                        coordSpace = CoordinateSpace.Object;
+                        break;
+                }
+
+                AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, coordSpace, ShaderStageCapability.Fragment));
                 validSlots.Add(NormalSlotId);
             }
             if (MaterialTypeUsesSlotMask(SlotMask.BentNormal))
