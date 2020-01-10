@@ -23,7 +23,7 @@ bool SampleGGX(MaterialData mtlData,
         return false;
 
     float NdotV = dot(mtlData.bsdfData.normalWS, mtlData.V);
-    float3 F = F_Schlick(mtlData.bsdfData.fresnel0, NdotV);
+    float3 F = F_Schlick(mtlData.bsdfData.fresnel0, VdotH);
     float Vg = V_SmithJointGGX(NdotL, NdotV, mtlData.bsdfData.roughnessT);
 
     value = F * D * Vg * NdotL;
@@ -51,7 +51,7 @@ void EvaluateGGX(MaterialData mtlData,
     float D = D_GGX(NdotH, mtlData.bsdfData.roughnessT);
     pdf = D * NdotH / (4.0 * VdotH);
 
-    float3 F = F_Schlick(mtlData.bsdfData.fresnel0, NdotV);
+    float3 F = F_Schlick(mtlData.bsdfData.fresnel0, VdotH);
     float Vg = V_SmithJointGGX(NdotL, NdotV, mtlData.bsdfData.roughnessT);
 
     value = F * D * Vg * NdotL;
