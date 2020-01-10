@@ -149,7 +149,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 if(EditorGUI.EndChangeCheck())
                 {
-                    m_Keyword.entries[index] = new KeywordEntry(index + 1, displayName, referenceName);
+                    m_Keyword.entries[index] = new KeywordEntry(entry.id, displayName, referenceName);
 
                     DirtyNodes();
                     Rebuild();
@@ -165,13 +165,13 @@ namespace UnityEditor.ShaderGraph.Drawing
             // Can add
             m_ReorderableList.onCanAddCallback = (ReorderableList list) =>
             {
-                return list.count < KeywordNode.kMaxEnumEntries;
+                return list.count < KeywordNode.k_MaxEnumEntries;
             };
 
             // Can remove
             m_ReorderableList.onCanRemoveCallback = (ReorderableList list) =>
             {
-                return list.count > KeywordNode.kMinEnumEntries;
+                return list.count > KeywordNode.k_MinEnumEntries;
             };
 
             // Add callback delegates
@@ -190,7 +190,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             graph.owner.RegisterCompleteObjectUndo("Add Keyword Entry");
 
-            var index = GetFirstUnusedIndex();
+            var index = GetFirstUnusedID();
             var displayName = GetDuplicateSafeDisplayName(index, "New");
             var referenceName = GetDuplicateSafeReferenceName(index, "NEW");
 
@@ -204,25 +204,24 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_SelectedIndex = list.list.Count - 1;
         }
 
-        private int GetFirstUnusedIndex()
+        // Allowed indicies are 1-MAX_ENUM_ENTRIES
+        private int GetFirstUnusedID()
         {
-            // Allowed indicies are 1-8 (MAX_ENUM_ENTRIES)
-            bool[] usedIndicies = new bool[KeywordNode.kMaxEnumEntries - 1];
+            List<int> ususedIDs = new List<int>();
 
-            int count = m_Keyword.entries.Count;
-            for (int x = 0; x < count; x++)
+            foreach (KeywordEntry keywordEntry in m_Keyword.entries)
             {
-                int idMinus1 = m_Keyword.entries[x].id - 1;
-                if (idMinus1 < KeywordNode.kMaxEnumEntries - 1)
-                    usedIndicies[idMinus1] = true;
+                ususedIDs.Add(keywordEntry.id);
             }
 
-            for (int x = 0; x < KeywordNode.kMaxEnumEntries - 1; x++)
+            for (int x = 1; x <= KeywordNode.k_MaxEnumEntries; x++)
             {
-                if (!usedIndicies[x]) return x + 1;
+                if (!ususedIDs.Contains(x))
+                    return x;
             }
 
-            return KeywordNode.kMaxEnumEntries;
+            Debug.LogError("GetFirstUnusedID: Attempting to get unused ID when all IDs are Used");
+            return 1;
         }
 
         private void RemoveEntry(ReorderableList list)
