@@ -220,7 +220,10 @@ namespace UnityEngine.Rendering.HighDefinition
 
         // Use to detect frame changes
         int m_FrameCount;
-        float m_LastTime, m_Time;
+        float m_LastTime, m_Time; // Do NOT take the 'animateMaterials' setting into account.
+
+        public float GetLastTime() { return m_LastTime; }
+        public float GetTime()     { return m_Time;     }
 
         GraphicsFormat GetColorBufferFormat()
             => (GraphicsFormat)m_Asset.currentPlatformRenderPipelineSettings.colorBufferFormat;
@@ -951,7 +954,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 ssRefraction.PushShaderParameters(cmd);
 
                 // Set up UnityPerView CBuffer.
-                hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
+                hdCamera.SetupGlobalParams(cmd, m_FrameCount);
 
                 cmd.SetGlobalVector(HDShaderIDs._IndirectLightingMultiplier, new Vector4(hdCamera.volumeStack.GetComponent<IndirectLightingController>().indirectDiffuseIntensity.value, 0, 0, 0));
 
@@ -1135,51 +1138,18 @@ namespace UnityEngine.Rendering.HighDefinition
             // or go in detail if debug is activated. Done once for all renderer.
             m_FrameSettingsHistoryEnabled = FrameSettingsHistory.enabled;
 
+            m_LastTime = m_Time;
+            m_Time     = Time.time;                     // Does NOT take the 'animateMaterials' setting into account.
+            m_LastTime = Mathf.Min(m_Time, m_LastTime); // Guard against broken Unity behavior. Should not be necessary.
+
+            int  newCount = Time.frameCount;
+            bool newFrame = newCount != m_FrameCount;
+            m_FrameCount  = newCount;
+
+            if (newFrame)
             {
-                float newTime;
-                bool  newFrame;
-
-                if (Application.isPlaying)
-                {
-                    newTime  = Time.time; // Using this allows time pausing and scaling
-                    int c    = Time.frameCount;
-                    newFrame = m_FrameCount != c;
-                }
-                else
-                {
-                    // SRP.Render() can be called several times per frame.
-                    // Also, most Time variables do not consistently update in the Scene View.
-                    // This makes reliable detection of the start of the new frame VERY hard.
-                    // One of the exceptions is 'Time.realtimeSinceStartup'.
-                    // Therefore, outside of the Play Mode we update the time at 60 fps,
-                    // and in the Play Mode we can rely on 'Time.frameCount'.
-                    newTime  = Time.realtimeSinceStartup;
-                    newFrame = (newTime - m_Time) > 0.0166f;
-
-                    // If we switch to other scene 'Time.realtimeSinceStartup' is reset, so we need to
-                    // reset also m_Time. Here we simply detect ill case to trigger the reset.
-                    newFrame = newFrame || (newTime <= m_Time);
-                }
-
-                if (newFrame)
-                {
-                    m_ProbeCameraCache.ClearCamerasUnusedFor(2, Time.frameCount);
-                    HDCamera.CleanUnused();
-
-                    if (newTime > m_Time)
-                    {
-                        m_FrameCount++;
-                        m_LastTime = m_Time;
-                        m_Time = newTime;
-                    }
-                    else if (newTime < m_Time)
-                    {
-                        m_FrameCount = 0;
-                        m_LastTime = m_Time;
-                        m_Time = newTime;
-                    }
-                    // Note: We do nothing if newTime = m_Time
-                }
+                m_ProbeCameraCache.ClearCamerasUnusedFor(2, m_FrameCount);
+                HDCamera.CleanUnused();
             }
 
             var dynResHandler = DynamicResolutionHandler.instance;
@@ -1378,7 +1348,7 @@ namespace UnityEngine.Rendering.HighDefinition
                             return;
 
                         // Notify that we render the probe at this frame
-                        probe.SetIsRendered(Time.frameCount);
+                        probe.SetIsRendered(m_FrameCount);
 
                         float visibility = ComputeVisibility(visibleInIndex, probe);
 
@@ -1502,7 +1472,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                     for (int j = 0; j < cameraSettings.Count; ++j)
                     {
-                        var camera = m_ProbeCameraCache.GetOrCreate((viewerTransform, visibleProbe, j), Time.frameCount);
+                        var camera = m_ProbeCameraCache.GetOrCreate((viewerTransform, visibleProbe, j), m_FrameCount);
                         var additionalCameraData = camera.GetComponent<HDAdditionalCameraData>();
 
                         if (additionalCameraData == null)
@@ -1876,7 +1846,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 material.Bind(cmd);
 
             // Frustum cull density volumes on the CPU. Can be performed as soon as the camera is set up.
-            DensityVolumeList densityVolumes = PrepareVisibleDensityVolumeList(hdCamera, cmd, m_Time);
+            DensityVolumeList densityVolumes = PrepareVisibleDensityVolumeList(hdCamera, cmd, hdCamera.time);
 
             // Note: Legacy Unity behave like this for ShadowMask
             // When you select ShadowMask in Lighting panel it recompile shaders on the fly with the SHADOW_MASK keyword.
@@ -2087,7 +2057,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     // This call overwrites camera properties passed to the shader system.
                     RenderShadowMaps(renderContext, cmd, cullingResults, hdCamera);
 
-                    hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
+                    hdCamera.SetupGlobalParams(cmd, m_FrameCount);
                 }
 
                 if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.RayTracing))
@@ -4301,7 +4271,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 // In order to avoid that we decide that objects rendered after Post processes while TAA is active will not benefit from the depth buffer so we disable it.
                 bool taaEnabled = hdCamera.IsTAAEnabled();
                 hdCamera.UpdateAllViewConstants(false);
-                hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
+                hdCamera.SetupGlobalParams(cmd, m_FrameCount);
 
                 // Here we share GBuffer albedo buffer since it's not needed anymore
                 // Note: We bind the depth only if the ZTest for After Post Process is enabled. It is disabled by

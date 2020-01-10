@@ -59,6 +59,8 @@ namespace UnityEngine.Rendering.HighDefinition
         // This will have the correct viewport position and the size will be full resolution (ie : not taking dynamic rez into account)
         public Rect      finalViewport;
 
+        public float lastTime, time; // Take the 'animateMaterials' setting into account.
+
         public RTHandleProperties historyRTHandleProperties { get { return m_HistoryRTSystem.rtHandleProperties; } }
 
         public bool colorPyramidHistoryIsValid = false;
@@ -306,6 +308,12 @@ namespace UnityEngine.Rendering.HighDefinition
         // Otherwise, previous frame view constants will be wrong.
         public void Update(FrameSettings currentFrameSettings, HDRenderPipeline hdrp, MSAASamples msaaSamples, XRPass xrPass)
         {
+            // Different views/tabs can have different values of the "Animated Materials" setting.
+            bool animateMaterials = CoreUtils.AreAnimatedMaterialsEnabled(camera);
+
+            time     = animateMaterials ? hdrp.GetTime()     : 0;
+            lastTime = animateMaterials ? hdrp.GetLastTime() : 0;
+
             // Make sure that the shadow history identification array is allocated and is at the right size
             if (shadowHistoryUsage == null || shadowHistoryUsage.Length != hdrp.currentPlatformRenderPipelineSettings.hdShadowInitParams.maxScreenSpaceShadowSlots)
             {
@@ -943,7 +951,7 @@ namespace UnityEngine.Rendering.HighDefinition
         }
 
         // Set up UnityPerView CBuffer.
-        public void SetupGlobalParams(CommandBuffer cmd, float time, float lastTime, int frameCount)
+        public void SetupGlobalParams(CommandBuffer cmd, int frameCount)
         {
             bool taaEnabled = m_frameSettings.IsEnabled(FrameSettingsField.Postprocess)
                 && antialiasing == AntialiasingMode.TemporalAntialiasing
@@ -970,18 +978,11 @@ namespace UnityEngine.Rendering.HighDefinition
             cmd.SetGlobalVector(HDShaderIDs._ScreenParams,              screenParams);
             cmd.SetGlobalVector(HDShaderIDs._TaaFrameInfo,              new Vector4(taaSharpenStrength, 0, taaFrameIndex, taaEnabled ? 1 : 0));
             cmd.SetGlobalVector(HDShaderIDs._TaaJitterStrength,         taaJitter);
+            cmd.SetGlobalInt(   HDShaderIDs._FrameCount,                frameCount);
             cmd.SetGlobalVectorArray(HDShaderIDs._FrustumPlanes,        frustumPlaneEquations);
 
-
-            // Time is also a part of the UnityPerView CBuffer.
-            // Different views can have different values of the "Animated Materials" setting.
-            bool animateMaterials = CoreUtils.AreAnimatedMaterialsEnabled(camera);
-
-            // We also enable animated materials in previews so the shader graph main preview works with time parameters.
-            animateMaterials |= camera.cameraType == CameraType.Preview;
-
-            float  ct = animateMaterials ? time     : 0;
-            float  pt = animateMaterials ? lastTime : 0;
+            float  ct = time;
+            float  pt = lastTime;
             float  dt = Time.deltaTime;
             float sdt = Time.smoothDeltaTime;
 
@@ -992,7 +993,6 @@ namespace UnityEngine.Rendering.HighDefinition
             cmd.SetGlobalVector(HDShaderIDs._TimeParameters,        new Vector4(ct, Mathf.Sin(ct), Mathf.Cos(ct), 0.0f));
             cmd.SetGlobalVector(HDShaderIDs._LastTimeParameters,    new Vector4(pt, Mathf.Sin(pt), Mathf.Cos(pt), 0.0f));
 
-            cmd.SetGlobalInt(HDShaderIDs._FrameCount,        frameCount);
 
             float exposureMultiplierForProbes = 1.0f / Mathf.Max(probeRangeCompressionFactor, 1e-6f);
             cmd.SetGlobalFloat(HDShaderIDs._ProbeExposureScale, exposureMultiplierForProbes);

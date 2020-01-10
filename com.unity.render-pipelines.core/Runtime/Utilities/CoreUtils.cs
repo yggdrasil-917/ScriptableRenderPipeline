@@ -999,7 +999,7 @@ namespace UnityEngine.Rendering
             bool animateMaterials = true;
 
         #if UNITY_EDITOR
-            animateMaterials = Application.isPlaying;
+            animateMaterials = Application.isPlaying; // For Game View
 
             if (camera.cameraType == CameraType.SceneView)
             {
@@ -1018,19 +1018,8 @@ namespace UnityEngine.Rendering
             }
             else if (camera.cameraType == CameraType.Preview)
             {
-                animateMaterials = false;
-
-                // Determine whether the "Animated Materials" checkbox is checked for the current view.
-                foreach (UnityEditor.MaterialEditor med in materialEditors())
-                {
-                    // Warning: currently, there's no way to determine whether a given camera corresponds to this MaterialEditor.
-                    // Therefore, if at least one of the visible MaterialEditors is in Play Mode, all of them will play.
-                    if (med.isVisible && med.RequiresConstantRepaint())
-                    {
-                        animateMaterials = true;
-                        break;
-                    }
-                }
+                // Enable for previews so the shader graph main preview works with time parameters.
+                animateMaterials = true;
             }
 
             // TODO: how to handle reflection views? We don't know the parent window they are being rendered into,
