@@ -1399,6 +1399,7 @@ namespace UnityEngine.Rendering.HighDefinition
                                 viewerTransform,
                                 new List<(int index, float weight)>{visibility},
                                 HDUtils.GetSceneCullingMaskFromCamera(visibleInRenderRequest.hdCamera.camera),
+                                visibleInRenderRequest.hdCamera,
                                 visibleInRenderRequest.hdCamera.camera.fieldOfView,
                                 visibleInRenderRequest.hdCamera.camera.aspect
                             );
@@ -1413,7 +1414,7 @@ namespace UnityEngine.Rendering.HighDefinition
                                 visibleInOneViewer = true;
                         }
                         if (visibleInOneViewer)
-                            AddHDProbeRenderRequests(visibleProbe, null, visibilities, 0);
+                            AddHDProbeRenderRequests(visibleProbe, null, visibilities, 0, null); // No parent camera
                     }
                 }
                 foreach (var pair in renderRequestIndicesWhereTheProbeIsVisible)
@@ -1426,6 +1427,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     Transform viewerTransform,
                     List<(int index, float weight)> visibilities,
                     ulong overrideSceneCullingMask,
+                    HDCamera parentCamera,
                     float referenceFieldOfView = 90,
                     float referenceAspect = 1
                 )
@@ -1514,6 +1516,9 @@ namespace UnityEngine.Rendering.HighDefinition
                             UnsafeGenericPool<HDCullingResults>.Release(_cullingResults);
                             continue;
                         }
+
+                        hdCamera.parentCamera = parentCamera.camera;
+
                         HDAdditionalCameraData hdCam;
                         camera.TryGetComponent<HDAdditionalCameraData>(out hdCam);
                         hdCam.flipYMode = visibleProbe.type == ProbeSettings.ProbeType.ReflectionProbe
@@ -3579,7 +3584,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
 #if UNITY_EDITOR
                 // In scene view there is no motion vector, so we clear the RT to black
-                if (hdCamera.camera.cameraType == CameraType.SceneView && !CoreUtils.AreAnimatedMaterialsEnabled(hdCamera.camera))
+                if (hdCamera.camera.cameraType == CameraType.SceneView && !hdCamera.animateMaterials)
                 {
                     CoreUtils.SetRenderTarget(cmd, m_SharedRTManager.GetMotionVectorsBuffer(msaa), m_SharedRTManager.GetDepthStencilBuffer(msaa), ClearFlag.Color, Color.clear);
                 }

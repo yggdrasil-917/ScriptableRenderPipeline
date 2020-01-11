@@ -266,7 +266,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             m_HDInstance = hdInstance;
             m_PostProcessEnabled = camera.frameSettings.IsEnabled(FrameSettingsField.Postprocess) && CoreUtils.ArePostProcessesEnabled(camera.camera);
-            m_AnimatedMaterialsEnabled = CoreUtils.AreAnimatedMaterialsEnabled(camera.camera);
+            m_AnimatedMaterialsEnabled = camera.animateMaterials;
             if (camera.NeedTAAResetHistory())
             {
                 ResetHistory();

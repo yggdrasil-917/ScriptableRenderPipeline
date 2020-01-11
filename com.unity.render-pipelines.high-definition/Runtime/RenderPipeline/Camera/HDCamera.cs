@@ -59,6 +59,7 @@ namespace UnityEngine.Rendering.HighDefinition
         // This will have the correct viewport position and the size will be full resolution (ie : not taking dynamic rez into account)
         public Rect      finalViewport;
 
+        public bool  animateMaterials;
         public float lastTime, time; // Take the 'animateMaterials' setting into account.
 
         public RTHandleProperties historyRTHandleProperties { get { return m_HistoryRTSystem.rtHandleProperties; } }
@@ -74,6 +75,8 @@ namespace UnityEngine.Rendering.HighDefinition
         internal uint cameraFrameCount = 0;
 
         internal bool hasRunLightListBuildingPrevFrame = false;
+
+        public Camera parentCamera = null; // Used for recursive rendering, e.g. a reflection in a scene view.
 
         // XR multipass and instanced views are supported (see XRSystem)
         XRPass m_XRPass;
@@ -308,8 +311,11 @@ namespace UnityEngine.Rendering.HighDefinition
         // Otherwise, previous frame view constants will be wrong.
         public void Update(FrameSettings currentFrameSettings, HDRenderPipeline hdrp, MSAASamples msaaSamples, XRPass xrPass)
         {
-            // Different views/tabs can have different values of the "Animated Materials" setting.
-            bool animateMaterials = CoreUtils.AreAnimatedMaterialsEnabled(camera);
+            // Inherit animation settings from the parent camera.
+            Camera aniCam = (parentCamera != null) ? parentCamera : camera;
+
+            // Different views/tabs may have different values of the "Animated Materials" setting.
+            animateMaterials = CoreUtils.AreAnimatedMaterialsEnabled(aniCam);
 
             time     = animateMaterials ? hdrp.GetTime()     : 0;
             lastTime = animateMaterials ? hdrp.GetLastTime() : 0;
@@ -456,7 +462,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     var mode = HDRenderPipelinePreferences.sceneViewAntialiasing;
 
-                    if (mode == AntialiasingMode.TemporalAntialiasing && !CoreUtils.AreAnimatedMaterialsEnabled(camera))
+                    if (mode == AntialiasingMode.TemporalAntialiasing && !animateMaterials)
                         antialiasing = AntialiasingMode.None;
                     else
                         antialiasing = mode;
