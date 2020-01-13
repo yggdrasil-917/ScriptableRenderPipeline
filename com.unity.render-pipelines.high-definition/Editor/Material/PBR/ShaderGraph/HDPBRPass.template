@@ -173,11 +173,11 @@ $include("SharedCode.template.hlsl")
         $SurfaceDescription.Normal: normalSrc = surfaceDescription.Normal;
 
         // compute world space normal
-#if _NORMAL_DROPOFF_SPACE==0
+#if _NORMAL_DROPOFF_TS
         GetNormalWS(fragInputs, normalSrc, surfaceData.normalWS, doubleSidedConstants);
-#elif _NORMAL_DROPOFF_SPACE==1
+#elif _NORMAL_DROPOFF_OS
 		surfaceData.normalWS = TransformObjectToWorldNormal(normalSrc);
-#elif _NORMAL_DROPOFF_SPACE==2
+#elif _NORMAL_DROPOFF_WS
 		surfaceData.normalWS = normalSrc;
 #endif
 

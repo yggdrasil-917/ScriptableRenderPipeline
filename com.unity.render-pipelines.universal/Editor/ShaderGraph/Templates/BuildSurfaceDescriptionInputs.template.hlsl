@@ -9,7 +9,8 @@ SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
 
 	$SurfaceDescriptionInputs.WorldSpaceBiTangent: // use bitangent on the fly like in hdrp
 	$SurfaceDescriptionInputs.WorldSpaceBiTangent: // IMPORTANT! If we ever support Flip on double sided materials ensure bitangent and tangent are NOT flipped.
-	$SurfaceDescriptionInputs.WorldSpaceBiTangent: float3 bitang = (input.tangentWS.w>0.0 ? 1.0 : -1.0) * cross(input.normalWS.xyz, input.tangentWS.xyz);
+    $SurfaceDescriptionInputs.WorldSpaceBiTangent: float crossSign = (input.tangentWS.w > 0.0 ? 1.0 : -1.0) * GetOddNegativeScale();
+	$SurfaceDescriptionInputs.WorldSpaceBiTangent: float3 bitang = crossSign * cross(input.normalWS.xyz, input.tangentWS.xyz);
 
     $SurfaceDescriptionInputs.WorldSpaceNormal:          output.WorldSpaceNormal =            renormFactor*input.normalWS.xyz;		// we want a unit length Normal Vector node in shader graph
     $SurfaceDescriptionInputs.ObjectSpaceNormal:         output.ObjectSpaceNormal =           normalize(mul(output.WorldSpaceNormal, (float3x3) UNITY_MATRIX_M));           // transposed multiplication by inverse matrix to handle normal scale

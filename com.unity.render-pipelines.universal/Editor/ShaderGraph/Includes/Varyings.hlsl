@@ -95,10 +95,6 @@ Varyings BuildVaryings(Attributes input)
     output.viewDirectionWS = _WorldSpaceCameraPos.xyz - positionWS;
 #endif
 
-#ifdef VARYINGS_NEED_BITANGENT_WS
-    output.bitangentWS = cross(normalWS, tangentWS.xyz) * tangentWS.w;
-#endif
-
 #ifdef VARYINGS_NEED_SCREENPOSITION
     output.screenPosition = ComputeScreenPos(output.positionCS, _ProjectionParams.x);
 #endif
