@@ -1167,6 +1167,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
             );
 
+            // This syntax is awful and hostile to debugging, please don't use it...
             using (ListPool<RenderRequest>.Get(out List<RenderRequest> renderRequests))
             using (ListPool<int>.Get(out List<int> rootRenderRequestIndices))
             using (HashSetPool<int>.Get(out HashSet<int> skipClearCullingResults))
@@ -1382,6 +1383,8 @@ namespace UnityEngine.Rendering.HighDefinition
                     //      render requests
                     var isViewDependent = visibleProbe.type == ProbeSettings.ProbeType.PlanarProbe;
 
+                    Camera parentCamera;
+
                     if (isViewDependent)
                     {
                         for (int i = 0; i < visibilities.Count; ++i)
@@ -1394,12 +1397,14 @@ namespace UnityEngine.Rendering.HighDefinition
                             var visibleInRenderRequest = renderRequests[visibleInIndex];
                             var viewerTransform = visibleInRenderRequest.hdCamera.camera.transform;
 
+                            parentCamera = visibleInRenderRequest.hdCamera.camera;
+
                             AddHDProbeRenderRequests(
                                 visibleProbe,
                                 viewerTransform,
                                 new List<(int index, float weight)>{visibility},
                                 HDUtils.GetSceneCullingMaskFromCamera(visibleInRenderRequest.hdCamera.camera),
-                                visibleInRenderRequest.hdCamera,
+                                parentCamera,
                                 visibleInRenderRequest.hdCamera.camera.fieldOfView,
                                 visibleInRenderRequest.hdCamera.camera.aspect
                             );
@@ -1407,6 +1412,12 @@ namespace UnityEngine.Rendering.HighDefinition
                     }
                     else
                     {
+                        // No parent camera.
+                        // That is wrong (reflection could be view-independent but still requested by another view),
+                        // but it appears there is no way to access the camera. Can't figure out the logic here.
+                        // The consequence of this is that spherical reflection probes don't have working animated materials.
+                        parentCamera = null;
+
                         bool visibleInOneViewer = false;
                         for (int i = 0; i < visibilities.Count && !visibleInOneViewer; ++i)
                         {
@@ -1414,7 +1425,7 @@ namespace UnityEngine.Rendering.HighDefinition
                                 visibleInOneViewer = true;
                         }
                         if (visibleInOneViewer)
-                            AddHDProbeRenderRequests(visibleProbe, null, visibilities, 0, null); // No parent camera
+                            AddHDProbeRenderRequests(visibleProbe, null, visibilities, 0, parentCamera);
                     }
                 }
                 foreach (var pair in renderRequestIndicesWhereTheProbeIsVisible)
@@ -1427,7 +1438,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     Transform viewerTransform,
                     List<(int index, float weight)> visibilities,
                     ulong overrideSceneCullingMask,
-                    HDCamera parentCamera,
+                    Camera parentCamera,
                     float referenceFieldOfView = 90,
                     float referenceAspect = 1
                 )
@@ -1517,7 +1528,7 @@ namespace UnityEngine.Rendering.HighDefinition
                             continue;
                         }
 
-                        hdCamera.parentCamera = parentCamera.camera;
+                        hdCamera.parentCamera = parentCamera; // Used to inherit the properties of the view
 
                         HDAdditionalCameraData hdCam;
                         camera.TryGetComponent<HDAdditionalCameraData>(out hdCam);
