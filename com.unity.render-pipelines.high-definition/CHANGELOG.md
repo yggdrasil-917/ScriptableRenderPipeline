@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added Contrast Adaptive Sharpen (CAS) Upscaling effect.
 - Added APIs to update probe settings at runtime.
 - Added documentation for the rayTracingSupported method in HDRP
+- Added semi-transparent shadows for point and spot lights.
 
 ### Fixed
 - Sorting, undo, labels, layout in the Lighting Explorer.
