@@ -21,6 +21,12 @@ EditorBuildSettings:
     path: Assets/Scenes/106_RTShadow.unity
     guid: fef4168c8e3f3bd47b3edad8d968de9f
   - enabled: 1
+    path: Assets/Scenes/107_RTSemiTransPT.unity
+    guid: 85d29280c924e314aa9bbe4130570252
+  - enabled: 1
+    path: Assets/Scenes/107_RTSemiTransSpot.unity
+    guid: 5a4c020917912884cae832c1a77f6703
+  - enabled: 1
     path: Assets/Scenes/1001_AmbientOcclusion.unity
     guid: 991ce8d8cc8714b4a93dad50967f7961
   - enabled: 1
