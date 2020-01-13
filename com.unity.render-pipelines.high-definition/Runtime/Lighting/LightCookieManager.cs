@@ -63,7 +63,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 cookieCubeSize = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, cookieCubeResolution, 1);
 
             // TODO: hardcoded format RGBA32, we need to move it to GraphicsFormat and then use the cookie format settings for this as well
-            m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
+            m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, GraphicsFormat.R8G8B8A8_SRGB, true, m_CubeToPanoMaterial);
         }
 
         internal void NewFrame() => m_CubeCookieTexArray.NewFrame();

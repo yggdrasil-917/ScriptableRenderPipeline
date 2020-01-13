@@ -36,13 +36,15 @@ namespace UnityEngine.Rendering.HighDefinition
             // BC6H requires CPP feature not yet available
             probeFormat = GraphicsFormat.R16G16B16A16_SFloat;
 
-            Debug.Assert(probeFormat == GraphicsFormat.RGB_BC6H_UFloat || probeFormat == GraphicsFormat.R16G16B16A16_SFloat, "Reflection Probe Cache format for HDRP can only be BC6H or FP16.");
+            Debug.Assert(probeFormat == GraphicsFormat.RGB_BC6H_SFloat || probeFormat == GraphicsFormat.R16G16B16A16_SFloat, "Reflection Probe Cache format for HDRP can only be BC6H or FP16.");
 
             m_ProbeSize = atlasResolution;
             m_TextureAtlas = new PowerOfTwoTextureAtlas(atlasResolution, 0, probeFormat, useMipMap: isMipmaped, name: "PlanarReflectionProbe Atlas");
             m_IBLFilterGGX = iblFilter;
 
-            m_PerformBC6HCompression = probeFormat == GraphicsFormat.RGB_BC6H_UFloat;
+            m_PerformBC6HCompression = probeFormat == GraphicsFormat.RGB_BC6H_SFloat;
+
+            InitializeProbeBakingStates();
         }
 
         void Initialize()
@@ -178,7 +180,7 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             bool    success = false;
 
-            using (new ProfilingSample(cmd, "Convolve Planar Reflection Probe"))
+            using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.ConvolvePlanarReflectionProbe)))
             {
                 // For now baking is done directly but will be time sliced in the future. Just preparing the code here.
                 m_ProbeBakingState[scaleOffset] = ProbeFilteringState.Convolving;
@@ -195,7 +197,9 @@ namespace UnityEngine.Rendering.HighDefinition
                 else
                 {
                     if (m_TextureAtlas.Contains(texture, out scaleOffset))
+                    {
                         success = m_TextureAtlas.UpdateTexture(cmd, texture, convolvedTexture, ref scaleOffset, sourceScaleOffset);
+                    }
                     else
                     {
                         // Reserve space for the rendertarget and then blit the result of the convolution at this
