@@ -3748,7 +3748,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (lightingDebug.displayCookieAtlas)
             {
-                using (new ProfilingSample(cmd, "Display Cookie Atlas", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
+                using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DisplayCookieAtlas)))
                 {
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
                     HDUtils.BlitQuad(cmd, parameters.cookieManager.atlasTexture, new Vector4(1, 1, 0, 0), new Vector4(1, 1, 0, 0), (int)lightingDebug.cookieAtlasMipLevel, false);
@@ -3758,7 +3758,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (lightingDebug.displayCookieCubeArray)
             {
-                using (new ProfilingSample(cmd, "Display Point Light Cookie Array", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
+                using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DisplayPointLightCookieArray)))
                 {
                     mpb.SetTexture(HDShaderIDs._InputCubemap, parameters.cookieManager.cubeCache);
                     mpb.SetFloat(HDShaderIDs._Mipmap, 0);
@@ -3778,7 +3778,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (lightingDebug.displayPlanarReflectionProbeAtlas)
             {
-                using (new ProfilingSample(cmd, "Display Planar Reflection Probe Atlas", CustomSamplerId.DisplayCookieAtlas.GetSampler()))
+                using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DisplayPlanarReflectionProbeAtlas)))
                 {
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
                     HDUtils.BlitQuad(cmd, parameters.planarProbeCache.GetTexCache(), new Vector4(1, 1, 0, 0), new Vector4(1, 1, 0, 0), (int)lightingDebug.planarReflectionProbeMipLevel, false);

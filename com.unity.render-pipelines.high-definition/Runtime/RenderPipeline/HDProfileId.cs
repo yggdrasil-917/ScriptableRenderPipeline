@@ -78,6 +78,9 @@ namespace UnityEngine.Rendering.HighDefinition
         PreIntegradeWardCookTorrance,
         FilterCubemapCharlie,
         FilterCubemapGGX,
+        DisplayPointLightCookieArray,
+        DisplayPlanarReflectionProbeAtlas,
+        BlitTextureInPotAtlas,
 
         UpdateSkyEnvironmentConvolution,
         RenderSkyToCubemap,

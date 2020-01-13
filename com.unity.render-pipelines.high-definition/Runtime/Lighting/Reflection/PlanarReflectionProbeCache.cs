@@ -43,8 +43,6 @@ namespace UnityEngine.Rendering.HighDefinition
             m_IBLFilterGGX = iblFilter;
 
             m_PerformBC6HCompression = probeFormat == GraphicsFormat.RGB_BC6H_SFloat;
-
-            InitializeProbeBakingStates();
         }
 
         void Initialize()

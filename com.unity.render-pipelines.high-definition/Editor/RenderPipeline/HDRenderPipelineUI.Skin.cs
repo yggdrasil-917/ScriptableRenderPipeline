@@ -121,6 +121,7 @@ namespace UnityEditor.Rendering.HighDefinition
             public static readonly GUIContent cookieTextureArraySizeContent = EditorGUIUtility.TrTextContent("Texture Array Size", "Sets the maximum Texture Array size for the 2D cookies HDRP uses for Directional and Spot Lights. Higher values allow HDRP to use more cookies concurrently on screen.");
             public static readonly GUIContent pointCoockieSizeContent = EditorGUIUtility.TrTextContent("Point Cookie Size", "Specifies the maximum size for the Cube cookies HDRP uses for Point Lights.");
             public static readonly GUIContent pointCookieTextureArraySizeContent = EditorGUIUtility.TrTextContent("Cubemap Array Size", "Sets the maximum Texture Array size for the Cube cookies HDRP uses for Directional and Spot Lights. Higher values allow HDRP to use more cookies concurrently on screen.");
+            public static readonly GUIContent maxPlanarReflectionOnScreen = EditorGUIUtility.TrTextContent("Max Planar Reflection On Screen", "Sets the maximum number of the Planar Reflection HDRP can handle on screen at once.");
 
             public static readonly GUIContent cookieAtlasSizeContent = EditorGUIUtility.TrTextContent("2D Atlas Size", "Specifies the size of the atlas used for 2D cookies (Directional, Spot and Rectangle Lights).");
             public static readonly GUIContent cookieAtlasFormatContent = EditorGUIUtility.TrTextContent("2D Atlas Format", "Specifies the HDR format of the atlas used for 2D cookies. R16G16B16");
@@ -133,6 +134,7 @@ namespace UnityEditor.Rendering.HighDefinition
             public static readonly GUIContent compressPlanarProbeCacheContent = EditorGUIUtility.TrTextContent("Compress Planar Reflection Probe Cache", "When enabled, HDRP compresses the Planar Reflection Probe cache to save disk space.");
             public static readonly GUIContent planarTextureSizeContent = EditorGUIUtility.TrTextContent("Planar Reflection Texture Size", "Specifies the maximum resolution of Planar Reflection Textures.");
             public static readonly GUIContent planarProbeCacheSizeContent = EditorGUIUtility.TrTextContent("Planar Probe Cache Size", "Sets the maximum size of the Planar Probe Cache.");
+            public static readonly GUIContent planarAtlasSizeContent = EditorGUIUtility.TrTextContent("Planar Reflection Atlas Size", "Specifies the resolution of Planar Reflection Atlas.");
 
             public static readonly GUIContent supportFabricBSDFConvolutionContent = EditorGUIUtility.TrTextContent("Fabric BSDF Convolution", "When enabled, HDRP calculates a separate version of each Reflection Probe for the Fabric Shader, creating more accurate lighting effects. See the documentation for more information and limitations of this feature.");
 

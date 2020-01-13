@@ -291,9 +291,9 @@ namespace UnityEditor.Rendering.HighDefinition
             EditorGUILayout.Space();
 
             EditorGUILayout.PropertyField(serialized.renderPipelineSettings.lightLoopSettings.planarReflectionCacheCompressed, Styles.compressPlanarProbeCacheContent);
-            EditorGUILayout.PropertyField(serialized.renderPipelineSettings.lightLoopSettings.planarReflectionAtlasSize, k_PlanarAtlasSizeContent);
+            EditorGUILayout.PropertyField(serialized.renderPipelineSettings.lightLoopSettings.planarReflectionAtlasSize, Styles.planarAtlasSizeContent);
             if (serialized.renderPipelineSettings.lightLoopSettings.planarReflectionAtlasSize.hasMultipleDifferentValues)
-                EditorGUILayout.HelpBox(k_MultipleDifferentValueMessage, MessageType.Info);
+                EditorGUILayout.HelpBox(Styles.multipleDifferenteValueMessage, MessageType.Info);
             else
             {
                 long currentCache = PlanarReflectionProbeCache.GetApproxCacheSizeInByte(1, serialized.renderPipelineSettings.lightLoopSettings.planarReflectionAtlasSize.intValue, GraphicsFormat.R16G16B16A16_UNorm);
@@ -309,7 +309,7 @@ namespace UnityEditor.Rendering.HighDefinition
                     EditorGUILayout.HelpBox(message, MessageType.Info);
                 }
             }
-            EditorGUILayout.PropertyField(serialized.renderPipelineSettings.lightLoopSettings.maxPlanarReflectionOnScreen, k_MaxPlanarReflectionOnScreen);
+            EditorGUILayout.PropertyField(serialized.renderPipelineSettings.lightLoopSettings.maxPlanarReflectionOnScreen, Styles.maxPlanarReflectionOnScreen);
 
             EditorGUILayout.Space();
 

@@ -47,7 +47,7 @@ namespace UnityEngine.Rendering.HighDefinition
             if (!blitMips)
                 mipCount = 1;
 
-            using (new ProfilingSample(cmd, "Blit texture in POT atlas"))
+            using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.BlitTextureInPotAtlas)))
             {
                 for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
                 {

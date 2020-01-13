@@ -126,7 +126,6 @@ namespace UnityEngine.Rendering.HighDefinition
         public void Reset()
         {
             m_Root.Release();
-            m_Root = new AtlasNode();
             m_Root.m_Rect.Set(m_Width, m_Height, 0, 0);
         }
     }
