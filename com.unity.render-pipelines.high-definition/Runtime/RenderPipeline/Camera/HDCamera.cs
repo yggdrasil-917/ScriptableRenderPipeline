@@ -73,9 +73,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         // Currently the frame count is not increase every render, for ray tracing shadow filtering. We need to have a number that increases every render
         internal uint cameraFrameCount = 0;
-
-        internal bool hasRunLightListBuildingPrevFrame = false;
-
+        
         public Camera parentCamera = null; // Used for recursive rendering, e.g. a reflection in a scene view.
 
         // XR multipass and instanced views are supported (see XRSystem)
@@ -266,7 +264,7 @@ namespace UnityEngine.Rendering.HighDefinition
         int m_NumColorPyramidBuffersAllocated = 0;
         int m_NumVolumetricBuffersAllocated   = 0;
 
-        internal string cameraName => m_AdditionalCameraData?.cameraName ?? "HDRenderPipeline::Render Camera";
+        internal ProfilingSampler profilingSampler => m_AdditionalCameraData?.profilingSampler ?? ProfilingSampler.Get(HDProfileId.HDRenderPipelineRenderCamera);
 
         public VolumeStack volumeStack { get; private set; }
 
@@ -343,7 +341,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 // The condition inside controls whether we perform init/deinit or not.
                 hdrp.ReinitializeVolumetricBufferParams(this);
 
-                bool isCurrentColorPyramidRequired = m_frameSettings.IsEnabled(FrameSettingsField.RoughRefraction) || m_frameSettings.IsEnabled(FrameSettingsField.Distortion);
+                bool isCurrentColorPyramidRequired = m_frameSettings.IsEnabled(FrameSettingsField.Refraction) || m_frameSettings.IsEnabled(FrameSettingsField.Distortion);
                 bool isHistoryColorPyramidRequired = m_frameSettings.IsEnabled(FrameSettingsField.SSR) || antialiasing == AntialiasingMode.TemporalAntialiasing;
                 bool isVolumetricHistoryRequired   = IsVolumetricReprojectionEnabled();
 
