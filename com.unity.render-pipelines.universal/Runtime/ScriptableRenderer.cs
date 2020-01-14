@@ -167,11 +167,6 @@ namespace UnityEngine.Rendering.Universal
             Clear();
         }
 
-        ~ScriptableRenderer()
-        {
-            Dispose(false);
-        }
-
         public void Dispose()
         {
             Dispose(true);
