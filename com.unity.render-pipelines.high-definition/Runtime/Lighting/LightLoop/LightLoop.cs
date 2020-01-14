@@ -226,7 +226,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 lightCookieManager = new LightCookieManager(hdrpAsset, k_MaxCacheSize);
 
                 env2DCaptureVP = new List<Matrix4x4>();
-                // TODO: meh
                 env2DCaptureForward = new List<float>();
                 for (int i = 0, c = Mathf.Max(1, lightLoopSettings.maxPlanarReflectionOnScreen); i < c; ++i)
                 {
@@ -1730,11 +1729,9 @@ namespace UnityEngine.Rendering.HighDefinition
                         envIndex = scaleOffset == Vector4.zero ? int.MinValue : -(fetchIndex + 1);
 
                         // If the max number of planar on screen is reached
-                        // TODO: add a counter for this: 
-                        // TODO: do we really need this ?
-                        // if (fetchIndex >= m_MaxPlanarReflectionOnScreen)
-                            // break;
-                        
+                        if (fetchIndex >= m_MaxPlanarReflectionOnScreen)
+                            break;
+
                         atlasScaleOffset = scaleOffset;
 
                         var renderData = planarProbe.renderData;
@@ -1749,7 +1746,6 @@ namespace UnityEngine.Rendering.HighDefinition
                         var gpuProj = GL.GetGPUProjectionMatrix(projectionMatrix, true);
                         var gpuView = worldToCameraRHSMatrix;
                         var vp = gpuProj * gpuView;
-                        // TODO: fetchIndex
                         m_TextureCaches.env2DAtlasScaleOffset[fetchIndex] = scaleOffset;
                         m_TextureCaches.env2DCaptureVP[fetchIndex] = vp;
 
@@ -2083,9 +2079,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 // We must clear the shadow requests before checking if they are any visible light because we would have requests from the last frame executed in the case where we don't see any lights
                 m_ShadowManager.Clear();
                 
-                // TODO: Implement a defragmentation function that clears only when there is no more space in the atlas
-                m_TextureCaches.lightCookieManager.ResetAllocator();
-
                 m_ScreenSpaceShadowIndex = 0;
                 m_ScreenSpaceShadowChannelSlot = 0;
                 // Set all the light data to invalid
@@ -2143,6 +2136,8 @@ namespace UnityEngine.Rendering.HighDefinition
                         LightVolumeType lightVolumeType = LightVolumeType.Count;
                         HDRenderPipeline.EvaluateGPULightType(lightType, additionalData.spotLightShape, additionalData.areaLightShape,
                                                                 ref lightCategory, ref gpuLightType, ref lightVolumeType);
+                                                            
+                        ReserveCookieAtlasTexture(additionalData, lightComponent, gpuLightType);
 
                         // Do NOT process lights beyond the specified limit!
                         switch(lightCategory)
@@ -2190,6 +2185,10 @@ namespace UnityEngine.Rendering.HighDefinition
                     // Now that all the lights have requested a shadow resolution, we can layout them in the atlas
                     // And if needed rescale the whole atlas
                     m_ShadowManager.LayoutShadowMaps(debugDisplaySettings.data.lightingDebugSettings);
+
+                    // Using the same pattern than shadowmaps, light have requested space in the atlas for their
+                    // cookies and now we can layout the atlas (re-insert all entries by order of size) if needed
+                    m_TextureCaches.lightCookieManager.LayoutIfNeeded();
 
                     var visualEnvironment = hdCamera.volumeStack.GetComponent<VisualEnvironment>();
 
@@ -2517,6 +2516,25 @@ namespace UnityEngine.Rendering.HighDefinition
             }
 
             return m_enableBakeShadowMask;
+        }
+
+        void ReserveCookieAtlasTexture(HDAdditionalLightData hdLightData, Light light, GPULightType gpuLightType)
+        {
+            switch (gpuLightType)
+            {
+                case GPULightType.Directional:
+                case GPULightType.Spot:
+                case GPULightType.ProjectorBox:
+                case GPULightType.ProjectorPyramid:
+                    if (gpuLightType == GPULightType.Directional)
+                        m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.surfaceTexture);
+                    else // Projectors lights must always have a cookie texture.
+                        m_TextureCaches.lightCookieManager.ReserveSpace(light.cookie ?? Texture2D.whiteTexture);
+                    break;
+                case GPULightType.Rectangle:
+                    m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.areaLightCookie);
+                    break;
+            }
         }
 
         Vector2 GetCookieSize(Texture cookie)
@@ -3123,7 +3141,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 cmd.SetGlobalVector(HDShaderIDs._CookieAtlasSize, param.textureCaches.lightCookieManager.GetCookieAtlasSize());
                 cmd.SetGlobalVector(HDShaderIDs._CookieAtlasData, param.textureCaches.lightCookieManager.GetCookieAtlasDatas());
 
-                // TODO: cleanup the unused cookie and planar stuff
                 cmd.SetGlobalTexture(HDShaderIDs._CookieCubeTextures, param.textureCaches.lightCookieManager.cubeCache);
                 cmd.SetGlobalTexture(HDShaderIDs._EnvCubemapTextures, param.textureCaches.reflectionProbeCache.GetTexCache());
                 cmd.SetGlobalInt(HDShaderIDs._EnvSliceSize, param.textureCaches.reflectionProbeCache.GetEnvSliceSize());

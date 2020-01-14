@@ -51,7 +51,7 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 // Temporary RT used for convolution and compression
 
-                // TODO: Temporarily disabled because planar probe baking is currently disabled so we avoid allocating unused targets
+                // Note: Temporarily disabled because planar probe baking is currently disabled so we avoid allocating unused targets
                 // m_TempRenderTexture = new RenderTexture(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf);
                 // m_TempRenderTexture.hideFlags = HideFlags.HideAndDontSave;
                 // m_TempRenderTexture.dimension = TextureDimension.Tex2D;
@@ -108,13 +108,13 @@ namespace UnityEngine.Rendering.HighDefinition
 
             RenderTexture convolutionSourceTexture = null;
 
-            // TODO: disabled code path because planar reflection probe baking is currently disabled
+            // Disabled code path because planar reflection probe baking is currently disabled
             if (texture2D != null && false)
             {
                 // if the size if different from the cache probe size or if the input texture format is compressed, we need to convert it
                 // 1) to a format for which we can generate mip maps
                 // 2) to the proper reflection probe cache size
-                var sizeMismatch = true; // TODO //texture2D.width != m_ProbeSize || texture2D.height != m_ProbeSize;
+                var sizeMismatch = texture2D.width != m_ProbeSize || texture2D.height != m_ProbeSize;
                 var formatMismatch = texture2D.format != TextureFormat.RGBAHalf; // Temporary RT for convolution is always FP16
                 if (formatMismatch || sizeMismatch)
                 {
@@ -146,7 +146,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 convolutionSourceTexture = renderTexture;
             }
 
-            // TODO: profile if it's faster with the viewport (it should with many small planar and one big atlas)
             float scaleX = (float)texture.width / m_ConvolutionTargetTexture.width;
             float scaleY = (float)texture.height / m_ConvolutionTargetTexture.height;
             sourceScaleOffset = new Vector4(scaleX, scaleY, 0, 0);
@@ -160,7 +159,7 @@ namespace UnityEngine.Rendering.HighDefinition
             Vector4 scaleOffset = Vector4.zero;
             fetchIndex = m_FrameProbeIndex++;
 
-            if (m_TextureAtlas.Contains(texture, out scaleOffset))
+            if (m_TextureAtlas.IsCached(out scaleOffset, texture))
             {
                 // If the texture is already in the atlas, we update it only if needed
                 if (NeedsUpdate(texture) || m_ProbeBakingState[scaleOffset] != ProbeFilteringState.Ready)
@@ -194,7 +193,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
                 else
                 {
-                    if (m_TextureAtlas.Contains(texture, out scaleOffset))
+                    if (m_TextureAtlas.IsCached(out scaleOffset, texture))
                     {
                         success = m_TextureAtlas.UpdateTexture(cmd, texture, convolvedTexture, ref scaleOffset, sourceScaleOffset);
                     }

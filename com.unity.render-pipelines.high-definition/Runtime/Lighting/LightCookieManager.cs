@@ -30,7 +30,12 @@ namespace UnityEngine.Rendering.HighDefinition
 
         // Structure for cookies used by point lights
         TextureCacheCubemap m_CubeCookieTexArray;
-        int cookieAtlasLastValidMip;
+        // During the light loop, when reserving space for the cookies (first part of the light loop) the atlas
+        // can run out of space, in this case, we set to true this flag which will trigger a re-layouting of the
+        // atlas (sort entries by size and insert them again).
+        bool                m_2DCookieAtlasNeedsLayouting = false;
+        bool                m_NoMoreSpace = false;
+        readonly int        cookieAtlasLastValidMip;
 
         public LightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
         {
@@ -62,11 +67,17 @@ namespace UnityEngine.Rendering.HighDefinition
             if (TextureCacheCubemap.GetApproxCacheSizeInByte(cookieCubeSize, cookieCubeResolution, 1) > HDRenderPipeline.k_MaxCacheSize)
                 cookieCubeSize = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, cookieCubeResolution, 1);
 
-            // TODO: hardcoded format RGBA32, we need to move it to GraphicsFormat and then use the cookie format settings for this as well
+            // For now the cubemap cookie array format is hardcoded to R8G8B8A8 SRGB.
             m_CubeCookieTexArray.AllocTextureArray(cookieCubeSize, cookieCubeResolution, GraphicsFormat.R8G8B8A8_SRGB, true, m_CubeToPanoMaterial);
         }
 
-        internal void NewFrame() => m_CubeCookieTexArray.NewFrame();
+        public void NewFrame()
+        {
+            m_CubeCookieTexArray.NewFrame();
+            m_CookieAtlas.ResetRequestedTexture();
+            m_2DCookieAtlasNeedsLayouting = false;
+            m_NoMoreSpace = false;
+        }
 
         public void Release()
         {
@@ -182,33 +193,51 @@ namespace UnityEngine.Rendering.HighDefinition
             return m_TempRenderTexture0;
         }
 
+        public void LayoutIfNeeded()
+        {
+            if (!m_2DCookieAtlasNeedsLayouting)
+                return;
+            
+            if (!m_CookieAtlas.RelayoutEntries())
+            {
+                Debug.LogError($"No more space in the 2D Cookie Texture Atlas. To solve this issue, increase the size of the cookie atlas in the HDRP settings.");
+                m_NoMoreSpace = true;
+            }
+        }
+
         public Vector4 Fetch2DCookie(CommandBuffer cmd, Texture cookie)
         {
-            Vector4 scaleBias = Vector4.zero;
+            if (!m_CookieAtlas.IsCached(out var scaleBias, cookie) && !m_NoMoreSpace)
+                Debug.LogError($"2D Light cookie texture {cookie} can't be fetched without having reserved. Check LightLoop.ReserveCookieAtlasTexture");
 
-            // TODO: check if the blitMips actually does something.
-            if (!m_CookieAtlas.UpdateTexture(cmd, cookie, ref scaleBias, blitMips: false))
-            {
-                Debug.LogWarning($"Can't fit {cookie} in the 2D Cookie Texture Atlas. To solve this issue, increase the size of the cookie atlas in the HDRP settings.");
-                return Vector4.zero;
-            }
+            if (m_CookieAtlas.NeedsUpdate(cookie))
+                m_CookieAtlas.BlitTexture(cmd, scaleBias, cookie, new Vector4(1, 1, 0, 0));
 
             return scaleBias;
         }
 
         public Vector4 FetchAreaCookie(CommandBuffer cmd, Texture cookie)
         {
-            Vector4 scaleBias = Vector4.zero;
-            // Update the mips
+            if (!m_CookieAtlas.IsCached(out var scaleBias, cookie) && !m_NoMoreSpace)
+                Debug.LogError($"Area Light cookie texture {cookie} can't be fetched without having reserved. Check LightLoop.ReserveCookieAtlasTexture");
 
-            if (!m_CookieAtlas.IsCached(out _, cookie) || m_CookieAtlas.NeedsUpdate(cookie))
+            if (m_CookieAtlas.NeedsUpdate(cookie))
             {
+                // Generate the mips
                 Texture filteredAreaLight = FilterAreaLightTexture(cmd, cookie);
-                m_CookieAtlas.AllocateTextureWithoutBlit(cookie, cookie.width, cookie.height, ref scaleBias);
                 m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, new Vector4(1, 1, 0, 0));
             }
 
             return scaleBias;
+        }
+
+        public void ReserveSpace(Texture cookie)
+        {
+            if (cookie == null)
+                return;
+
+            if (!m_CookieAtlas.ReserveSpace(cookie))
+                m_2DCookieAtlasNeedsLayouting = true;
         }
 
         public int FetchCubeCookie(CommandBuffer cmd, Texture cookie) => m_CubeCookieTexArray.FetchSlice(cmd, cookie);
