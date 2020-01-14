@@ -3194,12 +3194,12 @@ namespace UnityEngine.Rendering.HighDefinition
             switch (hdCamera.frameSettings.litShaderMode)
             {
                 case LitShaderMode.Forward:  // in forward rendering all pixels that decals wrote into have to be composited
-                    parameters.stencilMask = (int)StencilBitMask.Decals;
-                    parameters.stencilRef = (int)StencilBitMask.Decals;
+                    parameters.stencilMask = (int)StencilBeforeTransparent.Decals;
+                    parameters.stencilRef = (int)StencilBeforeTransparent.Decals;
                     break;
                 case LitShaderMode.Deferred: // in deferred rendering only pixels affected by both forward materials and decals need to be composited
-                    parameters.stencilMask = (int)StencilBitMask.Decals | (int)StencilBitMask.DecalsForwardOutputNormalBuffer;
-                    parameters.stencilRef = (int)StencilBitMask.Decals | (int)StencilBitMask.DecalsForwardOutputNormalBuffer;
+                    parameters.stencilMask = (int)StencilBeforeTransparent.Decals | (int)StencilBitMask.DecalsForwardOutputNormalBuffer;
+                    parameters.stencilRef = (int)StencilBeforeTransparent.Decals | (int)StencilBitMask.DecalsForwardOutputNormalBuffer;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown ShaderLitMode");
