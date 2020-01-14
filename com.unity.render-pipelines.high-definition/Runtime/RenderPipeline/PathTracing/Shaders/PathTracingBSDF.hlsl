@@ -4,37 +4,43 @@ namespace BRDF
 {
 
 bool SampleGGX(MaterialData mtlData,
+               float roughness,
+               float3 fresnel0,
                float3 inputSample,
            out float3 outgoingDir,
            out float3 value,
-           out float pdf)
+           out float pdf,
+           out float3 fresnel)
 {
     float NdotL, NdotH, VdotH;
     float3x3 localToWorld = GetLocalFrame(mtlData.bsdfData.normalWS);
-    SampleGGXDir(inputSample, mtlData.V, localToWorld, mtlData.bsdfData.roughnessT, outgoingDir, NdotL, NdotH, VdotH);
+    SampleGGXDir(inputSample, mtlData.V, localToWorld, roughness, outgoingDir, NdotL, NdotH, VdotH);
 
     if (NdotL < 0.001 || !IsAbove(mtlData, outgoingDir))
         return false;
 
-    float D = D_GGX(NdotH, mtlData.bsdfData.roughnessT);
+    float D = D_GGX(NdotH, roughness);
     pdf = D * NdotH / (4.0 * VdotH);
 
     if (pdf < 0.001)
         return false;
 
     float NdotV = dot(mtlData.bsdfData.normalWS, mtlData.V);
-    float3 F = F_Schlick(mtlData.bsdfData.fresnel0, VdotH);
-    float Vg = V_SmithJointGGX(NdotL, NdotV, mtlData.bsdfData.roughnessT);
+    float Vg = V_SmithJointGGX(NdotL, NdotV, roughness);
+    fresnel = F_Schlick(fresnel0, VdotH);
 
-    value = F * D * Vg * NdotL;
+    value = fresnel * D * Vg * NdotL;
 
     return true;
 }
 
 void EvaluateGGX(MaterialData mtlData,
+                 float roughness,
+                 float3 fresnel0,
                  float3 outgoingDir,
              out float3 value,
-             out float pdf)
+             out float pdf,
+             out float3 fresnel)
 {
     float NdotV = dot(mtlData.bsdfData.normalWS, mtlData.V);
     if (NdotV < 0.001)
@@ -48,13 +54,13 @@ void EvaluateGGX(MaterialData mtlData,
     float3 H = normalize(mtlData.V + outgoingDir);
     float NdotH = dot(mtlData.bsdfData.normalWS, H);
     float VdotH = dot(mtlData.V, H);
-    float D = D_GGX(NdotH, mtlData.bsdfData.roughnessT);
+    float D = D_GGX(NdotH, roughness);
     pdf = D * NdotH / (4.0 * VdotH);
 
-    float3 F = F_Schlick(mtlData.bsdfData.fresnel0, VdotH);
-    float Vg = V_SmithJointGGX(NdotL, NdotV, mtlData.bsdfData.roughnessT);
+    float Vg = V_SmithJointGGX(NdotL, NdotV, roughness);
+    fresnel = F_Schlick(fresnel0, VdotH);
 
-    value = F * D * Vg * NdotL;
+    value = fresnel * D * Vg * NdotL;
 }
 
 bool SampleDelta(MaterialData mtlData,
@@ -75,7 +81,7 @@ bool SampleDelta(MaterialData mtlData,
         value = F_FresnelDielectric(1.0 / mtlData.bsdfData.ior, NdotV);
     }
 
-    value *= mtlData.bsdfData.transmittanceMask * DELTA_PDF;
+    value *= DELTA_PDF;
     pdf = DELTA_PDF;
 
     return any(outgoingDir);
@@ -97,7 +103,7 @@ bool SampleLambert(MaterialData mtlData,
     if (pdf < 0.001)
         return false;
 
-    value = mtlData.bsdfData.diffuseColor * (1.0 - mtlData.bsdfData.transmittanceMask) * pdf;
+    value = mtlData.bsdfData.diffuseColor * pdf;
 
     return true;
 }
@@ -108,7 +114,7 @@ void EvaluateLambert(MaterialData mtlData,
                  out float pdf)
 {
     pdf = dot(mtlData.bsdfData.normalWS, outgoingDir) * INV_PI;
-    value = mtlData.bsdfData.diffuseColor * (1.0 - mtlData.bsdfData.transmittanceMask) * pdf;
+    value = mtlData.bsdfData.diffuseColor * pdf;
 }
 
 bool SampleBurley(MaterialData mtlData,
@@ -130,7 +136,7 @@ bool SampleBurley(MaterialData mtlData,
 
     float NdotV = saturate(dot(mtlData.bsdfData.normalWS, mtlData.V));
     float LdotV = saturate(dot(outgoingDir, mtlData.V));
-    value = mtlData.bsdfData.diffuseColor * (1.0 - mtlData.bsdfData.transmittanceMask) * DisneyDiffuseNoPI(NdotV, NdotL, LdotV, mtlData.bsdfData.perceptualRoughness) * pdf;
+    value = mtlData.bsdfData.diffuseColor * DisneyDiffuseNoPI(NdotV, NdotL, LdotV, mtlData.bsdfData.perceptualRoughness) * pdf;
 
     return true;
 }
@@ -145,7 +151,7 @@ void EvaluateBurley(MaterialData mtlData,
     float LdotV = saturate(dot(outgoingDir, mtlData.V));
 
     pdf = NdotL * INV_PI;
-    value = mtlData.bsdfData.diffuseColor * (1.0 - mtlData.bsdfData.transmittanceMask) * DisneyDiffuseNoPI(NdotV, NdotL, LdotV, mtlData.bsdfData.perceptualRoughness) * pdf;
+    value = mtlData.bsdfData.diffuseColor * DisneyDiffuseNoPI(NdotV, NdotL, LdotV, mtlData.bsdfData.perceptualRoughness) * pdf;
 }
 
 bool SampleDiffuse(MaterialData mtlData,
@@ -196,7 +202,7 @@ bool SampleDelta(MaterialData mtlData,
         value = 1.0 - F_FresnelDielectric(1.0 / mtlData.bsdfData.ior, NdotV);
     }
 
-    value *= mtlData.bsdfData.transmittanceMask * DELTA_PDF;
+    value *= DELTA_PDF;
     pdf = DELTA_PDF;
 
     return any(outgoingDir);
@@ -232,7 +238,7 @@ bool SampleGGX(MaterialData mtlData,
     jacobian = Sq(mtlData.bsdfData.ior) * abs(LdotH) / Sq(jacobian);
 
     pdf = D * NdotH * jacobian;
-    value = abs(4.0 * (1.0 - F) * D * Vg * NdotL * VdotH * jacobian * mtlData.bsdfData.transmittanceMask);
+    value = abs(4.0 * (1.0 - F) * D * Vg * NdotL * VdotH * jacobian);
 
     return (pdf > 0.001);
 }
