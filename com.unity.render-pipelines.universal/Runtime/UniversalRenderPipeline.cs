@@ -282,7 +282,9 @@ namespace UnityEngine.Rendering.Universal
             if (baseCameraAdditionalData != null && baseCameraAdditionalData.renderType == CameraRenderType.Overlay)
                 return;
 
-            List<Camera> cameraStack = baseCameraAdditionalData?.cameraStack;
+            // renderer contains a stack if it has additional data and the renderer supports stacking
+            bool supportsCameraStacking = baseCameraAdditionalData != null && baseCameraAdditionalData.scriptableRenderer.supportedRenderingFeatures.cameraStacking;
+            List<Camera> cameraStack = (supportsCameraStacking) ? baseCameraAdditionalData?.cameraStack : null;
 
             // We need to know the last active camera in the stack to be able to resolve
             // rendering to screen when rendering it. The last camera in the stack is not
