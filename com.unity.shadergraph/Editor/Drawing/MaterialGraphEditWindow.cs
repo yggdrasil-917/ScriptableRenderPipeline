@@ -376,7 +376,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                         if (success)
                         {
                             ShaderGraphImporterEditor.ShowGraphEditWindow(newPath);
-                            if (GraphData.onSaveGraph != null)
+                            if (GraphData.onSaveGraph != null && extension != ShaderSubGraphImporter.Extension)
                             {
                                 var shader = AssetDatabase.LoadAssetAtPath<Shader>(newPath);
                                 // Retrieve graph context, note that if we're here the output node will always be a master node
