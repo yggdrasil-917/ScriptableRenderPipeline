@@ -437,6 +437,16 @@ float2 ClampAndScaleUVForPoint(float2 UV)
     return min(UV, 1.0f) * _RTHandleScale.xy;
 }
 
+uint Get1DAddressFromPixelCoord(uint2 pixCoord, uint2 screenSize)
+{
+    return pixCoord.y * screenSize.x + pixCoord.x;
+}
+
+uint Get1DAddressFromPixelCoord(uint2 pixCoord)
+{
+    return Get1DAddressFromPixelCoord(pixCoord, _ScreenSize.xy);
+}
+
 // Define Model Matrix Macro
 // Note: In order to be able to define our macro to forbid usage of unity_ObjectToWorld/unity_WorldToObject
 // We need to declare inline function. Using uniform directly mean they are expand with the macro

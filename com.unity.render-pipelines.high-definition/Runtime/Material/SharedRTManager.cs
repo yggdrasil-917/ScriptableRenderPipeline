@@ -24,6 +24,8 @@ namespace UnityEngine.Rendering.HighDefinition
         // This texture stores a set of depth values that are required for evaluating a bunch of effects in MSAA mode (R = Samples Max Depth, G = Samples Min Depth, G =  Samples Average Depth)
         RTHandle m_CameraDepthValuesBuffer = null;
 
+        ComputeBuffer m_CoarseStencilBuffer = null;
+
         // MSAA resolve materials
         Material m_DepthResolveMaterial  = null;
         Material m_ColorResolveMaterial = null;
@@ -93,6 +95,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 m_DepthResolveMaterial = CoreUtils.CreateEngineMaterial(resources.shaders.depthValuesPS);
                 m_ColorResolveMaterial = CoreUtils.CreateEngineMaterial(resources.shaders.colorResolvePS);
             }
+
+            AllocateCoarseStencilBuffer(RTHandles.maxWidth, RTHandles.maxHeight);
 
             // If we are in the forward only mode
             if (!m_ReuseGBufferMemory)
@@ -210,6 +214,11 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
+        public ComputeBuffer GetCoarseStencilBuffer()
+        {
+            return m_CoarseStencilBuffer;
+        }
+
         public RTHandle GetLowResDepthBuffer()
         {
             return m_CameraHalfResDepthBuffer;
@@ -255,6 +264,16 @@ namespace UnityEngine.Rendering.HighDefinition
         {
         }
 
+        public void AllocateCoarseStencilBuffer(int width, int height)
+        {
+            m_CoarseStencilBuffer = new ComputeBuffer((RTHandles.maxWidth / 8) * (RTHandles.maxHeight / 8), 1);
+        }
+
+        public void DisposeCoarseStencilBuffer()
+        {
+            m_CoarseStencilBuffer.Dispose();
+        }
+
         public void Cleanup()
         {
             if (!m_ReuseGBufferMemory)
@@ -274,6 +293,7 @@ namespace UnityEngine.Rendering.HighDefinition
             RTHandles.Release(m_CameraDepthStencilBuffer);
             RTHandles.Release(m_CameraDepthBufferMipChain);
             RTHandles.Release(m_CameraHalfResDepthBuffer);
+            DisposeCoarseStencilBuffer();
 
             if (m_MSAASupported)
             {

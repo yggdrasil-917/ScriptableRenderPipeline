@@ -923,10 +923,12 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     LightLoopReleaseResolutionDependentBuffers();
                     m_DbufferManager.ReleaseResolutionDependentBuffers();
+                    m_SharedRTManager.DisposeCoarseStencilBuffer();
                 }
 
                 LightLoopAllocResolutionDependentBuffers(hdCamera, m_MaxCameraWidth, m_MaxCameraHeight);
                 m_DbufferManager.AllocResolutionDependentBuffers(hdCamera, m_MaxCameraWidth, m_MaxCameraHeight);
+                m_SharedRTManager.AllocateCoarseStencilBuffer(m_MaxCameraWidth, m_MaxCameraHeight);
             }
         }
 
@@ -1041,6 +1043,11 @@ namespace UnityEngine.Rendering.HighDefinition
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._StencilTexture, depthStencilBuffer, 0, RenderTextureSubElement.Stencil);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputStencilBuffer, resolvedStencilBuffer);
                 cmd.DispatchCompute(cs, kernel, (hdCamera.actualWidth + 7) / 8, (hdCamera.actualHeight + 7) / 8, hdCamera.viewCount);
+            }
+            // TODO_FCC: THIS IS TEMP! ASSUMING ONLY NON MSAA NEEDS THE RESOLVE IS WRONG
+            else
+            {
+
             }
         }
 
