@@ -1025,7 +1025,39 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        void ResolveStencilBufferIfNeeded(HDCamera hdCamera, RTHandle depthStencilBuffer, RTHandle resolvedStencilBuffer, CommandBuffer cmd)
+        void BuildCoarseStencilAndResolveIfNeeded(HDCamera hdCamera, RTHandle depthStencilBuffer, RTHandle resolvedStencilBuffer, ComputeBuffer coarseStencilBuffer, CommandBuffer cmd)
+        {
+            using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.CoarseStencilGeneration)))
+            {
+                bool MSAAEnabled = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA);
+
+                // The following features require a copy of the stencil, if none are active, no need to do the resolve.
+                bool resolveIsNecessary = GetFeatureVariantsEnabled(hdCamera.frameSettings);
+                resolveIsNecessary = resolveIsNecessary || hdCamera.frameSettings.IsEnabled(FrameSettingsField.SSR);
+
+                // We need the resolve only with msaa
+                resolveIsNecessary = resolveIsNecessary && MSAAEnabled;
+
+                ComputeShader cs = defaultResources.shaders.resolveStencilCS;
+                int kernel = SampleCountToPassIndex(hdCamera.msaaSamples);
+                int coarseStencilWidth = HDUtils.DivRoundUp(hdCamera.actualWidth, 8);
+                int coarseStencilHeight = HDUtils.DivRoundUp(hdCamera.actualHeight, 8);
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._CoarseStencilSize, new Vector4(hdCamera.actualWidth / 8, hdCamera.actualHeight / 8, 0, 0));
+                cmd.SetComputeBufferParam(cs, kernel, HDShaderIDs._OutputCoarseStencil, coarseStencilBuffer);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._StencilTexture, depthStencilBuffer, 0, RenderTextureSubElement.Stencil);
+
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, m_SharedRTManager.m_CoarseStencilDEBUG_TMP, 0);
+
+                if (resolveIsNecessary)
+                {
+                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputStencilBuffer, resolvedStencilBuffer);
+                }
+
+                cmd.DispatchCompute(cs, kernel, coarseStencilWidth, coarseStencilHeight, hdCamera.viewCount);
+            }
+        }
+
+        void ResolveStencilBufferIfNeeded(HDCamera hdCamera, RTHandle depthStencilBuffer, RTHandle resolvedStencilBuffer, ComputeBuffer coarseStencilBuffer, CommandBuffer cmd)
         {
             bool MSAAEnabled = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA);
 
@@ -1039,15 +1071,28 @@ namespace UnityEngine.Rendering.HighDefinition
             if (resolveIsNecessary)
             {
                 ComputeShader cs = defaultResources.shaders.resolveStencilCS;
-                int kernel = SampleCountToPassIndex(hdCamera.msaaSamples) - 1; // We start with kernel 0 being MSAA 2x
+                int kernel = SampleCountToPassIndex(hdCamera.msaaSamples);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._StencilTexture, depthStencilBuffer, 0, RenderTextureSubElement.Stencil);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputStencilBuffer, resolvedStencilBuffer);
+
+                cmd.SetComputeBufferParam(cs, kernel, HDShaderIDs._OutputCoarseStencil, coarseStencilBuffer);
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._CoarseStencilSize, new Vector4(hdCamera.actualWidth / 8, hdCamera.actualHeight / 8, 0, 0));
+
+
                 cmd.DispatchCompute(cs, kernel, (hdCamera.actualWidth + 7) / 8, (hdCamera.actualHeight + 7) / 8, hdCamera.viewCount);
             }
-            // TODO_FCC: THIS IS TEMP! ASSUMING ONLY NON MSAA NEEDS THE RESOLVE IS WRONG
+            // TODO_FCC: THIS IS TEMP! ASSUMING ONLY NON MSAA NEEDS THE RESOLVE IS WRONG HERE JUST TO TEST.
             else
             {
-
+                ComputeShader cs = defaultResources.shaders.resolveStencilCS;
+                int kernel = 0;
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._StencilTexture, resolvedStencilBuffer, 0, RenderTextureSubElement.Stencil);
+                if(coarseStencilBuffer != null) // TODO REMOVE AND FIX RENDER GRAPH
+                {
+                    cmd.SetComputeBufferParam(cs, kernel, HDShaderIDs._OutputCoarseStencil, coarseStencilBuffer);
+                    cmd.SetComputeVectorParam(cs, HDShaderIDs._CoarseStencilSize, new Vector4(hdCamera.actualWidth / 8, hdCamera.actualHeight / 8, 0, 0));
+                }
+                cmd.DispatchCompute(cs, kernel, (hdCamera.actualWidth + 7) / 8, (hdCamera.actualHeight + 7) / 8, hdCamera.viewCount);
             }
         }
 
@@ -2032,7 +2077,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
 
                 bool msaaEnabled = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA);
-                ResolveStencilBufferIfNeeded(hdCamera, m_SharedRTManager.GetDepthStencilBuffer(msaaEnabled), m_SharedRTManager.GetStencilBuffer(msaaEnabled), cmd);
+                BuildCoarseStencilAndResolveIfNeeded(hdCamera, m_SharedRTManager.GetDepthStencilBuffer(msaaEnabled), m_SharedRTManager.GetStencilBuffer(true), m_SharedRTManager.GetCoarseStencilBuffer(), cmd);
 
                 hdCamera.xr.StopSinglePass(cmd, camera, renderContext);
 

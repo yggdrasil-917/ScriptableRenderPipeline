@@ -7,6 +7,7 @@ namespace UnityEngine.Rendering.HighDefinition
         PushGlobalParameters,
         CopyDepthBuffer,
         CopyDepthInTargetTexture,
+        CoarseStencilGeneration,
         HTileForSSS,
         RenderSSAO,
         ResolveStencilBuffer,

@@ -1,18 +1,26 @@
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
-
+#pragma enable_d3d11_debug_symbols
 #pragma kernel MAIN         KERNEL_NAME=MAIN         NUM_SAMPLES=1
-#pragma kernel MAIN_MSAA_2  KERNEL_NAME=MAIN_MSAA_2  NUM_SAMPLES=2
-#pragma kernel MAIN_MSAA_4  KERNEL_NAME=MAIN_MSAA_4  NUM_SAMPLES=4
-#pragma kernel MAIN_MSAA_8  KERNEL_NAME=MAIN_MSAA_8  NUM_SAMPLES=8
+#pragma kernel MAIN_MSAA_2  KERNEL_NAME=MAIN_MSAA_2  NUM_SAMPLES=2 MSAA
+#pragma kernel MAIN_MSAA_4  KERNEL_NAME=MAIN_MSAA_4  NUM_SAMPLES=4 MSAA 
+#pragma kernel MAIN_MSAA_8  KERNEL_NAME=MAIN_MSAA_8  NUM_SAMPLES=8 MSAA
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
+#ifdef MSAA
 TEXTURE2D_X_MSAA(uint2, _StencilTexture);
 RW_TEXTURE2D_X(uint2, _OutputStencilBuffer);
+#else
+TEXTURE2D_X_UINT2(_StencilTexture);
+#endif
 
-float2 _CoarseStencilSize;
 
+float4 _CoarseStencilSize;
+RW_TEXTURE2D_X(uint, _OutputTexture);
+
+// TODO: Wasting 3 bytes here per entry, but still better than a texture as can be scalar read.
+// Need to investigate how to don't waste bytes. (Can be done in a separate step)
 RWBuffer<uint>    _OutputCoarseStencil;
 
 #ifdef PLATFORM_SUPPORTS_WAVE_INTRINSICS
@@ -21,35 +29,39 @@ RWBuffer<uint>    _OutputCoarseStencil;
     #define FAST_PLATFORM 0
 #endif
 
+#if FAST_PLATFORM == 0
+groupshared uint coarseStencilValue;
+#endif
+
 [numthreads(8, 8, 1)]
 void KERNEL_NAME(uint3 groupId          : SV_GroupID,
                  uint3 groupThreadId    : SV_GroupThreadID,
                  uint3 dispatchThreadID : SV_DispatchThreadID)
 {
+
+    // Don't collect garbage off-screen.
     // The best shot at resolving is being overly conservative, hence the OR operator. This is by nature inaccurate. 
     uint resolvedStencil = 0;
-    uint coarseStencilValue = 0;
 
-    UNITY_UNROLL
-    for (uint i = 0; i < NUM_SAMPLES; i++)
+    if (dispatchThreadID.x < (uint)_ScreenSize.x && dispatchThreadID.y < (uint)_ScreenSize.y)
     {
-        uint2 sampledStencil;
-    #if (NUM_SAMPLES == 1)
-        sampledStencil = LOAD_TEXTURE2D_X(_StencilTexture, dispatchThreadID.xy).g;
-    #else
-        sampledStencil = LOAD_TEXTURE2D_X_MSAA(_StencilTexture, dispatchThreadID.xy, i).g;
-    #endif
-        resolvedStencil = GetStencilValue(sampledStencil);
-    }
-
-    _OutputStencilBuffer[COORD_TEXTURE2D_X(dispatchThreadID.xy)] = uint2(resolvedStencil, resolvedStencil);
-
-#if FAST_PLATFORM
-
-    bool isFirstThread = WaveIsFirstLane();
-    coarseStencilValue = WaveActiveBitOr(resolvedStencil);
-
+        UNITY_UNROLL
+        for (uint i = 0; i < NUM_SAMPLES; i++)
+        {
+            uint2 sampledStencil;
+#ifndef MSAA
+            sampledStencil = LOAD_TEXTURE2D_X(_StencilTexture, dispatchThreadID.xy);
 #else
+            sampledStencil = LOAD_TEXTURE2D_X_MSAA(_StencilTexture, dispatchThreadID.xy, i);
+#endif
+            resolvedStencil = GetStencilValue(sampledStencil);
+        }
+    }
+#ifdef MSAA
+    _OutputStencilBuffer[COORD_TEXTURE2D_X(dispatchThreadID.xy)] = uint2(resolvedStencil, resolvedStencil);
+#endif
+
+#if FAST_PLATFORM == 0
 
     bool isFirstThread = groupThreadId.x == 0 && groupThreadId.y == 0;
     if (isFirstThread)
@@ -63,12 +75,17 @@ void KERNEL_NAME(uint3 groupId          : SV_GroupID,
 
     GroupMemoryBarrierWithGroupSync();
 
+#else
+
+    bool isFirstThread = WaveIsFirstLane();
+    uint coarseStencilValue = WaveActiveBitOr(resolvedStencil);
+
 #endif
 
     if (isFirstThread)
     {
-        uint addressIndex = Get1DAddressFromPixelCoord(groupId.xy, _CoarseStencilSize);
+        uint addressIndex = Get1DAddressFromPixelCoord(groupId.xy, _CoarseStencilSize.xy);
         _OutputCoarseStencil[addressIndex] = coarseStencilValue;
+        _OutputTexture[COORD_TEXTURE2D_X(groupId.xy)] = coarseStencilValue;
     }
-
 }
