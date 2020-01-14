@@ -13,7 +13,7 @@ Shader "Hidden/HDRP/TerrainLit_Basemap"
         [HideInInspector] _StencilWriteMaskGBuffer("_StencilWriteMaskGBuffer", Int) = 3 // StencilMask.Lighting
         // Depth prepass
         [HideInInspector] _StencilRefDepth("_StencilRefDepth", Int) = 0 // Nothing
-        [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 32 // DoesntReceiveSSR
+        [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 8 // StencilBeforeTransparent.TraceReflectionRay
 
         // Blending state
         [HideInInspector] _ZWrite ("__zw", Float) = 1.0

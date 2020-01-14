@@ -53,7 +53,7 @@
     StructuredBuffer<int2>  _DepthPyramidMipLevelOffsets;
 
 CBUFFER_START(UnityScreenSpaceReflections)
-    int   _SsrStencilExclusionValue;
+    int   _SsrStencilBit;
     int   _SsrIterLimit;
     float _SsrThicknessScale;
     float _SsrThicknessBias;
@@ -101,7 +101,7 @@ void ScreenSpaceReflectionsTracing(uint3 dispatchThreadId : SV_DispatchThreadID)
 
 #ifdef SSR_USE_STENCIL
     uint stencilValue = GetStencilValue(LOAD_TEXTURE2D_X(_StencilTexture, dispatchThreadId.xy));
-    bool doesntReceiveSSR = (stencilValue & _SsrStencilExclusionValue) != 0;
+    bool doesntReceiveSSR = (stencilValue & _SsrStencilBit) == 0;
     if (doesntReceiveSSR)
     {
         WriteDebugInfo(positionSS, -1);

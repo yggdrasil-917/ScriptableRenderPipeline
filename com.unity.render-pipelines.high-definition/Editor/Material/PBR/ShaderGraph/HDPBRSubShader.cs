@@ -376,8 +376,8 @@ namespace UnityEditor.Rendering.HighDefinition
             int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
             int stencilRef = useSplitLighting ? (int)StencilLightingUsage.SplitLighting : (int)StencilLightingUsage.RegularLighting;
 
-            stencilWriteMask |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
-            stencilRef |= !receiveSSR ? (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR : 0;
+            stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
+            stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;
 
             stencilWriteMask |= (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
 
@@ -399,8 +399,8 @@ namespace UnityEditor.Rendering.HighDefinition
             int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
             int stencilRef = receiveDecals ? (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer : 0;
 
-            stencilWriteMask |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
-            stencilRef |= !receiveSSR ? (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR : 0;
+            stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
+            stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;
 
             stencilWriteMask |= useObjectMotionVector ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;
             stencilRef |= useObjectMotionVector ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;

@@ -9,11 +9,11 @@ namespace UnityEngine.Rendering.HighDefinition
     {
         Clear = 0,
 
-        RequiresDeferredLighting = (1 << 1),
-        SubsurfaceScattering = (1 << 2),        //  SSS, Split Lighting
-        TraceReflectionRay = (1 << 3),          //  SSR or RTR
-        Decal = (1 << 4),                       //  Used for surfaces that receive decals
-        ObjectMotionVector = (1 << 5),          //  Animated object (for motion blur, SSR, SSAO, TAA)
+        RequiresDeferredLighting    = (1 << 1),
+        SubsurfaceScattering        = (1 << 2),     //  SSS, Split Lighting
+        TraceReflectionRay          = (1 << 3),     //  SSR or RTR
+        Decal                       = (1 << 4),     //  Used for surfaces that receive decals
+        ObjectMotionVector          = (1 << 5),     //  Animated object (for motion blur, SSR, SSAO, TAA)
 
         // User bits
         UserBit0 = (1 << 6),
@@ -31,9 +31,9 @@ namespace UnityEngine.Rendering.HighDefinition
         ExcludeFromTAA              = (1 << 1),    // Disable Temporal Antialiasing for certain objects
         DistortionVectors           = (1 << 2),    // Distortion pass - reset after distortion pass, shared with SMAA
         SMAA                        = (1 << 2),    // Subpixel Morphological Antialiasing
-        TraceReflectionRay          = (1 << 3),    //  SSR or RTR
+        TraceReflectionRay          = (1 << 3),    // SSR or RTR
 
-        ReservedBits                = 0x38,        //  Reserved for future usage
+        ReservedBits                = 0x38,        // Reserved for future usage
 
         // User bits
         UserBit0                    = (1 << 6),

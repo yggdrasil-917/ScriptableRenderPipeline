@@ -82,8 +82,8 @@ namespace UnityEditor.VFX
             stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
             stencilRef = receiveDecals ? (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer : 0;
 
-            stencilWriteMask |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
-            stencilRef |= !receiveSSR ? (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR : 0;
+            stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
+            stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;
 
             stencilWriteMask |= useObjectVelocity ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;
             stencilRef |= useObjectVelocity ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;

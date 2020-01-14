@@ -69,15 +69,15 @@ namespace UnityEditor.Rendering.HighDefinition
             // Set the reference values for the stencil test
 
             // Stencil usage rules:
-            // DoesntReceiveSSR and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
+            // TraceReflectionRay and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
             // LightingMask need to be tagged during either GBuffer or Forward pass
             // ObjectMotionVectors need to be tagged in motion vectors pass.
-            // As motion vectors pass can be use as a replacement of depth prepass it also need to have DoesntReceiveSSR and DecalsForwardOutputNormalBuffer
+            // As motion vectors pass can be use as a replacement of depth prepass it also need to have TraceReflectionRay and DecalsForwardOutputNormalBuffer
             // Object motion vectors is always render after a full depth buffer (if there is no depth prepass for GBuffer all object motion vectors are render after GBuffer)
             // so we have a guarantee than when we write object motion vectors no other object will be draw on top (and so would have require to overwrite motion vectors).
             // Final combination is:
-            // Prepass: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer
-            // Motion vectors: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer, ObjectMotionVectors
+            // Prepass: TraceReflectionRay,  DecalsForwardOutputNormalBuffer
+            // Motion vectors: TraceReflectionRay,  DecalsForwardOutputNormalBuffer, ObjectMotionVectors
             // GBuffer: LightingMask, DecalsForwardOutputNormalBuffer, ObjectMotionVectors
             // Forward: LightingMask
 
@@ -88,10 +88,10 @@ namespace UnityEditor.Rendering.HighDefinition
             int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
             int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
 
-            if (!ssrEnabled)
+            if (ssrEnabled)
             {
-                stencilRefDepth |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
-                stencilRefMV |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
+                stencilRefDepth |= (int)StencilBeforeTransparent.TraceReflectionRay;
+                stencilRefMV |= (int)StencilBeforeTransparent.TraceReflectionRay;
             }
 
             if (decalsEnabled)
@@ -100,8 +100,8 @@ namespace UnityEditor.Rendering.HighDefinition
                 stencilRefMV |= (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
             }
 
-            stencilWriteMaskDepth |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-            stencilWriteMaskMV |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
+            stencilWriteMaskDepth |= (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
+            stencilWriteMaskMV |= (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
 
             // As we tag both during motion vector pass and Gbuffer pass we need a separate state and we need to use the write mask
             material.SetInt(kStencilRef, stencilRef);
