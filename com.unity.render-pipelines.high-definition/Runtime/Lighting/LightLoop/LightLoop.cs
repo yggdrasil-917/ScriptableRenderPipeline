@@ -2523,13 +2523,14 @@ namespace UnityEngine.Rendering.HighDefinition
             switch (gpuLightType)
             {
                 case GPULightType.Directional:
+                    m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.surfaceTexture);
+                    m_TextureCaches.lightCookieManager.ReserveSpace(light.cookie);
+                    break;
                 case GPULightType.Spot:
                 case GPULightType.ProjectorBox:
                 case GPULightType.ProjectorPyramid:
-                    if (gpuLightType == GPULightType.Directional)
-                        m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.surfaceTexture);
-                    else // Projectors lights must always have a cookie texture.
-                        m_TextureCaches.lightCookieManager.ReserveSpace(light.cookie ?? Texture2D.whiteTexture);
+                    // Projectors lights must always have a cookie texture.
+                    m_TextureCaches.lightCookieManager.ReserveSpace(light.cookie ?? Texture2D.whiteTexture);
                     break;
                 case GPULightType.Rectangle:
                     m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.areaLightCookie);
