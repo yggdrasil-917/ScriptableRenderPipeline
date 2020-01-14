@@ -140,8 +140,8 @@ namespace UnityEditor.Rendering.HighDefinition
             stencilWriteMaskDepth = 0;
             stencilRefGBuffer = (int)StencilLightingUsage.RegularLighting;
             stencilWriteMaskGBuffer = (int)HDRenderPipeline.StencilBitMask.LightingMask;
-            stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
-            stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
+            stencilRefMV = (int)StencilBeforeTransparent.ObjectMotionVector;
+            stencilWriteMaskMV = (int)StencilBeforeTransparent.ObjectMotionVector;
 
             if (useSplitLighting)
             {

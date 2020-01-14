@@ -169,17 +169,17 @@ namespace UnityEngine.Rendering.HighDefinition
                     stencilRef = (int)StencilLightingUsage.SplitLighting;
                 }
 
-                if(mat.HasProperty("_ReceivesSSR") && mat.GetInt("_ReceivesSSR") == 0)
+                if(mat.HasProperty("_ReceivesSSR") && mat.GetInt("_ReceivesSSR") == 1)
                 {
-                    stencilWriteMask |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
-                    stencilRef |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
+                    stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
+                    stencilRef |= (int)StencilBeforeTransparent.TraceReflectionRay;
                 }
 
                 // As we tag both during motion vector pass and Gbuffer pass we need a separate state and we need to use the write mask
                 mat.SetInt("_StencilRef", stencilRef);
                 mat.SetInt("_StencilWriteMask", stencilWriteMask);
-                mat.SetInt("_StencilRefMV", (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors);
-                mat.SetInt("_StencilWriteMaskMV", (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors);
+                mat.SetInt("_StencilRefMV", (int)StencilBeforeTransparent.ObjectMotionVector);
+                mat.SetInt("_StencilWriteMaskMV", (int)StencilBeforeTransparent.ObjectMotionVector);
             }
         }
 

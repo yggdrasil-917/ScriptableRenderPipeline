@@ -85,8 +85,8 @@ namespace UnityEditor.Rendering.HighDefinition
             int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
             int stencilRefDepth = 0;
             int stencilWriteMaskDepth = 0;
-            int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
-            int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
+            int stencilRefMV = (int)StencilBeforeTransparent.ObjectMotionVector;
+            int stencilWriteMaskMV = (int)StencilBeforeTransparent.ObjectMotionVector;
 
             if (ssrEnabled)
             {

@@ -269,8 +269,8 @@ namespace UnityEditor.Rendering.HighDefinition
 
         public static void GetStencilStateForDepthOrMV(bool useObjectMotionVector, ref Pass pass)
         {
-            int stencilWriteMask = useObjectMotionVector ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;
-            int stencilRef = useObjectMotionVector ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;
+            int stencilWriteMask = useObjectMotionVector ? (int)StencilBeforeTransparent.ObjectMotionVector : 0;
+            int stencilRef = useObjectMotionVector ? (int)StencilBeforeTransparent.ObjectMotionVector : 0;
 
             if (stencilWriteMask != 0)
             {

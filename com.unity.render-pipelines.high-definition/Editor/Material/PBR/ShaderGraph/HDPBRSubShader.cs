@@ -402,8 +402,8 @@ namespace UnityEditor.Rendering.HighDefinition
             stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
             stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;
 
-            stencilWriteMask |= useObjectMotionVector ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;
-            stencilRef |= useObjectMotionVector ? (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors : 0;
+            stencilWriteMask |= useObjectMotionVector ? (int)StencilBeforeTransparent.ObjectMotionVector : 0;
+            stencilRef |= useObjectMotionVector ? (int)StencilBeforeTransparent.ObjectMotionVector : 0;
 
             if (stencilWriteMask != 0)
             {

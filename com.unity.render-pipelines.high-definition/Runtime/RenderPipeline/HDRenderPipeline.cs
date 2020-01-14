@@ -3651,8 +3651,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 // These flags are still required in SRP or the engine won't compute previous model matrices...
                 // If the flag hasn't been set yet on this camera, motion vectors will skip a frame.
                 hdCamera.camera.depthTextureMode |= DepthTextureMode.MotionVectors | DepthTextureMode.Depth;
-                m_CameraMotionVectorsMaterial.SetInt(HDShaderIDs._StencilMask, (int)StencilBitMask.ObjectMotionVectors);
-                m_CameraMotionVectorsMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilBitMask.ObjectMotionVectors);
+                m_CameraMotionVectorsMaterial.SetInt(HDShaderIDs._StencilMask, (int)StencilBeforeTransparent.ObjectMotionVector);
+                m_CameraMotionVectorsMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilBeforeTransparent.ObjectMotionVector);
 
                 HDUtils.DrawFullScreen(cmd, m_CameraMotionVectorsMaterial, m_SharedRTManager.GetMotionVectorsBuffer(msaa), m_SharedRTManager.GetDepthStencilBuffer(msaa), null, 0);
 

@@ -1212,8 +1212,8 @@ namespace UnityEditor.Rendering.HighDefinition
             collector.AddIntProperty("_StencilRefDepth", stencilRefDepth); // Nothing
             collector.AddIntProperty("_StencilWriteMaskDepth", stencilWriteMaskDepth); // StencilBeforeTransparent.TraceReflectionRay
             // Motion vector pass
-            collector.AddIntProperty("_StencilRefMV", stencilRefMV); // StencilBitMask.ObjectMotionVectors
-            collector.AddIntProperty("_StencilWriteMaskMV", stencilWriteMaskMV); // StencilBitMask.ObjectMotionVectors
+            collector.AddIntProperty("_StencilRefMV", stencilRefMV); // StencilBeforeTransparent.ObjectMotionVector
+            collector.AddIntProperty("_StencilWriteMaskMV", stencilWriteMaskMV); // StencilBeforeTransparent.ObjectMotionVector
             // Distortion vector pass
             collector.AddIntProperty("_StencilRefDistortionVec", (int)StencilAfterOpaque.DistortionVectors); 
             collector.AddIntProperty("_StencilWriteMaskDistortionVec", (int)StencilAfterOpaque.DistortionVectors); 

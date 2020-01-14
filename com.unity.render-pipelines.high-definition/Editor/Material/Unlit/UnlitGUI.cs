@@ -64,8 +64,8 @@ namespace UnityEditor.Rendering.HighDefinition
             int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
             int stencilRefDepth = (int)StencilBeforeTransparent.TraceReflectionRay;
             int stencilWriteMaskDepth = (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-            int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors | (int)StencilBeforeTransparent.TraceReflectionRay;
-            int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors | (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
+            int stencilRefMV = (int)StencilBeforeTransparent.ObjectMotionVector | (int)StencilBeforeTransparent.TraceReflectionRay;
+            int stencilWriteMaskMV = (int)StencilBeforeTransparent.ObjectMotionVector | (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
 
             // As we tag both during velocity pass and Gbuffer pass we need a separate state and we need to use the write mask
             material.SetInt(kStencilRef, stencilRef);
