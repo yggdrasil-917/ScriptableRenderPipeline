@@ -74,8 +74,8 @@ namespace UnityEditor.Rendering.HighDefinition
             material.SetInt(kStencilWriteMaskDepth, stencilWriteMaskDepth);
             material.SetInt(kStencilRefMV, stencilRefMV);
             material.SetInt(kStencilWriteMaskMV, stencilWriteMaskMV);
-            material.SetInt(kStencilRefDistortionVec, (int)HDRenderPipeline.StencilBitMask.DistortionVectors);
-            material.SetInt(kStencilWriteMaskDistortionVec, (int)HDRenderPipeline.StencilBitMask.DistortionVectors);
+            material.SetInt(kStencilRefDistortionVec, (int)StencilAfterOpaque.DistortionVectors);
+            material.SetInt(kStencilWriteMaskDistortionVec, (int)StencilAfterOpaque.DistortionVectors);
             if (material.HasProperty(kAddPrecomputedVelocity))
             {
                 CoreUtils.SetKeyword(material, "_ADD_PRECOMPUTED_VELOCITY", material.GetInt(kAddPrecomputedVelocity) != 0);

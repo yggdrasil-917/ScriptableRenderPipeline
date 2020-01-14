@@ -2876,8 +2876,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 var size = new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, 1f / hdCamera.actualWidth, 1f / hdCamera.actualHeight);
                 m_ApplyDistortionMaterial.SetVector(HDShaderIDs._Size, size);
-                m_ApplyDistortionMaterial.SetInt(HDShaderIDs._StencilMask, (int)StencilBitMask.DistortionVectors);
-                m_ApplyDistortionMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilBitMask.DistortionVectors);
+                m_ApplyDistortionMaterial.SetInt(HDShaderIDs._StencilMask, (int)StencilAfterOpaque.DistortionVectors);
+                m_ApplyDistortionMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilAfterOpaque.DistortionVectors);
 
                 HDUtils.DrawFullScreen(cmd, m_ApplyDistortionMaterial, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(), null, 0);
             }

@@ -2,8 +2,8 @@ Shader "Hidden/HDRP/ApplyDistortion"
 {
     Properties
     {
-        [HideInInspector] _StencilRef("_StencilRef", Int) = 64
-        [HideInInspector] _StencilMask("_StencilMask", Int) = 64
+        [HideInInspector] _StencilRef("_StencilRef", Int) = 2
+        [HideInInspector] _StencilMask("_StencilMask", Int) = 2
     }
 
     HLSLINCLUDE

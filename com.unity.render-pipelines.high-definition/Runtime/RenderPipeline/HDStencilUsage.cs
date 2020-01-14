@@ -29,7 +29,7 @@ namespace UnityEngine.Rendering.HighDefinition
         Clear = 0,
 
         ExcludeFromTAA              = (1 << 1),    // Disable Temporal Antialiasing for certain objects
-        DistortionVector            = (1 << 2),    // Distortion pass - reset after distortion pass, shared with SMAA
+        DistortionVectors           = (1 << 2),    // Distortion pass - reset after distortion pass, shared with SMAA
         SMAA                        = (1 << 2),    // Subpixel Morphological Antialiasing
         TraceReflectionRay          = (1 << 3),    //  SSR or RTR
 

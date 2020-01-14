@@ -112,8 +112,8 @@ namespace UnityEditor.Rendering.HighDefinition
             material.SetInt(kStencilWriteMaskGBuffer, stencilWriteMaskGBuffer);
             material.SetInt(kStencilRefMV, stencilRefMV);
             material.SetInt(kStencilWriteMaskMV, stencilWriteMaskMV);
-            material.SetInt(kStencilRefDistortionVec, (int)HDRenderPipeline.StencilBitMask.DistortionVectors);
-            material.SetInt(kStencilWriteMaskDistortionVec, (int)HDRenderPipeline.StencilBitMask.DistortionVectors);
+            material.SetInt(kStencilRefDistortionVec, (int)StencilAfterOpaque.DistortionVectors);
+            material.SetInt(kStencilWriteMaskDistortionVec, (int)StencilAfterOpaque.DistortionVectors);
         }
 
         static public void ComputeStencilProperties(bool receivesSSR, bool useSplitLighting, out int stencilRef, out int stencilWriteMask,
