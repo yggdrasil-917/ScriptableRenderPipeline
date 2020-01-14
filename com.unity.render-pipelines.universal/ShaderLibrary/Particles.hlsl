@@ -73,7 +73,8 @@ half3 AlphaModulate(half3 albedo, half alpha)
 half3 Distortion(float4 baseColor, float3 normal, half strength, half blend, float4 projection)
 {
     float2 screenUV = (projection.xy / projection.w) + normal.xy * strength * baseColor.a;
-    float4 Distortion = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV);
+    screenUV = UnityStereoTransformScreenSpaceTex(screenUV);
+    float4 Distortion = SAMPLE_TEXTURE2D_X(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV);
     return lerp(Distortion.rgb, baseColor.rgb, saturate(baseColor.a - blend));
 }
 
