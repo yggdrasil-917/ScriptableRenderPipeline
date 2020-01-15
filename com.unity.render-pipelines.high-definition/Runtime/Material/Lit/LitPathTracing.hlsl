@@ -143,12 +143,27 @@ bool SampleMaterial(MaterialData mtlData, float3 inputSample, out float3 sampleD
             if (!BTDF::SampleGGX(mtlData, inputSample, sampleDir, result.specValue, result.specPdf))
                 return false;
 
+#ifdef _REFRACTION_THIN
+            sampleDir = refract(sampleDir, mtlData.bsdfData.normalWS, mtlData.bsdfData.ior);
+            if (!any(sampleDir))
+                return false;
+#endif
+
             result.specValue *= mtlData.bsdfData.transmittanceMask;
             result.specPdf *= mtlData.bsdfWeight[3];
         }
     }
     else // Below
     {
+#ifdef _REFRACTION_THIN
+        if (mtlData.bsdfData.transmittanceMask)
+        {
+            // Just go through (although we should not end up here)
+            sampleDir = -mtlData.V;
+            result.specValue = DELTA_PDF;
+            result.specPdf = DELTA_PDF;
+        }
+#else
         if (inputSample.z < mtlData.bsdfWeight[2]) // Specular BRDF
         {
             if (!BRDF::SampleDelta(mtlData, sampleDir, result.specValue, result.specPdf))
@@ -163,6 +178,7 @@ bool SampleMaterial(MaterialData mtlData, float3 inputSample, out float3 sampleD
 
             result.specPdf *= mtlData.bsdfWeight[3];
         }
+#endif
     }
 
     return true;
