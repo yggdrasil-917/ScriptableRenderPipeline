@@ -383,8 +383,6 @@ namespace UnityEditor.Rendering.HighDefinition
             stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
             stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;
 
-            stencilWriteMask |= (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-
             pass.StencilOverride = new List<string>()
             {
                 "// Stencil setup",
@@ -400,8 +398,8 @@ namespace UnityEditor.Rendering.HighDefinition
 
         public static void GetStencilStateForDepthOrMV(bool receiveDecals, bool receiveSSR, bool useObjectMotionVector, ref Pass pass)
         {
-            int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-            int stencilRef = receiveDecals ? (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer : 0;
+            int stencilWriteMask = 0;
+            int stencilRef = 0;
 
             stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
             stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;

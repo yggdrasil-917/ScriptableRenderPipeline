@@ -48,25 +48,25 @@ namespace UnityEditor.Rendering.HighDefinition
                 CoreUtils.SetKeyword(material, "_EMISSIVE_COLOR_MAP", material.GetTexture(kEmissiveColorMap));
 
             // Stencil usage rules:
-            // StencilBeforeTransparent and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
+            // StencilBeforeTransparent need to be tagged during depth prepass
             // RequiresDeferredLighting need to be tagged during GBuffer
             // SubsurfaceScattering need to be tagged during either GBuffer or Forward pass
             // ObjectVelocity need to be tagged in velocity pass.
-            // As velocity pass can be use as a replacement of depth prepass it also need to have StencilBeforeTransparent and DecalsForwardOutputNormalBuffer
-            // As GBuffer pass can have no depth prepass, it also need to have StencilBeforeTransparent and DecalsForwardOutputNormalBuffer
+            // As velocity pass can be use as a replacement of depth prepass it also need to have StencilBeforeTransparent
+            // As GBuffer pass can have no depth prepass, it also need to have StencilBeforeTransparent
             // Object velocity is always render after a full depth buffer (if there is no depth prepass for GBuffer all object motion vectors are render after GBuffer)
             // so we have a guarantee than when we write object velocity no other object will be draw on top (and so would have require to overwrite velocity).
             // Final combination is:
-            // Prepass: StencilBeforeTransparent,  DecalsForwardOutputNormalBuffer
-            // Motion vectors: StencilBeforeTransparent,  DecalsForwardOutputNormalBuffer, ObjectVelocity
+            // Prepass: StencilBeforeTransparent
+            // Motion vectors: StencilBeforeTransparent, ObjectVelocity
             // Forward: LightingMask
 
             int stencilRef = (int)StencilBeforeTransparent.Clear;
             int stencilWriteMask = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
             int stencilRefDepth = (int)StencilBeforeTransparent.TraceReflectionRay;
-            int stencilWriteMaskDepth = (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
+            int stencilWriteMaskDepth = (int)StencilBeforeTransparent.TraceReflectionRay;
             int stencilRefMV = (int)StencilBeforeTransparent.ObjectMotionVector | (int)StencilBeforeTransparent.TraceReflectionRay;
-            int stencilWriteMaskMV = (int)StencilBeforeTransparent.ObjectMotionVector | (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
+            int stencilWriteMaskMV = (int)StencilBeforeTransparent.ObjectMotionVector | (int)StencilBeforeTransparent.TraceReflectionRay;
 
             // As we tag both during velocity pass and Gbuffer pass we need a separate state and we need to use the write mask
             material.SetInt(kStencilRef, stencilRef);

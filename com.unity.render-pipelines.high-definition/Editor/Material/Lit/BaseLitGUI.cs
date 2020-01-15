@@ -121,18 +121,18 @@ namespace UnityEditor.Rendering.HighDefinition
             out int stencilRefMV, out int stencilWriteMaskMV)
         {
             // Stencil usage rules:
-            // TraceReflectionRay and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
+            // TraceReflectionRay need to be tagged during depth prepass
             // RequiresDeferredLighting need to be tagged during GBuffer
             // SubsurfaceScattering need to be tagged during either GBuffer or Forward pass
             // ObjectMotionVectors need to be tagged in velocity pass.
-            // As motion vectors pass can be use as a replacement of depth prepass it also need to have TraceReflectionRay and DecalsForwardOutputNormalBuffer
-            // As GBuffer pass can have no depth prepass, it also need to have TraceReflectionRay and DecalsForwardOutputNormalBuffer
+            // As motion vectors pass can be use as a replacement of depth prepass it also need to have TraceReflectionRay
+            // As GBuffer pass can have no depth prepass, it also need to have TraceReflectionRay
             // Object motion vectors is always render after a full depth buffer (if there is no depth prepass for GBuffer all object motion vectors are render after GBuffer)
             // so we have a guarantee than when we write object motion vectors no other object will be draw on top (and so would have require to overwrite motion vectors).
             // Final combination is:
-            // Prepass: TraceReflectionRay,  DecalsForwardOutputNormalBuffer
-            // Motion vectors: TraceReflectionRay,  DecalsForwardOutputNormalBuffer, ObjectVelocity
-            // GBuffer: LightingMask, DecalsForwardOutputNormalBuffer, ObjectVelocity
+            // Prepass: TraceReflectionRay
+            // Motion vectors: TraceReflectionRay, ObjectVelocity
+            // GBuffer: LightingMask, ObjectVelocity
             // Forward: LightingMask
 
             stencilRef = (int)StencilBeforeTransparent.Clear; // Forward case
@@ -157,9 +157,9 @@ namespace UnityEditor.Rendering.HighDefinition
                 stencilRefMV |= (int)StencilBeforeTransparent.TraceReflectionRay;
             }
 
-            stencilWriteMaskDepth |= (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-            stencilWriteMaskGBuffer |= (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-            stencilWriteMaskMV |= (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
+            stencilWriteMaskDepth |= (int)StencilBeforeTransparent.TraceReflectionRay;
+            stencilWriteMaskGBuffer |= (int)StencilBeforeTransparent.TraceReflectionRay;
+            stencilWriteMaskMV |= (int)StencilBeforeTransparent.TraceReflectionRay;
         }
 
         static public void SetupBaseLitMaterialPass(Material material)

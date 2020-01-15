@@ -193,27 +193,6 @@ namespace UnityEngine.Rendering.HighDefinition
                                                 HDShaderPassNames.s_MeshDecalsMSName, HDShaderPassNames.s_MeshDecalsAOSName, HDShaderPassNames.s_MeshDecalsMAOSName, HDShaderPassNames.s_ShaderGraphMeshDecalsName4RT};
         ShaderTagId[] m_Decals3RTPassNames = { HDShaderPassNames.s_MeshDecals3RTName , HDShaderPassNames.s_ShaderGraphMeshDecalsName3RT };
 
-
-        // Stencil usage in HDRenderPipeline.
-        // Currently we use only 2 bits to identify the kind of lighting that is expected from the render pipeline
-        // Usage is define in LightDefinitions.cs
-        [Flags]
-        internal enum StencilBitMask
-        {
-            Clear                           = 0,    // 0x0
-            LightingMask                    = 3,    // 0x3  - 2 bit - Lifetime: GBuffer/Forward - SSSSS
-            // Free slot 4
-            // Note: If required, the usage Decals / DecalsForwardOutputNormalBuffer could be fit at same location as LightingMask as they have a non overlapped lifetime
-            Decals                          = 8,    // 0x8  - 1 bit - Lifetime: DBuffer - Patch normal buffer   (This bit is cleared to 0 after Patch normal buffer)
-            DecalsForwardOutputNormalBuffer = 16,   // 0x10 - 1 bit - Lifetime: DBuffer - Patch normal buffer   (This bit is cleared to 0 after Patch normal buffer)
-            ExcludeFromTAA                  = 16,   // 0x10 - 1 bit - Lifetime: Transparent rendering -TAA
-            DoesntReceiveSSR                = 32,   // 0x20 - 1 bit - Lifetime: DethPrepass - SSR
-            DistortionVectors               = 64,   // 0x40 - 1 bit - Lifetime: Accumulate distortion - Apply distortion (This bit is cleared to 0 after Apply distortion pass)
-            SMAA                            = 64,   // 0x40 - 1 bit - Lifetime: SMAA EdgeDetection - SMAA BlendWeight.
-            ObjectMotionVectors             = 128,  // 0x80 - 1 bit - Lifetime: Object motion vector pass - Camera motion vector (This bit is cleared to 0 after Camera motion vector pass)
-            All                             = 255   // 0xFF - 8 bit
-        }
-
         RenderStateBlock m_DepthStateOpaque;
 
         // Detect when windows size is changing
@@ -1974,7 +1953,6 @@ namespace UnityEngine.Rendering.HighDefinition
             m_SharedRTManager.ResolveSharedRT(cmd, hdCamera);
 
             RenderDBuffer(hdCamera, cmd, renderContext, cullingResults);
-            DecalNormalPatch(hdCamera, cmd, renderContext);
 
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
 
@@ -3159,8 +3137,8 @@ namespace UnityEngine.Rendering.HighDefinition
                     parameters.stencilRef = (int)StencilBeforeTransparent.Decals;
                     break;
                 case LitShaderMode.Deferred: // in deferred rendering only pixels affected by both forward materials and decals need to be composited
-                    parameters.stencilMask = (int)StencilBeforeTransparent.Decals | (int)StencilBitMask.DecalsForwardOutputNormalBuffer;
-                    parameters.stencilRef = (int)StencilBeforeTransparent.Decals | (int)StencilBitMask.DecalsForwardOutputNormalBuffer;
+                    parameters.stencilMask = (int)StencilBeforeTransparent.Decals | (int)StencilBeforeTransparent.RequiresDeferredLighting;
+                    parameters.stencilRef = (int)StencilBeforeTransparent.Decals;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown ShaderLitMode");
