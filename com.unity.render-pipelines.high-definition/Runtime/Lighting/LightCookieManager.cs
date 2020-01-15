@@ -211,7 +211,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 Debug.LogError($"2D Light cookie texture {cookie} can't be fetched without having reserved. Check LightLoop.ReserveCookieAtlasTexture");
 
             if (m_CookieAtlas.NeedsUpdate(cookie))
-                m_CookieAtlas.BlitTexture(cmd, scaleBias, cookie, new Vector4(1, 1, 0, 0));
+                m_CookieAtlas.BlitTexture(cmd, scaleBias, cookie, new Vector4(1, 1, 0, 0), blitMips: false);
 
             return scaleBias;
         }
