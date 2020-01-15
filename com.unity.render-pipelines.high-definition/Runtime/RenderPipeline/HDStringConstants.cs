@@ -263,8 +263,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
         // Used in the stencil resolve pass
         public static readonly int _OutputStencilBuffer = Shader.PropertyToID("_OutputStencilBuffer");
-        public static readonly int _OutputCoarseStencil = Shader.PropertyToID("_OutputCoarseStencil");
-        public static readonly int _CoarseStencilSize = Shader.PropertyToID("_CoarseStencilSize");
+        public static readonly int _CoarseStencilBuffer = Shader.PropertyToID("_CoarseStencilBuffer");
+        public static readonly int _CoarseStencilBufferSize = Shader.PropertyToID("_CoarseStencilBufferSize");
 
 
         // all decal properties

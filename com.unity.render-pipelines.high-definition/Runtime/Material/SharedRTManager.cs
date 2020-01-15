@@ -25,7 +25,6 @@ namespace UnityEngine.Rendering.HighDefinition
         RTHandle m_CameraDepthValuesBuffer = null;
 
         ComputeBuffer m_CoarseStencilBuffer = null;
-        public RTHandle m_CoarseStencilDEBUG_TMP = null;
 
         // MSAA resolve materials
         Material m_DepthResolveMaterial  = null;
@@ -268,15 +267,12 @@ namespace UnityEngine.Rendering.HighDefinition
         public void AllocateCoarseStencilBuffer(int width, int height)
         {
             if(width > 8 && height > 8)
-                m_CoarseStencilBuffer = new ComputeBuffer(HDUtils.DivRoundUp(width, 8) * HDUtils.DivRoundUp(height, 8), sizeof(uint), ComputeBufferType.Raw);
-
-            m_CoarseStencilDEBUG_TMP = RTHandles.Alloc(Vector2.one * 0.125f, TextureXR.slices, colorFormat: GraphicsFormat.R32_UInt, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, name: "dbg_stencil");
+                m_CoarseStencilBuffer = new ComputeBuffer(HDUtils.DivRoundUp(width, 8) * HDUtils.DivRoundUp(height, 8), sizeof(uint));
         }
 
         public void DisposeCoarseStencilBuffer()
         {
             CoreUtils.SafeRelease(m_CoarseStencilBuffer);
-            RTHandles.Release(m_CoarseStencilDEBUG_TMP);
         }
 
         public void Cleanup()

@@ -1,5 +1,5 @@
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
-#pragma enable_d3d11_debug_symbols
+
 #pragma kernel MAIN         KERNEL_NAME=MAIN         NUM_SAMPLES=1
 #pragma kernel MAIN_MSAA_2  KERNEL_NAME=MAIN_MSAA_2  NUM_SAMPLES=2 MSAA
 #pragma kernel MAIN_MSAA_4  KERNEL_NAME=MAIN_MSAA_4  NUM_SAMPLES=4 MSAA 
@@ -15,14 +15,13 @@ RW_TEXTURE2D_X(uint2, _OutputStencilBuffer);
 TEXTURE2D_X_UINT2(_StencilTexture);
 #endif
 
-
-float4 _CoarseStencilSize;
 RW_TEXTURE2D_X(uint, _OutputTexture);
 
 // TODO: Wasting 3 bytes here per entry, but still better than a texture as can be scalar read.
 // We could sub-index the right byte inside the uint, but it takes extra ALU and won't save bandwidth (just memory)
-// For now the extra memory cost is acceptable (3 bytes * 1/64th of a render target)
-RWByteAddressBuffer    _OutputCoarseStencil;
+// For now the extra memory cost is acceptable (3 bytes * 1/64th of a render target).
+// Note that using RawBuffers seems to have problem, so using structured buffers for now, but is worth revisiting if the perf difference is a concern.
+RWStructuredBuffer<uint>    _CoarseStencilBuffer;
 
 #ifdef PLATFORM_SUPPORTS_WAVE_INTRINSICS
     #define FAST_PLATFORM (PLATFORM_LANE_COUNT == 64)
@@ -40,7 +39,6 @@ void KERNEL_NAME(uint3 groupId          : SV_GroupID,
                  uint3 dispatchThreadID : SV_DispatchThreadID)
 {
 
-    // Don't collect garbage off-screen.
     // The best shot at resolving is being overly conservative, hence the OR operator. This is by nature inaccurate. 
     uint resolvedStencil = 0;
 
@@ -85,8 +83,7 @@ void KERNEL_NAME(uint3 groupId          : SV_GroupID,
 
     if (isFirstThread)
     {
-        uint addressIndex = Get1DAddressFromPixelCoord(groupId.xy, _CoarseStencilSize.xy);
-        _OutputCoarseStencil.Store(addressIndex, coarseStencilValue);
-        _OutputTexture[COORD_TEXTURE2D_X(groupId.xy)] = coarseStencilValue;
+        uint addressIndex = Get1DAddressFromPixelCoord(groupId.xy, _CoarseStencilBufferSize.xy);
+        _CoarseStencilBuffer[addressIndex] = coarseStencilValue;
     }
 }
