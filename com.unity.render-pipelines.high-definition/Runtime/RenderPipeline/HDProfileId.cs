@@ -82,6 +82,7 @@ namespace UnityEngine.Rendering.HighDefinition
         DisplayPointLightCookieArray,
         DisplayPlanarReflectionProbeAtlas,
         BlitTextureInPotAtlas,
+        AreaLightCookieConvolution,
 
         UpdateSkyEnvironmentConvolution,
         RenderSkyToCubemap,

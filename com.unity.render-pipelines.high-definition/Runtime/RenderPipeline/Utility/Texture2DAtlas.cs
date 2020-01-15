@@ -141,7 +141,6 @@ namespace UnityEngine.Rendering.HighDefinition
         private AtlasAllocator m_AtlasAllocator = null;
         private Dictionary<int, Vector4> m_AllocationCache = new Dictionary<int, Vector4>();
         private Dictionary<int, uint> m_IsGPUTextureUpToDate = new Dictionary<int, uint>();
-        private Dictionary<int, Vector2Int> m_RequestedTextures = new Dictionary<int, Vector2Int>();
 
         static readonly Vector4 fullScaleOffset = new Vector4(1, 1, 0, 0);
 
@@ -190,12 +189,10 @@ namespace UnityEngine.Rendering.HighDefinition
         public void ClearTarget(CommandBuffer cmd)
         {
             // clear the atlas by blitting a black texture
-            BlitTexture(cmd, fullScaleOffset, Texture2D.blackTexture, fullScaleOffset);
+            BlitTexture(cmd, fullScaleOffset, Texture2D.blackTexture, fullScaleOffset, blitMips: true);
 
             m_IsGPUTextureUpToDate.Clear(); // mark all GPU textures as invalid.
         }
-
-        public void ResetRequestedTexture() => m_RequestedTextures.Clear();
 
         protected int GetTextureMipmapCount(int width, int height)
         {
@@ -228,27 +225,31 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        public virtual void BlitTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset, bool blitMips = true)
+        protected void MarkGPUTextureValid(int instanceId) => m_IsGPUTextureUpToDate[instanceId] = 1;
+
+        protected void MarkGPUTextureInvalid(int instanceId) => m_IsGPUTextureUpToDate[instanceId] = 0;
+
+        public virtual void BlitTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset, bool blitMips = true, int overrideInstanceID = -1)
         {
             // This atlas only support 2D texture so we only blit 2D textures
             if (Is2D(texture))
                 Blit2DTexture(cmd, scaleOffset, texture, sourceScaleOffset, blitMips);
         }
 
-        public virtual bool AllocateTexture(CommandBuffer cmd, ref Vector4 scaleOffset, Texture texture, int width, int height)
+        public virtual bool AllocateTexture(CommandBuffer cmd, ref Vector4 scaleOffset, Texture texture, int width, int height, int overrideInstanceID = -1)
         {
             bool allocated = AllocateTextureWithoutBlit(texture, width, height, ref scaleOffset);
 
             if (allocated)
             {
                 BlitTexture(cmd, scaleOffset, texture, fullScaleOffset);
-                m_IsGPUTextureUpToDate[texture.GetInstanceID()] = 1; // texture is up to date
+                MarkGPUTextureValid(overrideInstanceID != -1 ? overrideInstanceID : texture.GetInstanceID()); // texture is up to date
             }
 
             return allocated;
         }
 
-        public virtual bool AllocateTextureWithoutBlit(Texture texture, int width, int height, ref Vector4 scaleOffset)
+        public bool AllocateTextureWithoutBlit(Texture texture, int width, int height, ref Vector4 scaleOffset)
             => AllocateTextureWithoutBlit(texture.GetInstanceID(), width, height, ref scaleOffset);
 
         public virtual bool AllocateTextureWithoutBlit(int instanceId, int width, int height, ref Vector4 scaleOffset)
@@ -259,7 +260,7 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 scaleOffset.Scale(new Vector4(1.0f / m_Width, 1.0f / m_Height, 1.0f / m_Width, 1.0f / m_Height));
                 m_AllocationCache.Add(instanceId, scaleOffset);
-                m_IsGPUTextureUpToDate[instanceId] = 0; // we set this to a value > 0 because the texture data haven't been uploaded
+                MarkGPUTextureInvalid(instanceId); // the texture data haven't been uploaded
                 return true;
             }
             else
@@ -271,7 +272,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public bool IsCached(out Vector4 scaleOffset, Texture texture)
             => m_AllocationCache.TryGetValue(texture.GetInstanceID(), out scaleOffset);
 
-        public bool NeedsUpdate(Texture texture)
+        public virtual bool NeedsUpdate(Texture texture)
         {
             RenderTexture   rt = texture as RenderTexture;
             int             key = texture.GetInstanceID();
@@ -299,46 +300,6 @@ namespace UnityEngine.Rendering.HighDefinition
             return false;
         }
 
-        /// <summary>
-        /// sort all the requested allocation from biggest to smallest and re-insert them.
-        /// This function does not moves the textures in the atlas, it only changes their coordinates
-        /// </summary>
-        /// <returns>True if all textures have successfully been re-inserted in the atlas</returns>
-        public bool RelayoutEntries()
-        {
-            var entries = new List<(int instanceId, Vector2Int size)>();
-
-            foreach (var entry in m_RequestedTextures)
-                entries.Add((entry.Key, entry.Value));
-            ResetAllocator();
-
-            // Sort entries from biggest to smallest
-            entries.Sort((c1, c2) => {
-                return c2.size.magnitude.CompareTo(c2.size.magnitude);
-            });
-
-            bool success = true;
-            Vector4 newScaleOffset = Vector4.zero;
-            foreach (var e in entries)
-                success &= AllocateTextureWithoutBlit(e.instanceId, e.size.x, e.size.y, ref newScaleOffset);
-
-            return success;
-        }
-
-        public bool ReserveSpace(Texture texture)
-        {
-            m_RequestedTextures[texture.GetInstanceID()] = new Vector2Int(texture.width, texture.height);
-
-            // new texture
-            if (!IsCached(out _, texture))
-            {
-                Vector4 scaleBias = Vector4.zero;
-                if (!AllocateTextureWithoutBlit(texture, texture.width, texture.height, ref scaleBias))
-                    return false;
-            }
-            return true;
-        }
-
         public virtual bool AddTexture(CommandBuffer cmd, ref Vector4 scaleOffset, Texture texture)
         {
             if (IsCached(out scaleOffset, texture))
@@ -359,7 +320,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 if (updateIfNeeded && NeedsUpdate(newTexture))
                 {
                     BlitTexture(cmd, scaleOffset, newTexture, sourceScaleOffset, blitMips);
-                    m_IsGPUTextureUpToDate[newTexture.GetInstanceID()] = 1; // texture is up to date
+                    MarkGPUTextureValid(newTexture.GetInstanceID()); // texture is up to date
                 }
                 return true;
             }

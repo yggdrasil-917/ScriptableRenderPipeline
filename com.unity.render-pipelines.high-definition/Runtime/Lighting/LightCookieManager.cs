@@ -224,9 +224,8 @@ namespace UnityEngine.Rendering.HighDefinition
             if (m_CookieAtlas.NeedsUpdate(cookie))
             {
                 // Generate the mips
-                Debug.Log("FIOFW");
                 Texture filteredAreaLight = FilterAreaLightTexture(cmd, cookie);
-                m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, new Vector4(1, 1, 0, 0), blitMips: true);
+                m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, new Vector4(1, 1, 0, 0), blitMips: true, overrideInstanceID: cookie.GetInstanceID());
             }
 
             return scaleBias;

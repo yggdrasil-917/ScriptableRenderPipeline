@@ -11,6 +11,8 @@ namespace UnityEngine.Rendering.HighDefinition
         public int mipPadding;
         const float k_MipmapFactorApprox = 1.33f;
 
+        private Dictionary<int, Vector2Int> m_RequestedTextures = new Dictionary<int, Vector2Int>();
+
         public PowerOfTwoTextureAtlas(int size, int mipPadding, GraphicsFormat format, FilterMode filterMode = FilterMode.Point, string name = "", bool useMipMap = true)
             : base(size, size, format, filterMode, true, name, useMipMap)
         {
@@ -57,11 +59,14 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        public override void BlitTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset, bool blitMips = true)
+        public override void BlitTexture(CommandBuffer cmd, Vector4 scaleOffset, Texture texture, Vector4 sourceScaleOffset, bool blitMips = true, int overrideInstanceID = -1)
         {
             // We handle ourself the 2D blit because cookies needs mipPadding for trilinear filtering
             if (Is2D(texture))
+            {
                 Blit2DTexturePadding(cmd, scaleOffset, texture, sourceScaleOffset, blitMips);
+                MarkGPUTextureValid(overrideInstanceID != -1 ? overrideInstanceID : texture.GetInstanceID());
+            }
         }
 
         void TextureSizeToPowerOfTwo(Texture texture, ref int width, ref int height)
@@ -80,7 +85,7 @@ namespace UnityEngine.Rendering.HighDefinition
         }
 
         // Override the behavior when we add a texture so all non-pot textures are blitted to a pot target zone
-        public override bool AllocateTexture(CommandBuffer cmd, ref Vector4 scaleOffset, Texture texture, int width, int height)
+        public override bool AllocateTexture(CommandBuffer cmd, ref Vector4 scaleOffset, Texture texture, int width, int height, int overrideInstanceID = -1)
         {
             // This atlas only supports square textures
             if (height != width)
@@ -92,6 +97,48 @@ namespace UnityEngine.Rendering.HighDefinition
             TextureSizeToPowerOfTwo(texture, ref height, ref width);
 
             return base.AllocateTexture(cmd, ref scaleOffset, texture, width, height);
+        }
+        
+        public void ResetRequestedTexture() => m_RequestedTextures.Clear();
+        
+        public bool ReserveSpace(Texture texture)
+        {
+            m_RequestedTextures[texture.GetInstanceID()] = new Vector2Int(texture.width, texture.height);
+
+            // new texture
+            if (!IsCached(out _, texture))
+            {
+                Vector4 scaleBias = Vector4.zero;
+                if (!AllocateTextureWithoutBlit(texture, texture.width, texture.height, ref scaleBias))
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// sort all the requested allocation from biggest to smallest and re-insert them.
+        /// This function does not moves the textures in the atlas, it only changes their coordinates
+        /// </summary>
+        /// <returns>True if all textures have successfully been re-inserted in the atlas</returns>
+        public bool RelayoutEntries()
+        {
+            var entries = new List<(int instanceId, Vector2Int size)>();
+
+            foreach (var entry in m_RequestedTextures)
+                entries.Add((entry.Key, entry.Value));
+            ResetAllocator();
+
+            // Sort entries from biggest to smallest
+            entries.Sort((c1, c2) => {
+                return c2.size.magnitude.CompareTo(c2.size.magnitude);
+            });
+
+            bool success = true;
+            Vector4 newScaleOffset = Vector4.zero;
+            foreach (var e in entries)
+                success &= AllocateTextureWithoutBlit(e.instanceId, e.size.x, e.size.y, ref newScaleOffset);
+
+            return success;
         }
 
         public static long GetApproxCacheSizeInByte(int nbElement, int resolution, bool hasMipmap, GraphicsFormat format)
