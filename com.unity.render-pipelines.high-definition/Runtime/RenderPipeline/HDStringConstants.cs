@@ -258,7 +258,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public static readonly int _ColorMaskTransparentVel = Shader.PropertyToID("_ColorMaskTransparentVel");
 
-        public static readonly int _SSSHTile = Shader.PropertyToID("_SSSHTile");
         public static readonly int _StencilTexture = Shader.PropertyToID("_StencilTexture");
 
         // Used in the stencil resolve pass
