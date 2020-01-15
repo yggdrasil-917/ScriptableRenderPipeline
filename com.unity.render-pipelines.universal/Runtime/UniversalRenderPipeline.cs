@@ -283,7 +283,8 @@ namespace UnityEngine.Rendering.Universal
                 return;
 
             // renderer contains a stack if it has additional data and the renderer supports stacking
-            bool supportsCameraStacking = baseCameraAdditionalData != null && baseCameraAdditionalData.scriptableRenderer.supportedRenderingFeatures.cameraStacking;
+            var renderer = baseCameraAdditionalData?.scriptableRenderer;
+            bool supportsCameraStacking = renderer != null && renderer.supportedRenderingFeatures.cameraStacking;
             List<Camera> cameraStack = (supportsCameraStacking) ? baseCameraAdditionalData?.cameraStack : null;
 
             // We need to know the last active camera in the stack to be able to resolve
