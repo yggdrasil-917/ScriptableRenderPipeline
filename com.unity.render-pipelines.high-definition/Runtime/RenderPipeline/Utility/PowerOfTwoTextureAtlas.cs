@@ -99,7 +99,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public static int GetMaxCacheSizeForWeightInByte(int weight, bool hasMipmap, GraphicsFormat format)
         {
-            HDUtils.GetFormatSizeInBytes(GraphicsFormat.None);
             // Compute the max size of a power of two atlas for a given size in byte (weight)
             float bytePerPixel = (float)HDUtils.GetFormatSizeInBytes(format) * (hasMipmap ? k_MipmapFactorApprox : 1.0f);
             var maxAtlasSquareSize = Mathf.Sqrt((float)weight / bytePerPixel);

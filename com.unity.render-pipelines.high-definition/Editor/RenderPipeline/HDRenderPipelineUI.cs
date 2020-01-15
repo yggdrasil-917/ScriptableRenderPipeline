@@ -220,10 +220,11 @@ namespace UnityEditor.Rendering.HighDefinition
                 EditorGUILayout.HelpBox(Styles.multipleDifferenteValueMessage, MessageType.Info);
             else
             {
-                long currentCache = PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(1, serialized.renderPipelineSettings.lightLoopSettings.cookieAtlasSize.intValue, true, GraphicsFormat.R8G8B8A8_UNorm);
+                GraphicsFormat cookieFormat = (GraphicsFormat)serialized.renderPipelineSettings.lightLoopSettings.cookieAtlasFormat.intValue;
+                long currentCache = PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(1, serialized.renderPipelineSettings.lightLoopSettings.cookieAtlasSize.intValue, true, cookieFormat);
                 if (currentCache > HDRenderPipeline.k_MaxCacheSize)
                 {
-                    int reserved = PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, true, GraphicsFormat.R8G8B8A8_UNorm);
+                    int reserved = PowerOfTwoTextureAtlas.GetMaxCacheSizeForWeightInByte(HDRenderPipeline.k_MaxCacheSize, true, cookieFormat);
                     string message = string.Format(Styles.cacheErrorFormat, HDEditorUtils.HumanizeWeight(currentCache), reserved);
                     EditorGUILayout.HelpBox(message, MessageType.Error);
                 }

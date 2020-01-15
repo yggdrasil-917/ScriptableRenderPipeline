@@ -2111,6 +2111,9 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     additionalData.ReserveShadowMap(hdCamera.camera, m_ShadowManager, hdShadowSettings, m_ShadowInitParameters, light.screenRect);
                 }
+                
+                // Reserve the cookie resolution in the 2D atlas
+                ReserveCookieAtlasTexture(additionalData, light.light, processedData.gpuLightType);
 
                 if (hasDebugLightFilter
                     && !debugLightFilter.IsEnabledFor(processedData.gpuLightType, additionalData.spotLightShape))
@@ -2195,8 +2198,6 @@ namespace UnityEngine.Rendering.HighDefinition
                     }
 #endif
                 }
-                
-                ReserveCookieAtlasTexture(additionalLightData, lightComponent, gpuLightType);
 
                 // Directional rendering side, it is separated as it is always visible so no volume to handle here
                 if (gpuLightType == GPULightType.Directional)
@@ -2573,17 +2574,18 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void ReserveCookieAtlasTexture(HDAdditionalLightData hdLightData, Light light, GPULightType gpuLightType)
         {
+            // Note: light component can be null if a Light is used for shuriken particle lighting.
             switch (gpuLightType)
             {
                 case GPULightType.Directional:
                     m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.surfaceTexture);
-                    m_TextureCaches.lightCookieManager.ReserveSpace(light.cookie);
+                    m_TextureCaches.lightCookieManager.ReserveSpace(light?.cookie);
                     break;
                 case GPULightType.Spot:
                 case GPULightType.ProjectorBox:
                 case GPULightType.ProjectorPyramid:
                     // Projectors lights must always have a cookie texture.
-                    m_TextureCaches.lightCookieManager.ReserveSpace(light.cookie ?? Texture2D.whiteTexture);
+                    m_TextureCaches.lightCookieManager.ReserveSpace(light?.cookie ?? Texture2D.whiteTexture);
                     break;
                 case GPULightType.Rectangle:
                     m_TextureCaches.lightCookieManager.ReserveSpace(hdLightData.areaLightCookie);
