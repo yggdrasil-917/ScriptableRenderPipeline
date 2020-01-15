@@ -197,11 +197,17 @@ void ClosestHit(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
                 nextRayIntersection.color += lightValue * misWeight;
             }
 
+#if HAS_REFRACTION
             // Apply absorption on rays below the interface, using Beer-Lambert's law
             if (isfinite(nextRayIntersection.t) && IsBelow(mtlData, rayDescriptor.Direction))
             {
+#ifdef _REFRACTION_THIN
+                nextRayIntersection.color *= exp(-mtlData.bsdfData.absorptionCoefficient * REFRACTION_THIN_DISTANCE);
+#else
                 nextRayIntersection.color *= exp(-mtlData.bsdfData.absorptionCoefficient * nextRayIntersection.t);
+#endif
             }
+#endif
 
             rayIntersection.color += value * russianRouletteFactor * nextRayIntersection.color;
         }
