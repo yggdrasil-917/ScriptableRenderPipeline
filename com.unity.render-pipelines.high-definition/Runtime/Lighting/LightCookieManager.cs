@@ -115,14 +115,14 @@ namespace UnityEngine.Rendering.HighDefinition
                 return null;
             }
 
-#if false
-            Texture texCache = m_AreaCookieTexArray.GetTexCache();
-            int numMipLevels = m_AreaCookieTexArray.GetNumMipLevels();
+            int sourceWidth = m_CookieAtlas.AtlasTexture.rt.width;
+            int sourceHeight = m_CookieAtlas.AtlasTexture.rt.height;
+            int mipMapCount = 1 + Mathf.FloorToInt(Mathf.Log(Mathf.Max(source.width, source.height), 2));
 
             if (m_TempRenderTexture0 == null )
             {
-                string cacheName = m_AreaCookieTexArray.GetCacheName();
-                m_TempRenderTexture0 = new RenderTexture(texCache.width, texCache.height, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
+                string cacheName = m_CookieAtlas.AtlasTexture.name;
+                m_TempRenderTexture0 = new RenderTexture(sourceWidth, sourceHeight, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
                 {
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
@@ -131,7 +131,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 };
 
                 // We start by a horizontal gaussian into mip 1 that reduces the width by a factor 2 but keeps the same height
-                m_TempRenderTexture1 = new RenderTexture(texCache.width >> 1, texCache.height, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
+                m_TempRenderTexture1 = new RenderTexture(sourceWidth >> 1, sourceHeight, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
                 {
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
@@ -140,55 +140,55 @@ namespace UnityEngine.Rendering.HighDefinition
                 };
             }
 
-            int sourceWidth = texCache.width;
-            int sourceHeight = texCache.height;
-            int targetWidth = sourceWidth;
-            int targetHeight = sourceHeight;
-            Vector4 targetSize = new Vector4( targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight );
-
-            // Start by copying the source texture to the array slice's mip 0
+            using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.AreaLightCookieConvolution)))
             {
-                cmd.SetGlobalTexture( s_texSource, source );
-                cmd.SetGlobalInt( s_sourceMipLevel, 0 );
-                cmd.SetRenderTarget( m_TempRenderTexture0, 0);
-                cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 0, MeshTopology.Triangles, 3, 1);
-            }
+                int targetWidth = sourceWidth;
+                int targetHeight = sourceHeight;
+                Vector4 targetSize = new Vector4( targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight );
 
-            // Then operate on all the remaining mip levels
-            Vector4 sourceSize = Vector4.zero;
-            for ( int mipIndex=1; mipIndex < numMipLevels; mipIndex++ )
-            {
-                {   // Perform horizontal blur
-                    targetWidth = Mathf.Max(1, targetWidth  >> 1);
-
-                    sourceSize.Set( sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight );
-                    targetSize.Set( targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight );
-
-                    cmd.SetGlobalTexture( s_texSource, m_TempRenderTexture0 );
-                    cmd.SetGlobalInt( s_sourceMipLevel, mipIndex-1 );          // Use previous mip as source
-                    cmd.SetGlobalVector( s_sourceSize, sourceSize );
-                    cmd.SetRenderTarget( m_TempRenderTexture1, mipIndex-1 );    // Temp texture is already 1 mip lower than source
-                    cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 1, MeshTopology.Triangles, 3, 1);
+                // Start by copying the source texture to the array slice's mip 0
+                {
+                    cmd.SetGlobalTexture( s_texSource, source );
+                    cmd.SetGlobalInt( s_sourceMipLevel, 0 );
+                    cmd.SetRenderTarget( m_TempRenderTexture0, 0);
+                    cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 0, MeshTopology.Triangles, 3, 1);
                 }
 
-                sourceWidth = targetWidth;
+                // Then operate on all the remaining mip levels
+                Vector4 sourceSize = Vector4.zero;
+                for ( int mipIndex=1; mipIndex < mipMapCount; mipIndex++ )
+                {
+                    {   // Perform horizontal blur
+                        targetWidth = Mathf.Max(1, targetWidth  >> 1);
 
-                {   // Perform vertical blur
-                    targetHeight = Mathf.Max(1, targetHeight >> 1);
+                        sourceSize.Set( sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight );
+                        targetSize.Set( targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight );
 
-                    sourceSize.Set( sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight );
-                    targetSize.Set( targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight );
+                        cmd.SetGlobalTexture( s_texSource, m_TempRenderTexture0 );
+                        cmd.SetGlobalInt( s_sourceMipLevel, mipIndex-1 );          // Use previous mip as source
+                        cmd.SetGlobalVector( s_sourceSize, sourceSize );
+                        cmd.SetRenderTarget( m_TempRenderTexture1, mipIndex-1 );    // Temp texture is already 1 mip lower than source
+                        cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 1, MeshTopology.Triangles, 3, 1);
+                    }
 
-                    cmd.SetGlobalTexture( s_texSource, m_TempRenderTexture1 );
-                    cmd.SetGlobalInt( s_sourceMipLevel, mipIndex-1 );
-                    cmd.SetGlobalVector( s_sourceSize, sourceSize );
-                    cmd.SetRenderTarget( m_TempRenderTexture0, mipIndex);
-                    cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 2, MeshTopology.Triangles, 3, 1);
+                    sourceWidth = targetWidth;
+
+                    {   // Perform vertical blur
+                        targetHeight = Mathf.Max(1, targetHeight >> 1);
+
+                        sourceSize.Set( sourceWidth, sourceHeight, 1.0f / sourceWidth, 1.0f / sourceHeight );
+                        targetSize.Set( targetWidth, targetHeight, 1.0f / targetWidth, 1.0f / targetHeight );
+
+                        cmd.SetGlobalTexture( s_texSource, m_TempRenderTexture1 );
+                        cmd.SetGlobalInt( s_sourceMipLevel, mipIndex-1 );
+                        cmd.SetGlobalVector( s_sourceSize, sourceSize );
+                        cmd.SetRenderTarget( m_TempRenderTexture0, mipIndex);
+                        cmd.DrawProcedural(Matrix4x4.identity, m_MaterialFilterAreaLights, 2, MeshTopology.Triangles, 3, 1);
+                    }
+
+                    sourceHeight = targetHeight;
                 }
-
-                sourceHeight = targetHeight;
             }
-#endif
 
             return m_TempRenderTexture0;
         }
@@ -224,8 +224,9 @@ namespace UnityEngine.Rendering.HighDefinition
             if (m_CookieAtlas.NeedsUpdate(cookie))
             {
                 // Generate the mips
+                Debug.Log("FIOFW");
                 Texture filteredAreaLight = FilterAreaLightTexture(cmd, cookie);
-                m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, new Vector4(1, 1, 0, 0));
+                m_CookieAtlas.BlitTexture(cmd, scaleBias, filteredAreaLight, new Vector4(1, 1, 0, 0), blitMips: true);
             }
 
             return scaleBias;

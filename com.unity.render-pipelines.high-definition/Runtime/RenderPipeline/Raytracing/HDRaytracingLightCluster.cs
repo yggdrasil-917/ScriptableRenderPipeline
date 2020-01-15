@@ -623,7 +623,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
                 else if (lightData.lightType == GPULightType.Rectangle && additionalLightData.areaLightCookie != null)
                 {
-                    lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.Fetch2DCookie(cmd, additionalLightData.areaLightCookie);
+                    lightData.cookieScaleOffset = m_RenderPipeline.m_TextureCaches.lightCookieManager.FetchAreaCookie(cmd, additionalLightData.areaLightCookie);
                 }
 
                 {
