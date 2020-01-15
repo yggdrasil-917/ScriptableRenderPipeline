@@ -33,7 +33,6 @@ public class UniversalGraphicsTests
 
         Scene scene = SceneManager.GetActiveScene();
 
-#if ENABLE_XR
         if (scene.name.Substring(3, 4).Equals("_xr_"))
         {
 #if ENABLE_VR && ENABLE_VR_MODULE
@@ -52,7 +51,6 @@ public class UniversalGraphicsTests
                 camera.stereoTargetEye = StereoTargetEyeMask.Both;
 #else
             yield return null;
-#endif
         }
         else
         {
