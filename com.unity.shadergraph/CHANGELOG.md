@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The Create Node Menu now has a tree view and support for fuzzy field searching.
 
 ### Changed
-- The `Branch` node now uses a ternary operator (`Out = bool ? a : B`) instead of a linear interpolate function.
+- Changed the `Branch` node so that it uses a ternary operator (`Out = bool ? a : B`) instead of a linear interpolate function.
 
 ### Fixed
 - Edges no longer produce errors when you save a Shader Graph.
