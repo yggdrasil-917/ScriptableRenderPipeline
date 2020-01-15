@@ -51,6 +51,7 @@ public class UniversalGraphicsTests
                 camera.stereoTargetEye = StereoTargetEyeMask.Both;
 #else
             yield return null;
+#endif
         }
         else
         {
@@ -59,7 +60,6 @@ public class UniversalGraphicsTests
 #endif
             yield return null;
         }
-#endif
 
         for (int i = 0; i < settings.WaitFrames; i++)
             yield return null;
