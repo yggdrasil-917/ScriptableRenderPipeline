@@ -1206,8 +1206,8 @@ namespace UnityEditor.Rendering.HighDefinition
             );
 
             // All these properties values will be patched with the material keyword update
-            collector.AddIntProperty("_StencilRef", stencilRef); // StencilLightingUsage.NoLighting
-            collector.AddIntProperty("_StencilWriteMask", stencilWriteMask); // StencilMask.Lighting
+            collector.AddIntProperty("_StencilRef", stencilRef); 
+            collector.AddIntProperty("_StencilWriteMask", stencilWriteMask); 
             // Depth prepass
             collector.AddIntProperty("_StencilRefDepth", stencilRefDepth); // Nothing
             collector.AddIntProperty("_StencilWriteMaskDepth", stencilWriteMaskDepth); // StencilBeforeTransparent.TraceReflectionRay
@@ -1218,8 +1218,8 @@ namespace UnityEditor.Rendering.HighDefinition
             collector.AddIntProperty("_StencilRefDistortionVec", (int)StencilAfterOpaque.DistortionVectors); 
             collector.AddIntProperty("_StencilWriteMaskDistortionVec", (int)StencilAfterOpaque.DistortionVectors); 
             // Gbuffer
-            collector.AddIntProperty("_StencilWriteMaskGBuffer", stencilWriteMaskGBuffer); // StencilMask.Lighting
-            collector.AddIntProperty("_StencilRefGBuffer", stencilRefGBuffer); // StencilLightingUsage.RegularLighting
+            collector.AddIntProperty("_StencilWriteMaskGBuffer", stencilWriteMaskGBuffer); 
+            collector.AddIntProperty("_StencilRefGBuffer", stencilRefGBuffer); 
             collector.AddIntProperty("_ZTestGBuffer", 4);
 
             collector.AddToggleProperty(kUseSplitLighting, splitLighting);

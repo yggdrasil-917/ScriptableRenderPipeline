@@ -259,8 +259,8 @@ namespace UnityEditor.Rendering.HighDefinition
                 "// Stencil setup",
                 "Stencil",
                 "{",
-                string.Format("   WriteMask {0}", (int) HDRenderPipeline.StencilBitMask.LightingMask),
-                string.Format("   Ref  {0}", (int)StencilLightingUsage.NoLighting),
+                string.Format("   WriteMask {0}", (int) StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering),
+                string.Format("   Ref  {0}", (int)StencilBeforeTransparent.Clear),
                 "   Comp Always",
                 "   Pass Replace",
                 "}"

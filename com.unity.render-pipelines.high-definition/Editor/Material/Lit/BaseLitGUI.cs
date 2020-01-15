@@ -122,7 +122,8 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             // Stencil usage rules:
             // TraceReflectionRay and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
-            // LightingMask need to be tagged during either GBuffer or Forward pass
+            // RequiresDeferredLighting need to be tagged during GBuffer
+            // SubsurfaceScattering need to be tagged during either GBuffer or Forward pass
             // ObjectMotionVectors need to be tagged in velocity pass.
             // As motion vectors pass can be use as a replacement of depth prepass it also need to have TraceReflectionRay and DecalsForwardOutputNormalBuffer
             // As GBuffer pass can have no depth prepass, it also need to have TraceReflectionRay and DecalsForwardOutputNormalBuffer
@@ -134,18 +135,19 @@ namespace UnityEditor.Rendering.HighDefinition
             // GBuffer: LightingMask, DecalsForwardOutputNormalBuffer, ObjectVelocity
             // Forward: LightingMask
 
-            stencilRef = (int)StencilLightingUsage.RegularLighting; // Forward case
-            stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
+            stencilRef = (int)StencilBeforeTransparent.Clear; // Forward case
+            stencilWriteMask = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
             stencilRefDepth = 0;
             stencilWriteMaskDepth = 0;
-            stencilRefGBuffer = (int)StencilLightingUsage.RegularLighting;
-            stencilWriteMaskGBuffer = (int)HDRenderPipeline.StencilBitMask.LightingMask;
+            stencilRefGBuffer = (int)StencilBeforeTransparent.RequiresDeferredLighting;
+            stencilWriteMaskGBuffer = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
             stencilRefMV = (int)StencilBeforeTransparent.ObjectMotionVector;
             stencilWriteMaskMV = (int)StencilBeforeTransparent.ObjectMotionVector;
 
             if (useSplitLighting)
             {
-                stencilRefGBuffer = stencilRef = (int)StencilLightingUsage.SplitLighting;
+                stencilRefGBuffer |= (int)StencilBeforeTransparent.SubsurfaceScattering;
+                stencilRef |= (int)StencilBeforeTransparent.SubsurfaceScattering;
             }
 
             if (receivesSSR)

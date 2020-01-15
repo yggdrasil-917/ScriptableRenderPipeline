@@ -49,7 +49,8 @@ namespace UnityEditor.Rendering.HighDefinition
 
             // Stencil usage rules:
             // StencilBeforeTransparent and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
-            // LightingMask need to be tagged during either GBuffer or Forward pass
+            // RequiresDeferredLighting need to be tagged during GBuffer
+            // SubsurfaceScattering need to be tagged during either GBuffer or Forward pass
             // ObjectVelocity need to be tagged in velocity pass.
             // As velocity pass can be use as a replacement of depth prepass it also need to have StencilBeforeTransparent and DecalsForwardOutputNormalBuffer
             // As GBuffer pass can have no depth prepass, it also need to have StencilBeforeTransparent and DecalsForwardOutputNormalBuffer
@@ -60,8 +61,8 @@ namespace UnityEditor.Rendering.HighDefinition
             // Motion vectors: StencilBeforeTransparent,  DecalsForwardOutputNormalBuffer, ObjectVelocity
             // Forward: LightingMask
 
-            int stencilRef = (int)StencilLightingUsage.NoLighting;
-            int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
+            int stencilRef = (int)StencilBeforeTransparent.Clear;
+            int stencilWriteMask = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
             int stencilRefDepth = (int)StencilBeforeTransparent.TraceReflectionRay;
             int stencilWriteMaskDepth = (int)StencilBeforeTransparent.TraceReflectionRay | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
             int stencilRefMV = (int)StencilBeforeTransparent.ObjectMotionVector | (int)StencilBeforeTransparent.TraceReflectionRay;

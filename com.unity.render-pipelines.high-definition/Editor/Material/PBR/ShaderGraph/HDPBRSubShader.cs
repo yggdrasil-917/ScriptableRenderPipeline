@@ -319,8 +319,8 @@ namespace UnityEditor.Rendering.HighDefinition
                 "// Stencil setup",
                 "Stencil",
                 "{",
-                string.Format("   WriteMask {0}", (int) HDRenderPipeline.StencilBitMask.LightingMask),
-                string.Format("   Ref  {0}", (int)StencilLightingUsage.RegularLighting),
+                string.Format("   WriteMask {0}", (int) StencilBeforeTransparent.RequiresDeferredLighting | (int) StencilBeforeTransparent.SubsurfaceScattering),
+                string.Format("   Ref  {0}", (int)StencilBeforeTransparent.Clear),
                 "   Comp Always",
                 "   Pass Replace",
                 "}"
@@ -373,8 +373,12 @@ namespace UnityEditor.Rendering.HighDefinition
         // These functions are still required because for the PBR shader use hardcoded stencil and render queues
         public static void GetStencilStateForGBuffer(bool receiveSSR, bool useSplitLighting, ref Pass pass)
         {
-            int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
-            int stencilRef = useSplitLighting ? (int)StencilLightingUsage.SplitLighting : (int)StencilLightingUsage.RegularLighting;
+            int stencilWriteMask = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
+            int stencilRef = (int)StencilBeforeTransparent.RequiresDeferredLighting;
+            if(useSplitLighting)
+            {
+                stencilRef |= (int)StencilBeforeTransparent.SubsurfaceScattering;
+            }
 
             stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
             stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;

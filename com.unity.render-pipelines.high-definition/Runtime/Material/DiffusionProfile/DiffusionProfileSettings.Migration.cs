@@ -162,22 +162,31 @@ namespace UnityEngine.Rendering.HighDefinition
             if (mat.shader.name.StartsWith("HDRP/"))
             {
                 // Set the reference value for the stencil test.
-                int stencilRef = (int)StencilLightingUsage.RegularLighting;
-                int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
+                int stencilRef = (int)StencilBeforeTransparent.Clear;
+                int stencilWriteMask = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
+                int stencilGBufferRef = (int)StencilBeforeTransparent.RequiresDeferredLighting;
+                int stencilGBufferMask = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
+
                 if (mat.HasProperty("_MaterialID") && (int)mat.GetFloat("_MaterialID") == 0) // 0 is MaterialId.LitSSS
                 {
-                    stencilRef = (int)StencilLightingUsage.SplitLighting;
+                    stencilRef = (int)StencilBeforeTransparent.SubsurfaceScattering;
+                    stencilGBufferRef |= (int)StencilBeforeTransparent.SubsurfaceScattering;
                 }
 
                 if(mat.HasProperty("_ReceivesSSR") && mat.GetInt("_ReceivesSSR") == 1)
                 {
                     stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
                     stencilRef |= (int)StencilBeforeTransparent.TraceReflectionRay;
+                    stencilGBufferMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
+                    stencilGBufferRef |= (int)StencilBeforeTransparent.TraceReflectionRay;
+
                 }
 
                 // As we tag both during motion vector pass and Gbuffer pass we need a separate state and we need to use the write mask
                 mat.SetInt("_StencilRef", stencilRef);
                 mat.SetInt("_StencilWriteMask", stencilWriteMask);
+                mat.SetInt("_StencilRefGBuffer", stencilGBufferRef);
+                mat.SetInt("_StencilWriteMaskGBuffer", stencilGBufferMask);
                 mat.SetInt("_StencilRefMV", (int)StencilBeforeTransparent.ObjectMotionVector);
                 mat.SetInt("_StencilWriteMaskMV", (int)StencilBeforeTransparent.ObjectMotionVector);
             }

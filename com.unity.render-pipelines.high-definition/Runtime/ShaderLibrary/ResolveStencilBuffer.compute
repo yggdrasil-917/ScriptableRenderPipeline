@@ -20,8 +20,9 @@ float4 _CoarseStencilSize;
 RW_TEXTURE2D_X(uint, _OutputTexture);
 
 // TODO: Wasting 3 bytes here per entry, but still better than a texture as can be scalar read.
-// Need to investigate how to don't waste bytes. (Can be done in a separate step)
-RWBuffer<uint>    _OutputCoarseStencil;
+// We could sub-index the right byte inside the uint, but it takes extra ALU and won't save bandwidth (just memory)
+// For now the extra memory cost is acceptable (3 bytes * 1/64th of a render target)
+RWByteAddressBuffer    _OutputCoarseStencil;
 
 #ifdef PLATFORM_SUPPORTS_WAVE_INTRINSICS
     #define FAST_PLATFORM (PLATFORM_LANE_COUNT == 64)
@@ -85,7 +86,7 @@ void KERNEL_NAME(uint3 groupId          : SV_GroupID,
     if (isFirstThread)
     {
         uint addressIndex = Get1DAddressFromPixelCoord(groupId.xy, _CoarseStencilSize.xy);
-        _OutputCoarseStencil[addressIndex] = coarseStencilValue;
+        _OutputCoarseStencil.Store(addressIndex, coarseStencilValue);
         _OutputTexture[COORD_TEXTURE2D_X(groupId.xy)] = coarseStencilValue;
     }
 }

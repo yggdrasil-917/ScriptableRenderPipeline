@@ -762,6 +762,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // OUTPUT_SPLIT_LIGHTING - SHADOWS_SHADOWMASK - DEBUG_DISPLAY
             m_deferredLightingMaterial = new Material[8];
+            int stencilMask = (int)StencilBeforeTransparent.RequiresDeferredLighting | (int)StencilBeforeTransparent.SubsurfaceScattering;
 
             for (int outputSplitLighting = 0; outputSplitLighting < 2; ++outputSplitLighting)
             {
@@ -777,8 +778,15 @@ namespace UnityEngine.Rendering.HighDefinition
                         CoreUtils.SetKeyword(m_deferredLightingMaterial[index], "SHADOWS_SHADOWMASK", shadowMask == 1);
                         CoreUtils.SetKeyword(m_deferredLightingMaterial[index], "DEBUG_DISPLAY", debugDisplay == 1);
 
-                        m_deferredLightingMaterial[index].SetInt(HDShaderIDs._StencilMask, (int)HDRenderPipeline.StencilBitMask.LightingMask);
-                        m_deferredLightingMaterial[index].SetInt(HDShaderIDs._StencilRef, outputSplitLighting == 1 ? (int)StencilLightingUsage.SplitLighting : (int)StencilLightingUsage.RegularLighting);
+                        int stencilRef = (int)StencilBeforeTransparent.RequiresDeferredLighting;
+
+                        if(outputSplitLighting == 1)
+                        {
+                            stencilRef |= (int)StencilBeforeTransparent.SubsurfaceScattering;
+                        }
+
+                        m_deferredLightingMaterial[index].SetInt(HDShaderIDs._StencilMask, stencilMask);
+                        m_deferredLightingMaterial[index].SetInt(HDShaderIDs._StencilRef, stencilRef);
                         m_deferredLightingMaterial[index].SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.Equal);
                     }
                 }
@@ -786,17 +794,17 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // Stencil set to only touch "regular lighting" pixels.
             s_DeferredTileRegularLightingMat = CoreUtils.CreateEngineMaterial(deferredTilePixelShader);
-            s_DeferredTileRegularLightingMat.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.RegularLighting);
+            s_DeferredTileRegularLightingMat.SetInt(HDShaderIDs._StencilRef, (int)StencilBeforeTransparent.RequiresDeferredLighting);
             s_DeferredTileRegularLightingMat.SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.Equal);
 
             // Stencil set to only touch "split-lighting" pixels.
             s_DeferredTileSplitLightingMat = CoreUtils.CreateEngineMaterial(deferredTilePixelShader);
-            s_DeferredTileSplitLightingMat.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.SplitLighting);
+            s_DeferredTileSplitLightingMat.SetInt(HDShaderIDs._StencilRef, (int)StencilBeforeTransparent.SubsurfaceScattering);
             s_DeferredTileSplitLightingMat.SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.Equal);
 
             // Stencil set to touch all pixels excepted background/sky.
             s_DeferredTileMat = CoreUtils.CreateEngineMaterial(deferredTilePixelShader);
-            s_DeferredTileMat.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
+            s_DeferredTileMat.SetInt(HDShaderIDs._StencilRef, (int)StencilBeforeTransparent.Clear);
             s_DeferredTileMat.SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.NotEqual);
 
             for (int i = 0; i < LightDefinitions.s_NumFeatureVariants; ++i)
@@ -3540,42 +3548,17 @@ namespace UnityEngine.Rendering.HighDefinition
                 // This is for debug purpose, so fine to use immediate material mode here to modify render state
                 if (!parameters.outputSplitLighting)
                 {
-                    currentLightingMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
+                    currentLightingMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilBeforeTransparent.Clear);
                     currentLightingMaterial.SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.NotEqual);
                 }
                 else
                 {
-                    currentLightingMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.RegularLighting);
+                    currentLightingMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilBeforeTransparent.RequiresDeferredLighting);
                     currentLightingMaterial.SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.Equal);
                 }
 
                 CoreUtils.DrawFullScreen(cmd, currentLightingMaterial, resources.colorBuffers[0], resources.depthStencilBuffer);
             }
-        }
-
-        static void CopyStencilBufferForMaterialClassification(CommandBuffer cmd, RTHandle depthStencilBuffer, RTHandle stencilCopyBuffer, Material copyStencilMaterial)
-        {
-#if (UNITY_SWITCH || UNITY_IPHONE || UNITY_STANDALONE_OSX)
-            // Faster on Switch.
-            CoreUtils.SetRenderTarget(cmd, stencilCopyBuffer, depthStencilBuffer, ClearFlag.Color, Color.clear);
-
-            copyStencilMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
-            copyStencilMaterial.SetInt(HDShaderIDs._StencilMask, (int)HDRenderPipeline.StencilBitMask.LightingMask);
-
-            // Use ShaderPassID 1 => "Pass 1 - Write 1 if value different from stencilRef to output"
-            CoreUtils.DrawFullScreen(cmd, copyStencilMaterial, null, 1);
-#else
-            CoreUtils.SetRenderTarget(cmd, stencilCopyBuffer, ClearFlag.Color, Color.clear);
-            CoreUtils.SetRenderTarget(cmd, depthStencilBuffer);
-            cmd.SetRandomWriteTarget(1, stencilCopyBuffer);
-
-            copyStencilMaterial.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
-            copyStencilMaterial.SetInt(HDShaderIDs._StencilMask, (int)HDRenderPipeline.StencilBitMask.LightingMask);
-
-            // Use ShaderPassID 3 => "Pass 3 - Initialize Stencil UAV copy with 1 if value different from stencilRef to output"
-            CoreUtils.DrawFullScreen(cmd, copyStencilMaterial, null, 3);
-            cmd.ClearRandomWriteTargets();
-#endif
         }
 
         struct LightLoopDebugOverlayParameters
