@@ -387,6 +387,9 @@ namespace UnityEngine.Rendering.Universal
             // RenderBufferLoadAction.DontCare in Vulkan/Metal behaves as DontCare load action
             // RenderBufferLoadAction.DontCare in GLES behaves as glInvalidateBuffer
 
+            if (cameraData.renderType == CameraRenderType.ScreenSpaceUI)
+                return ClearFlag.Depth;
+
             // Overlay cameras composite on top of previous ones. They don't clear color.
             // For overlay cameras we check if depth should be cleared on not.
             if (cameraData.renderType == CameraRenderType.Overlay)
@@ -481,11 +484,6 @@ namespace UnityEngine.Rendering.Universal
                 {
                     m_FirstTimeCameraColorTargetIsBound = false; // register that we did clear the camera target the first time it was bound
                     firstTimeStereo = true;
-
-                    // Overlay cameras composite on top of previous ones. They don't clear.
-                    // MTT: Commented due to not implemented yet
-                    //                    if (renderingData.cameraData.renderType == CameraRenderType.Overlay)
-                    //                        clearFlag = ClearFlag.None;
 
                     // We need to specifically clear the camera color target.
                     // But there is still a chance we don't need to issue individual clear() on each render-targets if they all have the same clear parameters.

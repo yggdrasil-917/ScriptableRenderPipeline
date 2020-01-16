@@ -223,8 +223,8 @@ namespace UnityEngine.Rendering.Universal
 
             EnqueuePass(m_RenderOpaqueForwardPass);
 
-            bool isOverlayCamera = cameraData.renderType == CameraRenderType.Overlay;
-            if (camera.clearFlags == CameraClearFlags.Skybox && RenderSettings.skybox != null && !isOverlayCamera)
+            bool isBaseCamera = cameraData.renderType == CameraRenderType.Base;
+            if (camera.clearFlags == CameraClearFlags.Skybox && RenderSettings.skybox != null && isBaseCamera)
                 EnqueuePass(m_DrawSkyboxPass);
 
             // If a depth texture was created we necessarily need to copy it, otherwise we could have render it to a renderbuffer
@@ -336,7 +336,14 @@ namespace UnityEngine.Rendering.Universal
         public override void SetupCullingParameters(ref ScriptableCullingParameters cullingParameters,
             ref CameraData cameraData)
         {
-            Camera camera = cameraData.camera;
+            if (cameraData.renderType == CameraRenderType.ScreenSpaceUI)
+            {
+                cullingParameters.cullingOptions = CullingOptions.None;
+                cullingParameters.shadowDistance = 0.0f;
+                cullingParameters.cullingMask = (uint)LayerMask.GetMask("UI");
+                return;
+            }
+
             // TODO: PerObjectCulling also affect reflection probes. Enabling it for now.
             // if (asset.additionalLightsRenderingMode == LightRenderingMode.Disabled ||
             //     asset.maxAdditionalLightsCount == 0)

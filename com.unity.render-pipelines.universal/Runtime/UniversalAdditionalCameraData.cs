@@ -54,11 +54,13 @@ namespace UnityEngine.Rendering.Universal
     /// Holds information about the render type of a camera. Options are Base or Overlay.
     /// Base rendering type allows the camera to render to either the screen or to a texture.
     /// Overlay rendering type allows the camera to render on top of a previous camera output, thus compositing camera results.
+    /// ScreenSpaceUI rendering type allows to render canvas mode Screen Space - Camera.
     /// </summary>
     public enum CameraRenderType
     {
         Base,
         Overlay,
+        ScreenSpaceUI,
     }
 
     /// <summary>
@@ -421,6 +423,10 @@ namespace UnityEngine.Rendering.Universal
             else if (m_CameraType == CameraRenderType.Overlay)
             {
                 gizmoName = $"{path}Camera_Overlay.png";
+            }
+            else if (m_CameraType == CameraRenderType.ScreenSpaceUI)
+            {
+                gizmoName = $"{path}Camera_UI.png";
             }
 
 #if UNITY_2019_2_OR_NEWER

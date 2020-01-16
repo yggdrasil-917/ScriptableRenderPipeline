@@ -436,10 +436,11 @@ namespace UnityEditor.Rendering.Universal
             // Get the type of Camera we are using
             var camType = (CameraRenderType)m_AdditionalCameraDataCameraTypeProp.intValue;
 
+            DrawCommonSettings();
+
             // Game Camera
             if (camType == CameraRenderType.Base)
             {
-                DrawCommonSettings();
                 DrawRenderingSettings();
                 DrawEnvironmentSettings();
                 DrawOutputSettings();
@@ -449,7 +450,6 @@ namespace UnityEditor.Rendering.Universal
             // Overlay Camera
             if (camType == CameraRenderType.Overlay)
             {
-                DrawCommonSettings();
                 DrawRenderingSettings();
             }
 
