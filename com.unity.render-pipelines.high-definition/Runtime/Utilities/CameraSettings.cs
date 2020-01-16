@@ -315,7 +315,7 @@ namespace UnityEngine.Rendering.HighDefinition
         /// <summary>True to invert face culling, false otherwise.</summary>
         public bool invertFaceCulling;
         /// <summary>The mode to use when we want to flip the Y axis.</summary>
-        public HDAdditionalCameraData.FlipYMode flipYMode;
+        internal HDAdditionalCameraData.FlipYMode flipYMode;
         /// <summary>The layer mask to use to filter probes that can influence this camera.</summary>
         public LayerMask probeLayerMask;
         /// <summary>Which default FrameSettings should be used when rendering with these parameters.</summary>
