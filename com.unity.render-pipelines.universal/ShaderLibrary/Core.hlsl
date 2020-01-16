@@ -117,7 +117,7 @@ void AlphaDiscard(real alpha, real cutoff, real offset = 0.0h)
 #endif
 }
 
-half Alpha(half outputAlpha)
+half OutputAlpha(half outputAlpha)
 {
     return saturate(outputAlpha + _DrawObjectPassData.a);
 }
