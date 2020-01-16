@@ -66,7 +66,7 @@ namespace UnityEngine.Rendering.HighDefinition
             Alpha,
         }
 
-        public class MaterialSharedPropertyMappingAttribute : Attribute
+        internal class MaterialSharedPropertyMappingAttribute : Attribute
         {
             public readonly MaterialSharedProperty property;
 
@@ -81,21 +81,22 @@ namespace UnityEngine.Rendering.HighDefinition
     {
         static bool isDebugViewMaterialInit = false;
 
-        public static GUIContent[] debugViewMaterialStrings = null;
-        public static int[] debugViewMaterialValues = null;
-        public static GUIContent[] debugViewEngineStrings = null;
-        public static int[] debugViewEngineValues = null;
-        public static GUIContent[] debugViewMaterialVaryingStrings = null;
-        public static int[] debugViewMaterialVaryingValues = null;
-        public static GUIContent[] debugViewMaterialPropertiesStrings = null;
-        public static int[] debugViewMaterialPropertiesValues = null;
-        public static GUIContent[] debugViewMaterialTextureStrings = null;
-        public static int[] debugViewMaterialTextureValues = null;
-        public static GUIContent[] debugViewMaterialGBufferStrings = null;
-        public static int[] debugViewMaterialGBufferValues = null;
+        internal static GUIContent[] debugViewMaterialStrings = null;
+        internal static int[] debugViewMaterialValues = null;
+        internal static GUIContent[] debugViewEngineStrings = null;
+        internal static int[] debugViewEngineValues = null;
+        internal static GUIContent[] debugViewMaterialVaryingStrings = null;
+        internal static int[] debugViewMaterialVaryingValues = null;
+        internal static GUIContent[] debugViewMaterialPropertiesStrings = null;
+        internal static int[] debugViewMaterialPropertiesValues = null;
+        internal static GUIContent[] debugViewMaterialTextureStrings = null;
+        internal static int[] debugViewMaterialTextureValues = null;
+        internal static GUIContent[] debugViewMaterialGBufferStrings = null;
+        internal static int[] debugViewMaterialGBufferValues = null;
+
+        static Dictionary<MaterialSharedProperty, int[]> s_MaterialPropertyMap = new Dictionary<MaterialSharedProperty, int[]>();
 
         public MaterialSharedProperty debugViewMaterialCommonValue = MaterialSharedProperty.None;
-        static Dictionary<MaterialSharedProperty, int[]> s_MaterialPropertyMap = new Dictionary<MaterialSharedProperty, int[]>();
 
         static MaterialDebugSettings()
         {
@@ -172,7 +173,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        public class MaterialItem
+        internal class MaterialItem
         {
             public String className;
             public Type surfaceDataType;

@@ -33,7 +33,7 @@ namespace UnityEngine.Rendering.HighDefinition
         IndirectPlanarProbe = 1 << 8,
     }
 
-    public static class DebugLightHierarchyExtensions
+    internal static class DebugLightHierarchyExtensions
     {
         public static bool IsEnabledFor(
             this DebugLightFilterMode mode,
@@ -46,15 +46,15 @@ namespace UnityEngine.Rendering.HighDefinition
                 case GPULightType.ProjectorBox:
                 case GPULightType.ProjectorPyramid:
                 case GPULightType.Spot:
-                {
-                    switch (spotLightShape)
                     {
-                        case SpotLightShape.Box: return (mode & DebugLightFilterMode.DirectSpotBox) != 0;
-                        case SpotLightShape.Cone: return (mode & DebugLightFilterMode.DirectSpotCone) != 0;
-                        case SpotLightShape.Pyramid: return (mode & DebugLightFilterMode.DirectSpotPyramid) != 0;
-                        default: throw new ArgumentOutOfRangeException(nameof(spotLightShape));
+                        switch (spotLightShape)
+                        {
+                            case SpotLightShape.Box: return (mode & DebugLightFilterMode.DirectSpotBox) != 0;
+                            case SpotLightShape.Cone: return (mode & DebugLightFilterMode.DirectSpotCone) != 0;
+                            case SpotLightShape.Pyramid: return (mode & DebugLightFilterMode.DirectSpotPyramid) != 0;
+                            default: throw new ArgumentOutOfRangeException(nameof(spotLightShape));
+                        }
                     }
-                }
                 case GPULightType.Tube: return (mode & DebugLightFilterMode.DirectTube) != 0;
                 case GPULightType.Point: return (mode & DebugLightFilterMode.DirectPunctual) != 0;
                 case GPULightType.Rectangle: return (mode & DebugLightFilterMode.DirectRectangle) != 0;
@@ -104,11 +104,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 || shadowDebugMode == ShadowMapDebugMode.SingleShadow;
         }
 
-        public bool IsDebugDisplayRemovePostprocess()
-        {
-            return debugLightingMode != DebugLightingMode.None && debugLightingMode != DebugLightingMode.MatcapView;
-        }
-
         public DebugLightFilterMode debugLightFilterMode = DebugLightFilterMode.None;
         public DebugLightingMode    debugLightingMode = DebugLightingMode.None;
         public ShadowMapDebugMode   shadowDebugMode = ShadowMapDebugMode.None;
@@ -151,5 +146,12 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public TileClusterDebug tileClusterDebug = TileClusterDebug.None;
         public TileClusterCategoryDebug tileClusterDebugByCategory = TileClusterCategoryDebug.Punctual;
+
+        // Internal APIs
+        internal bool IsDebugDisplayRemovePostprocess()
+        {
+            return debugLightingMode != DebugLightingMode.None && debugLightingMode != DebugLightingMode.MatcapView;
+        }
+
     }
 }
