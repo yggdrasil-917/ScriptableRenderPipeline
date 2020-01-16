@@ -67,12 +67,7 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct BufferClearing
         {
-            /// <summary>Default value.</summary>
-            [Obsolete("Since 2019.3, use BufferClearing.NewDefault() instead.")]
-            public static readonly BufferClearing @default = default;
-            /// <summary>Default value.</summary>
-            /// <returns>The default value.</returns>
-            public static BufferClearing NewDefault() => new BufferClearing
+            internal static BufferClearing NewDefault() => new BufferClearing
                 {
                     clearColorMode = HDAdditionalCameraData.ClearColorMode.Sky,
                     backgroundColorHDR = new Color32(6, 18, 48, 0),
@@ -95,12 +90,7 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct Volumes
         {
-            /// <summary>Default value.</summary>
-            [Obsolete("Since 2019.3, use Volumes.NewDefault() instead.")]
-            public static readonly Volumes @default = default;
-            /// <summary>Default value.</summary>
-            /// <returns>The default value.</returns>
-            public static Volumes NewDefault() => new Volumes
+            internal static Volumes NewDefault() => new Volumes
                 {
                     layerMask = -1,
                     anchorOverride = null
@@ -125,12 +115,7 @@ namespace UnityEngine.Rendering.HighDefinition
             /// <summary> The far clip plane value will be at least above <c><see cref="nearClipPlane"/> + <see cref="MinFarClipPlane"/></c></summary>
             public const float MinFarClipPlane = 1e-4f;
 
-            /// <summary>Default value.</summary>
-            [Obsolete("Since 2019.3, use Frustum.NewDefault() instead.")]
-            public static readonly Frustum @default = default;
-            /// <summary>Default value.</summary>
-            /// <returns>The default value.</returns>
-            public static Frustum NewDefault() => new Frustum
+            internal static Frustum NewDefault() => new Frustum
                 {
                     mode = Mode.ComputeProjectionMatrix,
                     aspect = 1.0f,
@@ -229,12 +214,7 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct Culling
         {
-            /// <summary>Default value.</summary>
-            [Obsolete("Since 2019.3, use Culling.NewDefault() instead.")]
-            public static readonly Culling @default = default;
-            /// <summary>Default value.</summary>
-            /// <returns>The default value.</returns>
-            public static Culling NewDefault() => new Culling
+            internal static Culling NewDefault() => new Culling
                 {
                     cullingMask = -1,
                     useOcclusionCulling = true,
@@ -249,12 +229,7 @@ namespace UnityEngine.Rendering.HighDefinition
             public ulong sceneCullingMaskOverride;
         }
 
-        /// <summary>Default value.</summary>
-        [Obsolete("Since 2019.3, use CameraSettings.defaultCameraSettingsNonAlloc instead.")]
-        public static readonly CameraSettings @default = default;
-        /// <summary>Default value.</summary>
-        /// <returns>The default value and allocate ~250B of garbage.</returns>
-        public static CameraSettings NewDefault() => new CameraSettings
+        internal static CameraSettings NewDefault() => new CameraSettings
             {
                 bufferClearing = BufferClearing.NewDefault(),
                 culling = Culling.NewDefault(),

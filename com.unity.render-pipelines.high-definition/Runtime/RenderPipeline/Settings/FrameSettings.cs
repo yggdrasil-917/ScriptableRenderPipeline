@@ -253,10 +253,6 @@ namespace UnityEngine.Rendering.HighDefinition
     [DebuggerTypeProxy(typeof(FrameSettingsDebugView))]
     partial struct FrameSettings
     {
-        /// <summary>Default FrameSettings for Camera renderer.</summary>
-        [Obsolete("Since 2019.3, use FrameSettings.NewDefaultCamera() instead.")]
-        internal static readonly FrameSettings defaultCamera = default;
-        /// <summary>Default FrameSettings for Camera renderer.</summary>
         internal static FrameSettings NewDefaultCamera() => new FrameSettings()
         {
             bitDatas = new BitArray128(new uint[] {
@@ -324,10 +320,6 @@ namespace UnityEngine.Rendering.HighDefinition
             }),
             lodBias = 1,
         };
-        /// <summary>Default FrameSettings for realtime ReflectionProbe/PlanarReflectionProbe renderer.</summary>
-        [Obsolete("Since 2019.3, use FrameSettings.NewDefaultRealtimeReflectionProbe() instead.")]
-        internal static readonly FrameSettings defaultRealtimeReflectionProbe = default;
-        /// <summary>Default FrameSettings for realtime ReflectionProbe/PlanarReflectionProbe renderer.</summary>
         internal static FrameSettings NewDefaultRealtimeReflectionProbe() => new FrameSettings()
         {
             bitDatas = new BitArray128(new uint[] {
@@ -377,10 +369,6 @@ namespace UnityEngine.Rendering.HighDefinition
             }),
             lodBias = 1,
         };
-        /// <summary>Default FrameSettings for baked or custom ReflectionProbe renderer.</summary>
-        [Obsolete("Since 2019.3, use FrameSettings.NewDefaultCustomOrBakeReflectionProbe() instead.")]
-        internal static readonly FrameSettings defaultCustomOrBakeReflectionProbe = default;
-        /// <summary>Default FrameSettings for baked or custom ReflectionProbe renderer.</summary>
         internal static FrameSettings NewDefaultCustomOrBakeReflectionProbe() => new FrameSettings()
         {
             bitDatas = new BitArray128(new uint[] {

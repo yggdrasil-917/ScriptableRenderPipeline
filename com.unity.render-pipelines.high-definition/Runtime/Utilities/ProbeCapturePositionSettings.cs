@@ -6,12 +6,7 @@ namespace UnityEngine.Rendering.HighDefinition
     [Serializable]
     public struct ProbeCapturePositionSettings
     {
-        /// <summary>Default value.</summary>
-        [Obsolete("Since 2019.3, use ProbeCapturePositionSettings.NewDefault() instead.")]
-        public static readonly ProbeCapturePositionSettings @default = default;
-        /// <summary>Default value.</summary>
-        /// <returns>The default value.</returns>
-        public static ProbeCapturePositionSettings NewDefault() => new ProbeCapturePositionSettings(
+        internal static ProbeCapturePositionSettings NewDefault() => new ProbeCapturePositionSettings(
             Vector3.zero, Quaternion.identity,
             Vector3.zero, Quaternion.identity,
             Matrix4x4.identity

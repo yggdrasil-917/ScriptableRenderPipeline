@@ -64,7 +64,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public bool colorPyramidHistoryIsValid = false;
         public bool volumetricHistoryIsValid   = false; // Contains garbage otherwise
         public int  colorPyramidHistoryMipCount = 0;
-        public VBufferParameters[] vBufferParams; // Double-buffered; needed even if reprojection is off
+        internal  VBufferParameters[] vBufferParams; // Double-buffered; needed even if reprojection is off
 
         float m_AmbientOcclusionResolutionScale = 0.0f; // Factor used to track if history should be reallocated for Ambient Occlusion
 
@@ -207,7 +207,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        public HDAdditionalCameraData.FlipYMode flipYMode
+        internal HDAdditionalCameraData.FlipYMode flipYMode
         {
             get
             {

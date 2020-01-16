@@ -110,12 +110,7 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct Lighting
         {
-            /// <summary>Default value.</summary>
-            [Obsolete("Since 2019.3, use Lighting.NewDefault() instead.")]
-            public static readonly Lighting @default = default;
-            /// <summary>Default value.</summary>
-            /// <returns>The default value.</returns>
-            public static Lighting NewDefault() => new Lighting
+            internal static Lighting NewDefault() => new Lighting
             {
                 multiplier = 1.0f,
                 weight = 1.0f,
@@ -142,12 +137,7 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct ProxySettings
         {
-            /// <summary>Default value.</summary>
-            [Obsolete("Since 2019.3, use ProxySettings.NewDefault() instead.")]
-            public static readonly ProxySettings @default = default;
-            /// <summary>Default value.</summary>
-            /// <returns>The default value.</returns>
-            public static ProxySettings NewDefault() => new ProxySettings
+            internal static ProxySettings NewDefault() => new ProxySettings
             {
                 capturePositionProxySpace = Vector3.zero,
                 captureRotationProxySpace = Quaternion.identity,
@@ -217,12 +207,7 @@ namespace UnityEngine.Rendering.HighDefinition
             public float viewerScale;
         }
 
-        /// <summary>Default value.</summary>
-        [Obsolete("Since 2019.3, use ProbeSettings.NewDefault() instead.")]
-        public static ProbeSettings @default = default;
-        /// <summary>Default value.</summary>
-        /// <returns>The default value.</returns>
-        public static ProbeSettings NewDefault() => new ProbeSettings
+        internal static ProbeSettings NewDefault() => new ProbeSettings
         {
             type = ProbeType.ReflectionProbe,
             realtimeMode = RealtimeMode.EveryFrame,

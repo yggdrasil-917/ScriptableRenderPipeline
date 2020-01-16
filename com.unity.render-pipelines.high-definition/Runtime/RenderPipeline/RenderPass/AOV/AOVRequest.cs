@@ -26,12 +26,7 @@ namespace UnityEngine.Rendering.HighDefinition
     /// <summary>Use this request to define how to render an AOV.</summary>
     public unsafe struct AOVRequest
     {
-        /// <summary>Default settings.</summary>
-        [Obsolete("Since 2019.3, use AOVRequest.NewDefault() instead.")]
-        public static readonly AOVRequest @default = default;
-        /// <summary>Default settings.</summary>
-        /// <returns></returns>
-        public static AOVRequest NewDefault() => new AOVRequest
+        internal static AOVRequest NewDefault() => new AOVRequest
         {
             m_MaterialProperty = MaterialSharedProperty.None,
             m_LightingProperty = LightingProperty.None,
