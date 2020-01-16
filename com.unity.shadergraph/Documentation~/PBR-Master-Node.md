@@ -4,7 +4,7 @@
 
 A [Master Node](Master-Node.md) for physically based rendering. Can be used in either **Metallic** or **Specular** workflow modes as defined by the **Workflow** dropdown parameter.
 
-Values supplied to the input **Normal** are expected to be in tangent space. Use the [Transform Node](Transform-Node.md) to convert to tangent space.
+Values supplied to the input **Normal** are expected to be in tangent space by default. Use the [Transform Node](Transform-Node.md) to convert to tangent space or use the **Fragment Normal Space** drop down in the Material Options (see below) to change the expected coordinate space to Object or World. 
 
 ## Ports
 
@@ -30,4 +30,5 @@ Values supplied to the input **Normal** are expected to be in tangent space. Use
 | Workflow      | Dropdown | Metallic, Specular | Defines workflow mode for the material |
 | Surface      | Dropdown | Opaque, Transparent | Defines if the material is transparent |
 | Blend      | Dropdown | Alpha, Premultiply, Additive, Multiply | Defines blend mode of a transparent material |
+| Fragment Normal Space | Dropdown | Tangent, Object, World | Defines the coordinate space of the value supplied to the **Normal** slot. |
 | Two Sided      | Toggle | True, False | If true both front and back faces of the mesh are rendered |
