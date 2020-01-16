@@ -29,7 +29,6 @@ namespace UnityEngine.Rendering.HighDefinition
             public RenderGraphResource depthStencilBuffer;
             public RenderGraphResource depthTexture;
             public RenderGraphMutableResource cameraFilteringBuffer;
-            public RenderGraphMutableResource hTileBuffer;
             public RenderGraphResource sssBuffer;
         }
 

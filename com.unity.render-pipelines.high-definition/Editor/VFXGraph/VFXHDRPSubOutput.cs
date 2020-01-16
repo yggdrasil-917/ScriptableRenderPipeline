@@ -79,8 +79,8 @@ namespace UnityEditor.VFX
         //TODO : extend & factorize this method
         public static void GetStencilStateForDepthOrMV(bool receiveDecals, bool receiveSSR, bool useObjectVelocity, out int stencilWriteMask, out int stencilRef)
         {
-            stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
-            stencilRef = receiveDecals ? (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer : 0;
+            stencilWriteMask = 0;
+            stencilRef = 0;
 
             stencilWriteMask |= (int)StencilBeforeTransparent.TraceReflectionRay;
             stencilRef |= receiveSSR ? (int)StencilBeforeTransparent.TraceReflectionRay : 0;

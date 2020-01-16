@@ -490,17 +490,14 @@ namespace UnityEngine.Rendering.HighDefinition
             public RenderGraphResource inputDepth;
             public RenderGraphMutableResource resolvedStencil;
             public ComputeBuffer coarseStencilBuffer;
-            public bool isMSAAEnabled;
         }
 
         void ResolveStencilBufferIfNeeded(RenderGraph renderGraph, HDCamera hdCamera, ref PrepassOutput output)
         {
-            bool isMSAAEnabled = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA);
-
             using (var builder = renderGraph.AddRenderPass<ResolveStencilPassData>("Resolve Stencil", out var passData, ProfilingSampler.Get(HDProfileId.ResolveStencilBuffer)))
             {
                 passData.inputDepth = output.depthBuffer;
-                
+                passData.coarseStencilBuffer = m_SharedRTManager.GetCoarseStencilBuffer();
                 passData.resolvedStencil = builder.WriteTexture(renderGraph.CreateTexture(new TextureDesc(Vector2.one, true, true) { colorFormat = GraphicsFormat.R8G8_UInt, enableRandomWrite = true, name = "StencilBufferResolved" }));
                 builder.SetRenderFunc(
                 (ResolveStencilPassData data, RenderGraphContext context) =>
@@ -513,8 +510,9 @@ namespace UnityEngine.Rendering.HighDefinition
                         context.cmd);
                 }
                 );
+                bool isMSAAEnabled = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA);
 
-                if(isMSAAEnabled)
+                if (isMSAAEnabled)
                 {
                     output.stencilBuffer = passData.resolvedStencil;
                 }

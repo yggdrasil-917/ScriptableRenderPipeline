@@ -135,12 +135,13 @@ namespace UnityEditor.Rendering.HighDefinition
              * SecondMigrationStep,
              * ...
              SpecularOcclusionMode  */
+             StencilRefactor
         };
 
         #region Migrations
 
         // Not used currently:
-        // TODO: Script liek this must also work with embed material in scene (i.e we need to catch
+        // TODO: Script like this must also work with embed material in scene (i.e we need to catch
         // .unity scene and load material and patch in memory. And it must work with perforce
         // i.e automatically checkout all those files).
         static void SpecularOcclusionMode(Material material, HDShaderUtils.ShaderID id)
@@ -170,7 +171,14 @@ namespace UnityEditor.Rendering.HighDefinition
             }
         }
 
-        //exemple migration method, remove it after first real migration
+        static void StencilRefactor(Material material, HDShaderUtils.ShaderID id)
+        {
+            var serializedObject = new SerializedObject(material);
+            serializedObject.ApplyModifiedProperties();
+
+            HDShaderUtils.ResetMaterialKeywords(material);
+        }
+        //example migration method, remove it after first real migration
         //static void EmissiveIntensityToColor(Material material, ShaderID id)
         //{
         //    switch(id)
