@@ -26,7 +26,7 @@ namespace UnityEngine.Rendering.HighDefinition
             m_Callback = null
         };
 
-        public static readonly AOVRequestData defaultAOVRequestDataNonAlloc = NewDefault();
+        internal static readonly AOVRequestData defaultAOVRequestDataNonAlloc = NewDefault();
 
         private AOVRequest m_Settings;
         private AOVBuffers[] m_RequestedAOVBuffers;

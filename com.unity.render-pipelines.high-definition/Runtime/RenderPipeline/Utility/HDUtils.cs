@@ -8,7 +8,7 @@ using UnityEditor.SceneManagement;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
-    public class HDUtils
+    internal class HDUtils
     {
         public const PerObjectData k_RendererConfigurationBakedLighting = PerObjectData.LightProbe | PerObjectData.Lightmaps | PerObjectData.LightProbeProxyVolume;
         public const PerObjectData k_RendererConfigurationBakedLightingWithShadowMask = k_RendererConfigurationBakedLighting | PerObjectData.OcclusionProbe | PerObjectData.OcclusionProbeProxyVolume | PerObjectData.ShadowMask;

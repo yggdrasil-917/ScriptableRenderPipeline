@@ -243,7 +243,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 probeRangeCompressionFactor = 1.0f
             };
 
-        public static readonly CameraSettings defaultCameraSettingsNonAlloc = NewDefault();
+        internal static readonly CameraSettings defaultCameraSettingsNonAlloc = NewDefault();
 
         /// <summary>
         /// Extract the CameraSettings from an HDCamera
