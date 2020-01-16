@@ -1,7 +1,10 @@
-using System.Collections.Generic;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
+#if ENABLE_INPUT_SYSTEM && ENABLE_INPUT_SYSTEM_PACKAGE
+#define USE_INPUT_SYSTEM
+    // using UnityEngine.InputSystem;
+    // using UnityEngine.InputSystem.Controls;
 #endif
+
+using System.Collections.Generic;
 
 namespace UnityEngine.Rendering
 {
@@ -100,6 +103,8 @@ namespace UnityEngine.Rendering
             var desc = m_DebugActions[actionIndex];
             var state = m_DebugActionStates[actionIndex];
 
+// Disable all input events if we're using the new input system
+#if !USE_INPUT_SYSTEM
             //bool canSampleAction = (state.actionTriggered == false) || (desc.repeatMode == DebugActionRepeatMode.Delay && state.timer > desc.repeatDelay);
             if (state.runningAction == false)
             {
@@ -111,11 +116,7 @@ namespace UnityEngine.Rendering
 
                     foreach (var button in buttons)
                     {
-#if ENABLE_INPUT_SYSTEM
-                        allButtonPressed = NewInputSystemIsButtonPressed(button);
-#else
                         allButtonPressed = Input.GetButton(button);
-#endif
                         if (!allButtonPressed)
                             break;
                     }
@@ -139,9 +140,9 @@ namespace UnityEngine.Rendering
                 // Check key triggers
                 for (int keyListIndex = 0; keyListIndex < desc.keyTriggerList.Count; ++keyListIndex)
                 {
-                    var keys = desc.keyTriggerList[keyListIndex];
                     bool allKeyPressed = true;
 
+                    var keys = desc.keyTriggerList[keyListIndex];
                     foreach (var key in keys)
                     {
                         allKeyPressed = Input.GetKey(key);
@@ -156,33 +157,7 @@ namespace UnityEngine.Rendering
                     }
                 }
             }
-        }
-
-        bool NewInputSystemIsButtonPressed(string button)
-        {
-            var k = InputSystem.Keyboard.current;
-            var g = InputSystem.Gamepad.current;
-
-            switch (button)
-            {
-                case "Enable Debug Button 1":
-                    return (k != null ? k.leftCtrlKey.isPressed : false) || (g != null ? g.rightStickButton.isPressed : false);
-                case "Enable Debug Button 2":
-                    return (k != null ? k.backspaceKey.isPressed : false) || (g != null ? g.leftStickButton.isPressed : false);
-                case "Debug Previous":
-                    return (k != null ? k.pageUpKey.isPressed : false) || (g != null ? g.leftTrigger.isPressed : false);
-                case "Debug Next":
-                    return (k != null ? k.pageDownKey.isPressed : false) || (g != null ? g.rightTrigger.isPressed : false);
-                case "Debug Validate":
-                    return (k != null ? k.enterKey.isPressed : false) || (g != null ? g.aButton.isPressed : false);
-                case "Debug Persistent":
-                    return (k != null ? k.rightShiftKey.isPressed : false) || (g != null ? g.xButton.isPressed : false);
-                case "Debug Multiplier":
-                    return (k != null ? k.leftShiftKey.isPressed : false) || (g != null ? g.yButton.isPressed : false);
-                case "Debug Reset":
-                    return (k != null ? k.leftAltKey.isPressed : false) || (g != null ? g.bButton.isPressed : false);
-                default: return false;
-            }
+#endif
         }
 
         void UpdateAction(int actionIndex)
@@ -229,11 +204,6 @@ namespace UnityEngine.Rendering
 
             InputRegistering.RegisterInputs(inputEntries);
 #endif
-
-// #if ENABLE_INPUT_SYSTEM
-//             var k = InputSystem.Keyboard.current;
-//             k.leftCtrlKey.isPressed
-// #endif
         }
     }
 
