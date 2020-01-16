@@ -35,8 +35,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed a bug where Properties in the Blackboard could have duplicate names.
 - Fixed a bug where Blackboard can be dragged into the Graph when Blackboard is disabled
 - Fixed a bug where you could drag the Blackboard properties into a graph even when you disabled the Blackboard.
-- Sticky Notes can now be grouped properly.
-- Fixed an issue where nodes couldn't be copied from a group.
 
 ## [7.1.1] - 2019-09-05
 ### Added
