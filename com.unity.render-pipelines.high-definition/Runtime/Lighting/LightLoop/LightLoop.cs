@@ -1705,7 +1705,10 @@ namespace UnityEngine.Rendering.HighDefinition
 
                         // If the max number of planar on screen is reached
                         if (fetchIndex >= m_MaxPlanarReflectionOnScreen)
+                        {
+                            Debug.LogError("Maximum planar reflection probe on screen reached. To fix this error, increase the maximum number of planar reflections on screen in the HDRP asset.");
                             break;
+                        }
 
                         atlasScaleOffset = scaleOffset;
 
