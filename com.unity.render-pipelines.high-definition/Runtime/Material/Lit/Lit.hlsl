@@ -1263,9 +1263,8 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
         // Apply isotropic GGX for clear coat
         // Note: coat F is scalar as it is a dieletric
         float coatF = F_Schlick(CLEAR_COAT_F0, LdotH) * bsdfData.coatMask;
-        float coatTransmittedEnergy = 1.0 - coatF;
         // Scale base specular
-        specTerm *= coatTransmittedEnergy; //Sq(1.0 - coatF);
+        specTerm *= Sq(1.0 - coatF);
 
         // Add top specular
         // TODO: Should we call just D_GGX here ?
@@ -1276,7 +1275,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
         // Note: The modification of the base roughness and fresnel0 by the clear coat is already handled in FillMaterialClearCoatData
 
         // Very coarse attempt at doing energy conservation for the diffuse layer based on NdotL. No science.
-        diffTerm *= coatTransmittedEnergy; //lerp(1, 1.0 - coatF, bsdfData.coatMask);
+        diffTerm *= lerp(1, 1.0 - coatF, bsdfData.coatMask);
     }
 
     // The compiler should optimize these. Can revisit later if necessary.
