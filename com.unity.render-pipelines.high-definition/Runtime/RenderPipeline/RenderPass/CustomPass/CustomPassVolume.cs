@@ -28,8 +28,6 @@ namespace UnityEngine.Rendering.HighDefinition
         /// <summary>
         /// List of custom passes to execute
         /// </summary>
-        /// <typeparam name="CustomPass"></typeparam>
-        /// <returns></returns>
         [SerializeReference]
         public List<CustomPass> customPasses = new List<CustomPass>();
 
@@ -240,6 +238,11 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
+        /// <summary>
+        /// Return the current active custom pass volume for a given injection point
+        /// </summary>
+        /// <param name="injectionPoint">Custom pass injection point</param>
+        /// <returns>A custom pass volume instance</returns>
         public static CustomPassVolume GetActivePassVolume(CustomPassInjectionPoint injectionPoint)
         {
             foreach (var volume in m_OverlappingPassVolumes)

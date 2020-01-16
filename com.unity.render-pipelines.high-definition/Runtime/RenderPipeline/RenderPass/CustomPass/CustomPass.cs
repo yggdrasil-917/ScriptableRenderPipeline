@@ -90,8 +90,11 @@ namespace UnityEngine.Rendering.HighDefinition
         /// </summary>
         public enum TargetBuffer
         {
+            /// <summary>Current rendering camera buffers</summary>
             Camera,
+            /// <summary>Custom rendering buffers, allocated by HDRP</summary>
             Custom,
+            /// <summary>No buffer</summary>
             None,
         }
 
@@ -100,16 +103,27 @@ namespace UnityEngine.Rendering.HighDefinition
         /// </summary>
         public enum RenderQueueType
         {
+            /// <summary>Opaque object without alpha test only</summary>
             OpaqueNoAlphaTest,
+            /// <summary>Opaque objects with alpha test only</summary>
             OpaqueAlphaTest,
+            /// <summary>All opaque objects</summary>
             AllOpaque,
+            /// <summary>Opaque objects with after post process rendering pass</summary>
             AfterPostProcessOpaque,
+            /// <summary>Transparent objects with the pre refraction rendering pass</summary>
             PreRefraction,
+            /// <summary>Transparent objects with default rendering pass</summary>
             Transparent,
+            /// <summary>Transparent objects with low resolution rendering pass</summary>
             LowTransparent,
+            /// <summary>All Transparent objects</summary>
             AllTransparent,
+            /// <summary>Pre-refraction + Default + Low res transparent objects</summary>
             AllTransparentWithLowRes,
+            /// <summary>Transparent objects with after post process rendering pass</summary>
             AfterPostProcessTransparent,
+            /// <summary>All objects</summary>
             All,
         }
 
@@ -174,8 +188,10 @@ namespace UnityEngine.Rendering.HighDefinition
 
         internal void InternalAggregateCullingParameters(ref ScriptableCullingParameters cullingParameters, HDCamera hdCamera) => AggregateCullingParameters(ref cullingParameters, hdCamera);
 
-        // Hack to cleanup the custom pass when it is unexpectedly destroyed, which happens every time you edit
-        // the UI because of a bug with the SerializeReference attribute.
+        /// <summary>
+        /// Hack to cleanup the custom pass when it is unexpectedly destroyed, which happens every time you edit
+        /// the UI because of a bug with the SerializeReference attribute.
+        /// </summary>
         ~CustomPass() { CleanupPassInternal(); }
 
         internal void CleanupPassInternal()
@@ -224,14 +240,14 @@ namespace UnityEngine.Rendering.HighDefinition
         /// </summary>
         /// <param name="cullingParameters">Aggregate the parameters in this property (use |= for masks fields, etc.)</param>
         /// <param name="hdCamera">The camera where the culling is being done</param>
-        protected virtual void AggregateCullingParameters(ref ScriptableCullingParameters cullingParameters, HDCamera camera) {}
+        protected virtual void AggregateCullingParameters(ref ScriptableCullingParameters cullingParameters, HDCamera hdCamera) {}
 
         /// <summary>
         /// Called when your pass needs to be executed by a camera
         /// </summary>
         /// <param name="renderContext"></param>
         /// <param name="cmd"></param>
-        /// <param name="camera"></param>
+        /// <param name="hdCamera"></param>
         /// <param name="cullingResult"></param>
         protected abstract void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResult);
 
@@ -356,7 +372,8 @@ namespace UnityEngine.Rendering.HighDefinition
         /// <summary>
         /// Returns the render queue range associated with the custom render queue type
         /// </summary>
-        /// <returns></returns>
+        /// <param name="type">The custom pass render queue type</param>
+        /// <returns>a render queue range compatible with a ScriptableRenderContext.DrawRenderers</returns>
         protected RenderQueueRange GetRenderQueueRange(CustomPass.RenderQueueType type)
         {
             switch (type)

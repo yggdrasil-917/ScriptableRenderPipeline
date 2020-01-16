@@ -27,17 +27,23 @@ namespace UnityEditor.Rendering.HighDefinition
 			public static GUIContent clearFlags = new GUIContent("Clear Flags", "Clear Flags used when the render targets will are bound, before the pass renders.");
 	    }
 
-		[Flags]
 		/// <summary>
 		/// List of the elements you can show/hide in the default custom pass UI.
 		/// </summary>
+		[Flags]
 		public enum PassUIFlag
 		{
+			/// <summary>Hide all the default UI fields</summary>
 			None				= 0x00,
+			/// <summary>Show the name field</summary>
 			Name				= 0x01,
+			/// <summary>show the target color buffer field</summary>
 			TargetColorBuffer	= 0x02,
+			/// <summary>Show the target depth buffer field</summary>
 			TargetDepthBuffer	= 0x04,
+			/// <summary>Show the clear flags field</summary>
 			ClearFlags			= 0x08,
+			/// <summary>Show all the default UI fields</summary>
 			All					= ~0,
 		}
 

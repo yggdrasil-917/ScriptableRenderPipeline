@@ -10,6 +10,10 @@ namespace UnityEditor.Rendering.HighDefinition
 	{
 		internal Type targetPassType;
 
+		/// <summary>
+		/// Indicate that the class is a custom pass drawer and that it replace the default custom pass GUI.
+		/// </summary>
+		/// <param name="targetPassType">Your Custom Pass type</param>
 		public CustomPassDrawerAttribute(Type targetPassType) => this.targetPassType = targetPassType;
 	}
 }
