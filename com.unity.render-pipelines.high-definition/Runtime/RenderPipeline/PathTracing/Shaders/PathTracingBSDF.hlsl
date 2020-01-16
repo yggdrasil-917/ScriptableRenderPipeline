@@ -1,4 +1,5 @@
 #define DELTA_PDF 1000000.0
+#define MAX_GGX_ROUGHNESS 0.999
 
 namespace BRDF
 {
@@ -12,6 +13,8 @@ bool SampleGGX(MaterialData mtlData,
            out float pdf,
            out float3 fresnel)
 {
+    roughness = min(roughness, MAX_GGX_ROUGHNESS);
+
     float NdotL, NdotH, VdotH;
     float3x3 localToWorld = GetLocalFrame(mtlData.bsdfData.normalWS);
     SampleGGXDir(inputSample, mtlData.V, localToWorld, roughness, outgoingDir, NdotL, NdotH, VdotH);
@@ -50,6 +53,8 @@ void EvaluateGGX(MaterialData mtlData,
         return;
     }
     float NdotL = dot(mtlData.bsdfData.normalWS, outgoingDir);
+
+    roughness = min(roughness, MAX_GGX_ROUGHNESS);
 
     float3 H = normalize(mtlData.V + outgoingDir);
     float NdotH = dot(mtlData.bsdfData.normalWS, H);
@@ -214,9 +219,11 @@ bool SampleGGX(MaterialData mtlData,
            out float3 value,
            out float pdf)
 {
+    float roughness = min(mtlData.bsdfData.roughnessT, MAX_GGX_ROUGHNESS);
+
     float NdotL, NdotH, VdotH;
     float3x3 localToWorld = GetLocalFrame(mtlData.bsdfData.normalWS);
-    SampleGGXDir(inputSample, mtlData.V, localToWorld, mtlData.bsdfData.roughnessT, outgoingDir, NdotL, NdotH, VdotH);
+    SampleGGXDir(inputSample, mtlData.V, localToWorld, roughness, outgoingDir, NdotL, NdotH, VdotH);
 
     // FIXME: won't be necessary after new version of SampleGGXDir()
     float3 H = normalize(mtlData.V + outgoingDir);
@@ -230,8 +237,8 @@ bool SampleGGX(MaterialData mtlData,
     float LdotH = dot(outgoingDir, H);
 
     float3 F = F_Schlick(mtlData.bsdfData.fresnel0, VdotH);
-    float  D = D_GGX(NdotH, mtlData.bsdfData.roughnessT);
-    float Vg = V_SmithJointGGX(-NdotL, NdotV, mtlData.bsdfData.roughnessT);
+    float  D = D_GGX(NdotH, roughness);
+    float Vg = V_SmithJointGGX(-NdotL, NdotV, roughness);
 
     // Compute the Jacobian
     float jacobian = max(abs(VdotH + mtlData.bsdfData.ior * LdotH), 0.001);
