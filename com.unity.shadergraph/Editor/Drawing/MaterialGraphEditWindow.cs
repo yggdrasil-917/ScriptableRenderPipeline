@@ -376,6 +376,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                         if (success)
                         {
                             ShaderGraphImporterEditor.ShowGraphEditWindow(newPath);
+                            // This is for updating material dependencies so we exclude subgraphs here.
                             if (GraphData.onSaveGraph != null && extension != ShaderSubGraphImporter.Extension)
                             {
                                 var shader = AssetDatabase.LoadAssetAtPath<Shader>(newPath);
