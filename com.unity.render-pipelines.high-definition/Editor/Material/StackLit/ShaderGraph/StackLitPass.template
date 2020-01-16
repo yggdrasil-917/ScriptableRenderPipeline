@@ -140,6 +140,13 @@ Pass
     // _VLAYERED_RECOMPUTE_PERLIGHT
     // _VLAYERED_USE_REFRACTED_ANGLES_FOR_BASE
 
+    //-------------------------------------------------------------------------------------
+    // Graph Defines
+    //-------------------------------------------------------------------------------------
+    $splice(Defines)
+    //-------------------------------------------------------------------------------------
+    // End Defines
+    //-------------------------------------------------------------------------------------
 
     // Common shader_features:
 
@@ -240,9 +247,8 @@ Pass
 
 
     //-------------------------------------------------------------------------------------
-    // Defines
+    // Active Field Defines
     //-------------------------------------------------------------------------------------
-    $splice(Defines)
 
     // this translates the new dependency tracker into the old preprocessor definitions for the existing HDRP shader code
     $AttributesMesh.normalOS:               #define ATTRIBUTES_NEED_NORMAL
