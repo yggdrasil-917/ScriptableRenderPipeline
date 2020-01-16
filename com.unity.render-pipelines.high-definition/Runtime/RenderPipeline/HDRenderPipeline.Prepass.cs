@@ -184,6 +184,7 @@ namespace UnityEngine.Rendering.HighDefinition
             public FrameSettings frameSettings;
             public bool msaaEnabled;
             public bool hasDepthOnlyPrepass;
+            public bool renderRayTracingPrepass;
 
             public RenderGraphMutableResource depthBuffer;
             public RenderGraphMutableResource depthAsColorBuffer;
@@ -212,6 +213,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 passData.frameSettings = hdCamera.frameSettings;
                 passData.msaaEnabled = msaa;
                 passData.hasDepthOnlyPrepass = depthPrepassParameters.hasDepthOnlyPass;
+                passData.renderRayTracingPrepass = depthPrepassParameters.renderRayTracingPrepass;
 
                 passData.depthBuffer = builder.UseDepthBuffer(output.depthBuffer, DepthAccess.ReadWrite);
                 passData.normalBuffer = builder.WriteTexture(CreateNormalBuffer(renderGraph, msaa));
@@ -258,6 +260,7 @@ namespace UnityEngine.Rendering.HighDefinition
                                     , data.hasDepthOnlyPrepass
                                     , useRayTracing ? context.resources.GetRendererList(data.renderListRayTracingOpaque) : new RendererList()
                                     , useRayTracing ? context.resources.GetRendererList(data.renderListRayTracingTransparent) : new RendererList()
+                                    , data.renderRayTracingPrepass
                                     );
                 });
             }

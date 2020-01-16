@@ -65,6 +65,7 @@ namespace UnityEngine.Rendering.HighDefinition
         ClearSsrBuffers,
         HDRenderPipelineRenderCamera,
         HDRenderPipelineRenderAOV,
+        HDRenderPipelineAllRenderRequest,
         CullResultsCull,
         CustomPassCullResultsCull,
         UpdateStencilCopyForSSRExclusion,
@@ -133,6 +134,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         // Misc
         VolumeUpdate,
+        CustomPassVolumeUpdate,
         XROcclusionMesh,
         XRMirrorView,
         XRCustomMirrorView,
@@ -176,5 +178,6 @@ namespace UnityEngine.Rendering.HighDefinition
         CustomPostProcessBeforePP,
         CustomPostProcessAfterPP,
         CustomPostProcessAfterOpaqueAndSky,
+        ContrastAdaptiveSharpen,
     }
 }
