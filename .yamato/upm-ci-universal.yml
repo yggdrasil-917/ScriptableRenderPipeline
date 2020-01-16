@@ -20,6 +20,10 @@ platforms:
     type: Unity::VM::GPU
     image: cds-ops/ubuntu-18.04-base:latest
     flavor: b1.large
+  - name: Android
+    type: Unity::mobile::android
+    image: mobile/android-execution-r19:stable
+    flavor: b1.large
 testplatforms:
   - name: Standalone
     args: --suite=playmode --platform=Standalone
@@ -27,6 +31,11 @@ testplatforms:
     args: --suite=playmode
   - name: editmode
     args: --suite=editor --platform=editmode
+mobiles:
+  - name: Android
+    type: Unity::mobile::android
+    image: mobile/android-execution-r19:stable
+    flavor: b1.large
 projects:
   - name: Universal
     folder: UniversalGraphicsTest
@@ -169,8 +178,34 @@ mac_apis:
     logs:
       paths:
         - "**/test-results/**/*"  
-{% endfor %}   
 {% endfor %}
+{% endfor %}
+
+{% elsif platform.name == "Android" %}
+
+
+{{ project.name }}_Android_{{ editor.version }}:
+  name: {{ project.name }} on Android on version {{ editor.version }}
+  agent:
+    type: {{ platform.type }}
+    image: {{ platform.image }}
+    flavor: {{ platform.flavor }}
+  commands:
+   - wget http://artifactory-slo.bf.unity3d.com/artifactory/ie-generic-core-automation/tools/android/shield/adbkey.pub -O %USERPROFILE%/.android/adbkey.pub
+   - wget http://artifactory-slo.bf.unity3d.com/artifactory/ie-generic-core-automation/tools/android/shield/adbkey -O %USERPROFILE%/.android/adbkey
+   - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
+   - git clone git@github.cds.internal.unity3d.com:unity/utr.git utr
+   - unity-downloader-cli {{ editor.cmd }} -p WindowsEditor -c editor -c Android --wait
+   - >
+      %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
+   - powershell %ANDROID_SDK_ROOT%\platform-tools\adb.exe devices
+   - NetSh Advfirewall set allprofiles state off
+   - utr\utr --suite=playmode --platform=Android --testproject=TestProjects\{{ project.folder }} --editor-location=WindowsEditor --artifacts_path=test-results --scripting-backend=il2cpp --timeout=1200
+   - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe kill-server
+  artifacts:
+    logs:
+      paths:
+        - "**test-results/**/*"
 
 
 {% endif %}
