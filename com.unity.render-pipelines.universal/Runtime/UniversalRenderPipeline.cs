@@ -301,7 +301,7 @@ namespace UnityEngine.Rendering.Universal
             // rendering to screen when rendering it. The last camera in the stack is not
             // necessarily the last active one as it users might disable it.
             int lastActiveOverlayCameraIndex = -1;
-            if (cameraStack != null && baseCameraAdditionalData.renderType == CameraRenderType.Base)
+            if (cameraStack != null && renderType == CameraRenderType.Base)
             {
                 // TODO: Add support to camera stack in VR multi pass mode
                 if (!IsMultiPassStereoEnabled(baseCamera))
@@ -400,13 +400,13 @@ namespace UnityEngine.Rendering.Universal
 
         static void InitializeCameraData(Camera camera, UniversalAdditionalCameraData additionalCameraData, out CameraData cameraData)
         {
+            cameraData = new CameraData();
             if (additionalCameraData?.renderType == CameraRenderType.ScreenSpaceUI)
             {
-                InitializeScreenSpaceCameraData(camera, additionalCameraData, out cameraData);
+                InitializeScreenSpaceCameraData(camera, additionalCameraData, ref cameraData);
             }
             else
             {
-                cameraData = new CameraData();
                 InitializeStackedCameraData(camera, additionalCameraData, ref cameraData);
                 InitializeAdditionalCameraData(camera, additionalCameraData, ref cameraData);
             }
@@ -562,7 +562,7 @@ namespace UnityEngine.Rendering.Universal
             cameraData.requiresDepthTexture |= cameraData.isSceneViewCamera || cameraData.postProcessEnabled;
         }
 
-        static void InitializeScreenSpaceCameraData(Camera camera, UniversalAdditionalCameraData additionalCameraData, out CameraData cameraData)
+        static void InitializeScreenSpaceCameraData(Camera camera, UniversalAdditionalCameraData additionalCameraData, ref CameraData cameraData)
         {
             cameraData.camera = camera;
             cameraData.renderType = CameraRenderType.ScreenSpaceUI;
