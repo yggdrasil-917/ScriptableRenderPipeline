@@ -3861,9 +3861,11 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DisplayCookieAtlas)))
                 {
+                    m_LightLoopDebugMaterialProperties.SetFloat(HDShaderIDs._DebugExposure, lightingDebug.debugExposure);
+                    m_LightLoopDebugMaterialProperties.SetFloat(HDShaderIDs._Mipmap, lightingDebug.cookieAtlasMipLevel);
+                    m_LightLoopDebugMaterialProperties.SetTexture(HDShaderIDs._InputTexture, parameters.cookieManager.atlasTexture);
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
-                    HDUtils.BlitQuad(cmd, parameters.cookieManager.atlasTexture, new Vector4(1, 1, 0, 0), new Vector4(1, 1, 0, 0), (int)lightingDebug.cookieAtlasMipLevel, false);
-                    HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
+                    cmd.DrawProcedural(Matrix4x4.identity, parameters.debugBlitMaterial, 0, MeshTopology.Triangles, 3, 1, m_LightLoopDebugMaterialProperties);
                 }
             }
 
