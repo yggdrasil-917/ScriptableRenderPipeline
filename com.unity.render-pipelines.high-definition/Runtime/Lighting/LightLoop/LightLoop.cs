@@ -3866,6 +3866,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     m_LightLoopDebugMaterialProperties.SetTexture(HDShaderIDs._InputTexture, parameters.cookieManager.atlasTexture);
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
                     cmd.DrawProcedural(Matrix4x4.identity, parameters.debugBlitMaterial, 0, MeshTopology.Triangles, 3, 1, m_LightLoopDebugMaterialProperties);
+                    HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
                 }
             }
 
@@ -3897,6 +3898,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     m_LightLoopDebugMaterialProperties.SetTexture(HDShaderIDs._InputTexture, parameters.planarProbeCache.GetTexCache());
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
                     cmd.DrawProcedural(Matrix4x4.identity, parameters.debugBlitMaterial, 0, MeshTopology.Triangles, 3, 1, m_LightLoopDebugMaterialProperties);
+                    HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
                 }
             }
         }
