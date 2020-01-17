@@ -1966,6 +1966,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
 
+            DecalNormalPatch(hdCamera, cmd, renderContext);
 
             // We can now bind the normal buffer to be use by any effect
             m_SharedRTManager.BindNormalBuffer(cmd);
