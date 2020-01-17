@@ -3,7 +3,7 @@ using System;
 namespace UnityEngine.Rendering.HighDefinition
 {
     /// <summary>Helpers to manipulate <see cref="MigrationDescription{TVersion, TTarget}"/></summary>
-    public static class MigrationDescription
+    static class MigrationDescription
     {
         /// <summary>Create a new migration description.</summary>
         /// <typeparam name="TVersion">An enum identifying the version.</typeparam>
