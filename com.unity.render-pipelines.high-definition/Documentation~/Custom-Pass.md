@@ -113,7 +113,7 @@ By default, the objects are displayed with their material, you can override the 
 
 Injection Point               | Material Type
 ----------------------------- | -------------------------------------------
-Before Rendering              | Unlit forward, only camera depth will be rendered.
+Before Rendering              | Unlit forward but without writing to the camera color
 After Opaque Depth And Normal | Unlit forward
 Before PreRefraction          | Unlit + Lit forward only
 Before Transparent            | Unlit + Lit forward only with refraction
