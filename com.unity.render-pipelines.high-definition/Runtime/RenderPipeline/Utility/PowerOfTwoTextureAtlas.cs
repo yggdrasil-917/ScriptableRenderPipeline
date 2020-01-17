@@ -130,7 +130,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // Sort entries from biggest to smallest
             entries.Sort((c1, c2) => {
-                return c2.size.magnitude.CompareTo(c2.size.magnitude);
+                return c2.size.magnitude.CompareTo(c1.size.magnitude);
             });
 
             bool success = true;
