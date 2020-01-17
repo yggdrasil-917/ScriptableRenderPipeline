@@ -188,8 +188,14 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public void ClearTarget(CommandBuffer cmd)
         {
-            // clear the atlas by blitting a black texture
-            BlitTexture(cmd, fullScaleOffset, Texture2D.blackTexture, fullScaleOffset, blitMips: true);
+            int mipCount = (m_UseMipMaps) ? GetTextureMipmapCount(m_Width, m_Height) : 1;
+
+            // clear the atlas by blitting a black texture at every mips
+            for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
+            {
+                cmd.SetRenderTarget(m_AtlasTexture, mipLevel);
+                HDUtils.BlitQuad(cmd, Texture2D.blackTexture, fullScaleOffset, fullScaleOffset, mipLevel, true);
+            }
 
             m_IsGPUTextureUpToDate.Clear(); // mark all GPU textures as invalid.
         }
