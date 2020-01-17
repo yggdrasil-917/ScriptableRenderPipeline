@@ -146,10 +146,11 @@ namespace UnityEngine.Rendering.HighDefinition
         }
         DebugData m_Data;
 
-        internal DebugData data { get => m_Data; }
+        public DebugData data { get => m_Data; }
 
-        static GUIContent[] renderingFullScreenDebugStrings => s_RenderingFullScreenDebugStrings;
-        static int[] renderingFullScreenDebugValues => s_RenderingFullScreenDebugValues;
+        // Had to keep those public because HDRP tests using it (as a workaround to access proper enum values for this debug)
+        public static GUIContent[] renderingFullScreenDebugStrings => s_RenderingFullScreenDebugStrings;
+        public static int[] renderingFullScreenDebugValues => s_RenderingFullScreenDebugValues;
 
         internal DebugDisplaySettings()
         {

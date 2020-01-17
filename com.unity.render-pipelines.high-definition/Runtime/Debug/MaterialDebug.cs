@@ -66,7 +66,7 @@ namespace UnityEngine.Rendering.HighDefinition
             Alpha,
         }
 
-        internal class MaterialSharedPropertyMappingAttribute : Attribute
+        class MaterialSharedPropertyMappingAttribute : Attribute
         {
             public readonly MaterialSharedProperty property;
 
@@ -91,8 +91,10 @@ namespace UnityEngine.Rendering.HighDefinition
         internal static int[] debugViewMaterialPropertiesValues = null;
         internal static GUIContent[] debugViewMaterialTextureStrings = null;
         internal static int[] debugViewMaterialTextureValues = null;
-        internal static GUIContent[] debugViewMaterialGBufferStrings = null;
-        internal static int[] debugViewMaterialGBufferValues = null;
+
+        // Had to keep those public because HDRP tests using it (as a workaround to access proper enum values for this debug)
+        public static GUIContent[] debugViewMaterialGBufferStrings = null;
+        public static int[] debugViewMaterialGBufferValues = null;
 
         static Dictionary<MaterialSharedProperty, int[]> s_MaterialPropertyMap = new Dictionary<MaterialSharedProperty, int[]>();
 
