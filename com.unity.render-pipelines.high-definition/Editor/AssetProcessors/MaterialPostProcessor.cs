@@ -173,10 +173,13 @@ namespace UnityEditor.Rendering.HighDefinition
 
         static void StencilRefactor(Material material, HDShaderUtils.ShaderID id)
         {
-            var serializedObject = new SerializedObject(material);
-            serializedObject.ApplyModifiedProperties();
+            if (id < HDShaderUtils.ShaderID.Count_Standard)
+            {
+                    var serializedObject = new SerializedObject(material);
+                    serializedObject.ApplyModifiedProperties();
+                    HDShaderUtils.ResetMaterialKeywords(material);
+            }
 
-            HDShaderUtils.ResetMaterialKeywords(material);
         }
         //example migration method, remove it after first real migration
         //static void EmissiveIntensityToColor(Material material, ShaderID id)

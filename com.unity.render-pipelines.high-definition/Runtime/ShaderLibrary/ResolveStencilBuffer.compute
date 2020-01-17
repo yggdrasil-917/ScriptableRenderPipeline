@@ -5,6 +5,10 @@
 #pragma kernel MAIN_MSAA_4  KERNEL_NAME=MAIN_MSAA_4  NUM_SAMPLES=4 MSAA 
 #pragma kernel MAIN_MSAA_8  KERNEL_NAME=MAIN_MSAA_8  NUM_SAMPLES=8 MSAA
 
+#pragma kernel MAIN_MSAA_2_RESOLVE  KERNEL_NAME=MAIN_MSAA_2_RESOLVE  NUM_SAMPLES=2 MSAA RESOLVE
+#pragma kernel MAIN_MSAA_4_RESOLVE  KERNEL_NAME=MAIN_MSAA_4_RESOLVE  NUM_SAMPLES=4 MSAA RESOLVE
+#pragma kernel MAIN_MSAA_8_RESOLVE  KERNEL_NAME=MAIN_MSAA_8_RESOLVE  NUM_SAMPLES=8 MSAA RESOLVE
+
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
@@ -14,8 +18,6 @@ RW_TEXTURE2D_X(uint2, _OutputStencilBuffer);
 #else
 TEXTURE2D_X_UINT2(_StencilTexture);
 #endif
-
-RW_TEXTURE2D_X(uint, _OutputTexture);
 
 // TODO: Wasting 3 bytes here per entry, but still better than a texture as can be scalar read.
 // We could sub-index the right byte inside the uint, but it takes extra ALU and won't save bandwidth (just memory)
@@ -56,7 +58,7 @@ void KERNEL_NAME(uint3 groupId          : SV_GroupID,
             resolvedStencil = GetStencilValue(sampledStencil);
         }
     }
-#ifdef MSAA
+#ifdef RESOLVE
     _OutputStencilBuffer[COORD_TEXTURE2D_X(dispatchThreadID.xy)] = uint2(resolvedStencil, resolvedStencil);
 #endif
 

@@ -1026,6 +1026,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 ComputeShader cs = defaultResources.shaders.resolveStencilCS;
                 int kernel = SampleCountToPassIndex(hdCamera.msaaSamples);
+                kernel = resolveIsNecessary ? kernel + 3 : kernel; // We have a different variant if we need to resolve to non-MSAA stencil
                 int coarseStencilWidth = HDUtils.DivRoundUp(hdCamera.actualWidth, 8);
                 int coarseStencilHeight = HDUtils.DivRoundUp(hdCamera.actualHeight, 8);
                 cmd.SetGlobalVector(HDShaderIDs._CoarseStencilBufferSize, new Vector4(coarseStencilWidth, coarseStencilHeight, 1.0f / coarseStencilWidth, 1.0f / coarseStencilHeight));
@@ -1965,7 +1966,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
 
-            DecalNormalPatch(hdCamera, cmd, renderContext);
 
             // We can now bind the normal buffer to be use by any effect
             m_SharedRTManager.BindNormalBuffer(cmd);
@@ -2190,9 +2190,17 @@ namespace UnityEngine.Rendering.HighDefinition
                 m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraSssDiffuseLightingMSAABuffer, m_CameraSssDiffuseLightingBuffer);
                 m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, GetSSSBufferMSAA(), GetSSSBuffer());
 
+                if(hdCamera.frameSettings.IsEnabled(FrameSettingsField.SubsurfaceScattering))
+                {
+                    // We need htile for SSS, but we don't need to resolve again
+                    BuildCoarseStencilAndResolveIfNeeded(hdCamera, m_SharedRTManager.GetDepthStencilBuffer(msaaEnabled),
+                                                     msaaEnabled ? m_SharedRTManager.GetStencilBuffer(msaaEnabled) : null,
+                                                     m_SharedRTManager.GetCoarseStencilBuffer(), cmd);
+                }
+
                 // SSS pass here handle both SSS material from deferred and forward
                 RenderSubsurfaceScattering(hdCamera, cmd, hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? m_CameraColorMSAABuffer : m_CameraColorBuffer,
-                    m_CameraSssDiffuseLightingBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), m_SharedRTManager.GetDepthTexture());
+                                           m_CameraSssDiffuseLightingBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), m_SharedRTManager.GetDepthTexture());
 
                 RenderForwardEmissive(cullingResults, hdCamera, renderContext, cmd);
 
