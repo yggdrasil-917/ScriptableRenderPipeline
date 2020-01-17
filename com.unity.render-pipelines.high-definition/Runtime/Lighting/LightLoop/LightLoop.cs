@@ -636,6 +636,8 @@ namespace UnityEngine.Rendering.HighDefinition
         int m_DebugSelectedLightShadowIndex;
         int m_DebugSelectedLightShadowCount;
 
+        static MaterialPropertyBlock m_LightLoopDebugMaterialProperties = new MaterialPropertyBlock();
+
         bool HasLightToCull()
         {
             return m_TotalLightCount > 0;
@@ -3789,7 +3791,7 @@ namespace UnityEngine.Rendering.HighDefinition
             return parameters;
         }
 
-        static void RenderLightLoopDebugOverlay(in DebugParameters debugParameters, CommandBuffer cmd, ref float x, ref float y, float overlaySize, RTHandle depthTexture, MaterialPropertyBlock mpb)
+        static void RenderLightLoopDebugOverlay(in DebugParameters debugParameters, CommandBuffer cmd, ref float x, ref float y, float overlaySize, RTHandle depthTexture)
         {
             var hdCamera = debugParameters.hdCamera;
             var parameters = debugParameters.lightingOverlayParameters;
@@ -3869,11 +3871,11 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DisplayPointLightCookieArray)))
                 {
-                    mpb.SetTexture(HDShaderIDs._InputCubemap, parameters.cookieManager.cubeCache);
-                    mpb.SetFloat(HDShaderIDs._Mipmap, 0);
-                    mpb.SetFloat(HDShaderIDs._SliceIndex, lightingDebug.cookieCubeArraySliceIndex);
+                    m_LightLoopDebugMaterialProperties.SetTexture(HDShaderIDs._InputCubemap, parameters.cookieManager.cubeCache);
+                    m_LightLoopDebugMaterialProperties.SetFloat(HDShaderIDs._Mipmap, 0);
+                    m_LightLoopDebugMaterialProperties.SetFloat(HDShaderIDs._SliceIndex, lightingDebug.cookieCubeArraySliceIndex);
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
-                    cmd.DrawProcedural(Matrix4x4.identity, debugParameters.debugLatlongMaterial, 0, MeshTopology.Triangles, 3, 1, mpb);
+                    cmd.DrawProcedural(Matrix4x4.identity, debugParameters.debugLatlongMaterial, 0, MeshTopology.Triangles, 3, 1, m_LightLoopDebugMaterialProperties);
                     HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
                 }
             }
@@ -3888,11 +3890,11 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 using (new ProfilingScope(cmd, ProfilingSampler.Get(HDProfileId.DisplayPlanarReflectionProbeAtlas)))
                 {
-                    mpb.SetFloat(HDShaderIDs._DebugExposure, lightingDebug.debugExposure);
-                    mpb.SetFloat(HDShaderIDs._Mipmap, lightingDebug.planarReflectionProbeMipLevel);
-                    mpb.SetTexture(HDShaderIDs._InputTexture, parameters.planarProbeCache.GetTexCache());
+                    m_LightLoopDebugMaterialProperties.SetFloat(HDShaderIDs._DebugExposure, lightingDebug.debugExposure);
+                    m_LightLoopDebugMaterialProperties.SetFloat(HDShaderIDs._Mipmap, lightingDebug.planarReflectionProbeMipLevel);
+                    m_LightLoopDebugMaterialProperties.SetTexture(HDShaderIDs._InputTexture, parameters.planarProbeCache.GetTexCache());
                     cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
-                    cmd.DrawProcedural(Matrix4x4.identity, parameters.debugBlitMaterial, 0, MeshTopology.Triangles, 3, 1, mpb);
+                    cmd.DrawProcedural(Matrix4x4.identity, parameters.debugBlitMaterial, 0, MeshTopology.Triangles, 3, 1, m_LightLoopDebugMaterialProperties);
                 }
             }
         }

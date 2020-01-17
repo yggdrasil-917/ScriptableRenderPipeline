@@ -225,7 +225,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        protected void MarkGPUTextureValid(int instanceId) => m_IsGPUTextureUpToDate[instanceId] = 1;
+        protected void MarkGPUTextureValid(int instanceId, bool mipAreValid = false) => m_IsGPUTextureUpToDate[instanceId] = (mipAreValid) ? 2u : 1u;
 
         protected void MarkGPUTextureInvalid(int instanceId) => m_IsGPUTextureUpToDate[instanceId] = 0;
 
@@ -243,7 +243,7 @@ namespace UnityEngine.Rendering.HighDefinition
             if (allocated)
             {
                 BlitTexture(cmd, scaleOffset, texture, fullScaleOffset);
-                MarkGPUTextureValid(overrideInstanceID != -1 ? overrideInstanceID : texture.GetInstanceID()); // texture is up to date
+                MarkGPUTextureValid(overrideInstanceID != -1 ? overrideInstanceID : texture.GetInstanceID(), true); // texture is up to date
             }
 
             return allocated;
@@ -272,7 +272,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public bool IsCached(out Vector4 scaleOffset, Texture texture)
             => m_AllocationCache.TryGetValue(texture.GetInstanceID(), out scaleOffset);
 
-        public virtual bool NeedsUpdate(Texture texture)
+        public virtual bool NeedsUpdate(Texture texture, bool needMips = false)
         {
             RenderTexture   rt = texture as RenderTexture;
             int             key = texture.GetInstanceID();
@@ -293,9 +293,10 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
             }
             // For regular textures, values == 0 means that their GPU data needs to be updated (either because
-            // the atlas have been re-layouted or the texture have never been uploaded
+            // the atlas have been re-layouted or the texture have never been uploaded. We also check if the mips
+            // are valid for the texture if we need them
             else if (m_IsGPUTextureUpToDate.TryGetValue(key, out var value))
-                return value == 0;
+                return value == 0 || (needMips && value == 1);
 
             return false;
         }
@@ -320,7 +321,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 if (updateIfNeeded && NeedsUpdate(newTexture))
                 {
                     BlitTexture(cmd, scaleOffset, newTexture, sourceScaleOffset, blitMips);
-                    MarkGPUTextureValid(newTexture.GetInstanceID()); // texture is up to date
+                    MarkGPUTextureValid(newTexture.GetInstanceID(), blitMips); // texture is up to date
                 }
                 return true;
             }

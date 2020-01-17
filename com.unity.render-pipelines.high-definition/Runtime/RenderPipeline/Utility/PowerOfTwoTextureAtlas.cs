@@ -65,7 +65,7 @@ namespace UnityEngine.Rendering.HighDefinition
             if (Is2D(texture))
             {
                 Blit2DTexturePadding(cmd, scaleOffset, texture, sourceScaleOffset, blitMips);
-                MarkGPUTextureValid(overrideInstanceID != -1 ? overrideInstanceID : texture.GetInstanceID());
+                MarkGPUTextureValid(overrideInstanceID != -1 ? overrideInstanceID : texture.GetInstanceID(), blitMips);
             }
         }
 

@@ -53,9 +53,10 @@ float3 SampleAreaLightCookie(float4 cookieScaleOffset, float4x3 L, float3 F)
     //          mix of up into right that needs to be subtracted from simple projection on right vector
     //
     float   u = (dot(hitPosition, right) - upRightMixing * v) * recSqLengthRight;
-    // We need to flip the UV in x because we're emitting light from the area light and not projecting it.
-    // Thus we use a different convention compared to spot that projects lights. This is necessary to
-    // keep a coherent lighting workflow between area and spot lights.
+    // We create automatic quad emissive mesh for area light. For those to be displayed in the direction
+    // of the light when they are single sided, we need to reverse the winding order.
+    // Because of this reverse of winding order, to get a matching area light reflection,
+    // we need to flip the x axis.
     float2  hitUV = float2(1 - u, v);
 
     // Assuming the original cosine lobe distribution Do is enclosed in a cone of 90 deg  aperture,

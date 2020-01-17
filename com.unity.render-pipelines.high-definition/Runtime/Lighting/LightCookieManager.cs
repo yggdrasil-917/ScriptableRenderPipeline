@@ -17,10 +17,12 @@ namespace UnityEngine.Rendering.HighDefinition
         internal static readonly int s_sourceMipLevel = Shader.PropertyToID("_SourceMipLevel");
         internal static readonly int s_sourceSize = Shader.PropertyToID("_SourceSize");
 
-        Material m_MaterialFilterAreaLights;
+        internal const int k_MinCookieSize = 2;
+
+        readonly Material m_MaterialFilterAreaLights;
         MaterialPropertyBlock m_MPBFilterAreaLights;
 
-        Material m_CubeToPanoMaterial;
+        readonly Material m_CubeToPanoMaterial;
 
         RenderTexture m_TempRenderTexture0 = null;
         RenderTexture m_TempRenderTexture1 = null;
@@ -36,6 +38,7 @@ namespace UnityEngine.Rendering.HighDefinition
         bool                m_2DCookieAtlasNeedsLayouting = false;
         bool                m_NoMoreSpace = false;
         readonly int        cookieAtlasLastValidMip;
+        readonly GraphicsFormat cookieFormat;
 
         public LightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
         {
@@ -52,7 +55,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             int cookieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
             int cookieAtlasSize = (int)gLightLoopSettings.cookieAtlasSize;
-            var cookieFormat = (GraphicsFormat)gLightLoopSettings.cookieAtlasFormat;
+            cookieFormat = (GraphicsFormat)gLightLoopSettings.cookieAtlasFormat;
             cookieAtlasLastValidMip = gLightLoopSettings.cookieAtlasLastValidMip;
 
             if (PowerOfTwoTextureAtlas.GetApproxCacheSizeInByte(1, cookieAtlasSize, true, cookieFormat) > HDRenderPipeline.k_MaxCacheSize)
@@ -122,7 +125,7 @@ namespace UnityEngine.Rendering.HighDefinition
             if (m_TempRenderTexture0 == null)
             {
                 string cacheName = m_CookieAtlas.AtlasTexture.name;
-                m_TempRenderTexture0 = new RenderTexture(sourceWidth, sourceHeight, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+                m_TempRenderTexture0 = new RenderTexture(sourceWidth, sourceHeight, 1, cookieFormat)
                 {
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
@@ -131,7 +134,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 };
 
                 // We start by a horizontal gaussian into mip 1 that reduces the width by a factor 2 but keeps the same height
-                m_TempRenderTexture1 = new RenderTexture(sourceWidth >> 1, sourceHeight, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+                m_TempRenderTexture1 = new RenderTexture(sourceWidth >> 1, sourceHeight, 1, cookieFormat)
                 {
                     hideFlags = HideFlags.HideAndDontSave,
                     useMipMap = true,
@@ -207,10 +210,13 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public Vector4 Fetch2DCookie(CommandBuffer cmd, Texture cookie)
         {
+            if (cookie.width < k_MinCookieSize || cookie.height < k_MinCookieSize)
+                return Vector4.zero;
+
             if (!m_CookieAtlas.IsCached(out var scaleBias, cookie) && !m_NoMoreSpace)
                 Debug.LogError($"2D Light cookie texture {cookie} can't be fetched without having reserved. Check LightLoop.ReserveCookieAtlasTexture");
 
-            if (m_CookieAtlas.NeedsUpdate(cookie))
+            if (m_CookieAtlas.NeedsUpdate(cookie, false))
                 m_CookieAtlas.BlitTexture(cmd, scaleBias, cookie, new Vector4(1, 1, 0, 0), blitMips: false);
 
             return scaleBias;
@@ -218,10 +224,13 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public Vector4 FetchAreaCookie(CommandBuffer cmd, Texture cookie)
         {
+            if (cookie.width < k_MinCookieSize || cookie.height < k_MinCookieSize)
+                return Vector4.zero;
+
             if (!m_CookieAtlas.IsCached(out var scaleBias, cookie) && !m_NoMoreSpace)
                 Debug.LogError($"Area Light cookie texture {cookie} can't be fetched without having reserved. Check LightLoop.ReserveCookieAtlasTexture");
 
-            if (m_CookieAtlas.NeedsUpdate(cookie))
+            if (m_CookieAtlas.NeedsUpdate(cookie, true))
             {
                 // Generate the mips
                 Texture filteredAreaLight = FilterAreaLightTexture(cmd, cookie);
@@ -234,6 +243,9 @@ namespace UnityEngine.Rendering.HighDefinition
         public void ReserveSpace(Texture cookie)
         {
             if (cookie == null)
+                return;
+            
+            if (cookie.width < k_MinCookieSize || cookie.height < k_MinCookieSize)
                 return;
 
             if (!m_CookieAtlas.ReserveSpace(cookie))
