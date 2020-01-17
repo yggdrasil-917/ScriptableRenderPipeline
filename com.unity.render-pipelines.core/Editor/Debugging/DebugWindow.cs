@@ -1,3 +1,7 @@
+#if ENABLE_INPUT_SYSTEM && ENABLE_INPUT_SYSTEM_PACKAGE
+#define USE_INPUT_SYSTEM
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -376,6 +380,10 @@ namespace UnityEditor.Rendering
             if (GUILayout.Button(k_ResetButtonContent, EditorStyles.toolbarButton))
                 DebugManager.instance.Reset();
             GUILayout.EndHorizontal();
+
+#if !ENABLE_LEGACY_INPUT_MANAGER
+            EditorGUILayout.HelpBox("The debug menu does not support the new Unity Input package yet, you'll be unable to use the debug menu at runtime.", MessageType.Error);
+#endif
 
             using (new EditorGUILayout.HorizontalScope())
             {
