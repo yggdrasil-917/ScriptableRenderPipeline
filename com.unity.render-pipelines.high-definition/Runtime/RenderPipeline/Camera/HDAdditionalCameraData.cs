@@ -133,7 +133,7 @@ namespace UnityEngine.Rendering.HighDefinition
     [RequireComponent(typeof(Camera))]
     public partial class HDAdditionalCameraData : MonoBehaviour, IFrameSettingsHistoryContainer
     {
-        internal enum FlipYMode
+        public enum FlipYMode
         {
             Automatic,
             ForceFlipY
@@ -214,7 +214,7 @@ namespace UnityEngine.Rendering.HighDefinition
         // Physical parameters
         public HDPhysicalCamera physicalParameters = new HDPhysicalCamera();
 
-        internal FlipYMode flipYMode;
+        public FlipYMode flipYMode;
 
         [Tooltip("Skips rendering settings to directly render in fullscreen (Useful for video).")]
         public bool fullscreenPassthrough = false;
