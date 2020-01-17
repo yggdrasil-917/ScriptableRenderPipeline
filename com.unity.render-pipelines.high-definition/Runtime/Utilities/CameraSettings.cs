@@ -67,7 +67,12 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct BufferClearing
         {
-            internal static BufferClearing NewDefault() => new BufferClearing
+            /// <summary>Default value.</summary>
+            [Obsolete("Since 2019.3, use BufferClearing.NewDefault() instead.")]
+            public static readonly BufferClearing @default = default;
+            /// <summary>Default value.</summary>
+            /// <returns>The default value.</returns>
+            public static BufferClearing NewDefault() => new BufferClearing
                 {
                     clearColorMode = HDAdditionalCameraData.ClearColorMode.Sky,
                     backgroundColorHDR = new Color32(6, 18, 48, 0),
@@ -90,7 +95,12 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct Volumes
         {
-            internal static Volumes NewDefault() => new Volumes
+            /// <summary>Default value.</summary>
+            [Obsolete("Since 2019.3, use Volumes.NewDefault() instead.")]
+            public static readonly Volumes @default = default;
+            /// <summary>Default value.</summary>
+            /// <returns>The default value.</returns>
+            public static Volumes NewDefault() => new Volumes
                 {
                     layerMask = -1,
                     anchorOverride = null
@@ -115,7 +125,12 @@ namespace UnityEngine.Rendering.HighDefinition
             /// <summary> The far clip plane value will be at least above <c><see cref="nearClipPlane"/> + <see cref="MinFarClipPlane"/></c></summary>
             public const float MinFarClipPlane = 1e-4f;
 
-            internal static Frustum NewDefault() => new Frustum
+            /// <summary>Default value.</summary>
+            [Obsolete("Since 2019.3, use Frustum.NewDefault() instead.")]
+            public static readonly Frustum @default = default;
+            /// <summary>Default value.</summary>
+            /// <returns>The default value.</returns>
+            public static Frustum NewDefault() => new Frustum
                 {
                     mode = Mode.ComputeProjectionMatrix,
                     aspect = 1.0f,
@@ -214,7 +229,12 @@ namespace UnityEngine.Rendering.HighDefinition
         [Serializable]
         public struct Culling
         {
-            internal static Culling NewDefault() => new Culling
+            /// <summary>Default value.</summary>
+            [Obsolete("Since 2019.3, use Culling.NewDefault() instead.")]
+            public static readonly Culling @default = default;
+            /// <summary>Default value.</summary>
+            /// <returns>The default value.</returns>
+            public static Culling NewDefault() => new Culling
                 {
                     cullingMask = -1,
                     useOcclusionCulling = true,
@@ -229,7 +249,12 @@ namespace UnityEngine.Rendering.HighDefinition
             public ulong sceneCullingMaskOverride;
         }
 
-        internal static CameraSettings NewDefault() => new CameraSettings
+        /// <summary>Default value.</summary>
+        [Obsolete("Since 2019.3, use CameraSettings.defaultCameraSettingsNonAlloc instead.")]
+        public static readonly CameraSettings @default = default;
+        /// <summary>Default value.</summary>
+        /// <returns>The default value and allocate ~250B of garbage.</returns>
+        public static CameraSettings NewDefault() => new CameraSettings
             {
                 bufferClearing = BufferClearing.NewDefault(),
                 culling = Culling.NewDefault(),
@@ -243,7 +268,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 probeRangeCompressionFactor = 1.0f
             };
 
-        internal static readonly CameraSettings defaultCameraSettingsNonAlloc = NewDefault();
+        public static readonly CameraSettings defaultCameraSettingsNonAlloc = NewDefault();
 
         /// <summary>
         /// Extract the CameraSettings from an HDCamera
@@ -315,7 +340,7 @@ namespace UnityEngine.Rendering.HighDefinition
         /// <summary>True to invert face culling, false otherwise.</summary>
         public bool invertFaceCulling;
         /// <summary>The mode to use when we want to flip the Y axis.</summary>
-        internal HDAdditionalCameraData.FlipYMode flipYMode;
+        public HDAdditionalCameraData.FlipYMode flipYMode;
         /// <summary>The layer mask to use to filter probes that can influence this camera.</summary>
         public LayerMask probeLayerMask;
         /// <summary>Which default FrameSettings should be used when rendering with these parameters.</summary>
